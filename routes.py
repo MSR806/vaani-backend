@@ -4,6 +4,17 @@ from database import get_db
 from models import Book, Chapter
 from pydantic import BaseModel
 from typing import Optional
+import openai
+from fastapi.responses import StreamingResponse
+import json
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+# Initialize OpenAI client
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 router = APIRouter()
 
@@ -19,6 +30,10 @@ class ChapterCreate(BaseModel):
 
 class ChapterUpdate(BaseModel):
     content: str
+
+class CompletionRequest(BaseModel):
+    context: str
+    user_prompt: str
 
 @router.get("/books/test")
 def test_db(db: Session = Depends(get_db)):
@@ -112,4 +127,48 @@ def update_chapter(book_id: int, chapter_id: int, chapter_update: ChapterUpdate,
     chapter.content = chapter_update.content
     db.commit()
     db.refresh(chapter)
-    return chapter 
+    return chapter
+
+@router.post("/complete")
+async def stream_completion(request: CompletionRequest):
+    if not openai.api_key:
+        raise HTTPException(status_code=500, detail="OpenAI API key not configured")
+    
+    try:
+        # Prepare the messages for GPT
+        messages = [
+            {"role": "system", "content": "You are a creative writing assistant. Your task is to continue the story based on the provided context and user prompt. Write in a natural, engaging style that matches the existing narrative."},
+            {"role": "user", "content": f"Context: {request.context}\n\nUser Prompt: {request.user_prompt}\n\nPlease continue the story:"}
+        ]
+
+        # Create streaming response
+        async def generate():
+            try:
+                stream = openai.ChatCompletion.create(
+                    model="gpt-3.5-turbo",
+                    messages=messages,
+                    stream=True,
+                    temperature=0.7,
+                    max_tokens=500
+                )
+                
+                for chunk in stream:
+                    if chunk.choices[0].delta.get('content'):
+                        yield f"data: {json.dumps({'content': chunk.choices[0].delta.content})}\n\n"
+                
+                yield "data: [DONE]\n\n"
+            except Exception as e:
+                yield f"data: {json.dumps({'error': str(e)})}\n\n"
+                yield "data: [DONE]\n\n"
+
+        return StreamingResponse(
+            generate(),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "X-Accel-Buffering": "no"  # This helps with nginx buffering
+            }
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) 
