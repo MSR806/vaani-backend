@@ -145,7 +145,7 @@ async def stream_completion(request: CompletionRequest):
         async def generate():
             try:
                 stream = openai.ChatCompletion.create(
-                    model="gpt-3.5-turbo",
+                    model="gpt-4o-mini",
                     messages=messages,
                     stream=True,
                     temperature=0.7,
