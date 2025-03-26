@@ -25,7 +25,6 @@ class BookCreate(BaseModel):
 
 class ChapterCreate(BaseModel):
     title: str
-    chapter_no: int
     content: str
 
 class ChapterUpdate(BaseModel):
@@ -96,18 +95,18 @@ def create_chapter(book_id: int, chapter: ChapterCreate, db: Session = Depends(g
     if not book:
         raise HTTPException(status_code=404, detail="Book not found")
     
-    # Check if chapter number already exists
-    existing_chapter = db.query(Chapter).filter(
-        Chapter.book_id == book_id,
-        Chapter.chapter_no == chapter.chapter_no
-    ).first()
-    if existing_chapter:
-        raise HTTPException(status_code=400, detail="Chapter number already exists")
+    # Get the highest chapter number for this book
+    max_chapter = db.query(Chapter).filter(
+        Chapter.book_id == book_id
+    ).order_by(Chapter.chapter_no.desc()).first()
+    
+    # Set the next chapter number
+    next_chapter_no = 1 if not max_chapter else max_chapter.chapter_no + 1
     
     db_chapter = Chapter(
         book_id=book_id,
         title=chapter.title,
-        chapter_no=chapter.chapter_no,
+        chapter_no=next_chapter_no,
         content=chapter.content
     )
     db.add(db_chapter)
