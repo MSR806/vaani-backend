@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from database import get_db
 from models import Book, Chapter
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 import openai
 from fastapi.responses import StreamingResponse
 import json
@@ -36,6 +36,16 @@ class ChapterUpdate(BaseModel):
 class CompletionRequest(BaseModel):
     context: str
     user_prompt: str
+
+class OutlineRequest(BaseModel):
+    user_prompt: str
+
+class OutlineSection(BaseModel):
+    title: str
+    content: str
+
+class ChapterOutline(BaseModel):
+    sections: List[OutlineSection]
 
 @router.get("/books/test")
 def test_db(db: Session = Depends(get_db)):
@@ -184,4 +194,64 @@ async def stream_completion(request: CompletionRequest):
             }
         )
     except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/books/{book_id}/chapters/outline", response_model=ChapterOutline)
+async def generate_chapter_outline(book_id: int, request: OutlineRequest, db: Session = Depends(get_db)):
+    # Check if book exists and get all chapters
+    book = db.query(Book).filter(Book.id == book_id).first()
+    if not book:
+        raise HTTPException(status_code=404, detail="Book not found")
+    
+    # Get all chapters in order
+    chapters = db.query(Chapter).filter(
+        Chapter.book_id == book_id
+    ).order_by(Chapter.chapter_no).all()
+    
+    # Prepare context from previous chapters
+    previous_chapters_context = "\n\n".join([
+        f"Chapter {ch.chapter_no}: {ch.title}\n{ch.content}"
+        for ch in chapters
+    ])
+    
+    # Prepare the messages for GPT
+    messages = [
+        {
+            "role": "system",
+            "content": """You are a creative writing assistant specialized in creating chapter outlines. 
+            Based on the previous chapters and user's prompt, create a structured outline for the next chapter.
+            Your response should be in JSON format with a list of sections, where each section has a title and abstract content.
+            Keep the content abstract and high-level, focusing on plot points and key events rather than detailed narrative.
+            Format your response as: {"sections": [{"title": "section title", "content": "abstract content"}]}"""
+        },
+        {
+            "role": "user",
+            "content": f"""Previous Chapters:\n{previous_chapters_context}\n\n
+            User's Request for Next Chapter: {request.user_prompt}\n\n
+            Please provide a structured outline for the next chapter:"""
+        }
+    ]
+
+    try:
+        response = await openai.ChatCompletion.acreate(
+            model="gpt-4o-mini",
+            messages=messages,
+            temperature=0.7,
+            max_tokens=1000
+        )
+        
+        # Parse the response
+        outline_text = response.choices[0].message.content
+        try:
+            outline_data = json.loads(outline_text)
+            return ChapterOutline(**outline_data)
+        except json.JSONDecodeError:
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to parse the AI response into proper outline format"
+            )
+            
+    except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) 
+    
+
