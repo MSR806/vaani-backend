@@ -23,6 +23,9 @@ class BookCreate(BaseModel):
     title: str
     author: str
 
+class BookUpdate(BaseModel):
+    title: str
+
 class ChapterCreate(BaseModel):
     title: str
     content: str
@@ -127,6 +130,17 @@ def update_chapter(book_id: int, chapter_id: int, chapter_update: ChapterUpdate,
     db.commit()
     db.refresh(chapter)
     return chapter
+
+@router.put("/books/{book_id}")
+def update_book(book_id: int, book_update: BookUpdate, db: Session = Depends(get_db)):
+    book = db.query(Book).filter(Book.id == book_id).first()
+    if not book:
+        raise HTTPException(status_code=404, detail="Book not found")
+    
+    book.title = book_update.title
+    db.commit()
+    db.refresh(book)
+    return book
 
 @router.post("/complete")
 async def stream_completion(request: CompletionRequest):
