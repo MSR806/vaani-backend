@@ -50,6 +50,13 @@ class ChapterOutline(BaseModel):
 class NextChapterRequest(BaseModel):
     user_prompt: str
 
+class ChapterResponse(BaseModel):
+    id: int
+    book_id: int
+    title: str
+    chapter_no: int
+    content: str
+
 @router.get("/books/test")
 def test_db(db: Session = Depends(get_db)):
     book = Book(title="Test Book", author="Test Author")
@@ -257,7 +264,7 @@ async def generate_chapter_outline(book_id: int, request: OutlineRequest, db: Se
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/books/{book_id}/chapters/next")
+@router.post("/books/{book_id}/chapters/next", response_model=ChapterResponse)
 async def generate_next_chapter(book_id: int, request: NextChapterRequest, db: Session = Depends(get_db)):
     # Check if book exists and get all chapters
     book = db.query(Book).filter(Book.id == book_id).first()
@@ -351,18 +358,14 @@ async def generate_next_chapter(book_id: int, request: NextChapterRequest, db: S
             # Join the remaining lines for content
             content = '\n'.join(lines[content_start:]).strip()
                 
-            # Create the new chapter
-            db_chapter = Chapter(
+            # Return the generated chapter without saving to DB
+            return ChapterResponse(
+                id=0,
                 book_id=book_id,
                 title=title,
                 chapter_no=next_chapter_no,
                 content=content
             )
-            db.add(db_chapter)
-            db.commit()
-            db.refresh(db_chapter)
-            
-            return db_chapter
             
         except Exception as e:
             raise HTTPException(
