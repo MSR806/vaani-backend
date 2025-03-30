@@ -13,8 +13,11 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
+# Constants
+OPENAI_MODEL = "gpt-4o-mini"
+
 # Initialize OpenAI client
-openai.api_key = os.getenv("OPENAI_API_KEY")
+client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 router = APIRouter()
 
@@ -76,6 +79,16 @@ class SceneUpdate(BaseModel):
     scene_number: Optional[int] = None
     title: Optional[str] = None
     character_ids: Optional[List[int]] = None
+
+class SubScene(BaseModel):
+    title: str
+    content: str
+
+class SceneCompletionRequest(BaseModel):
+    user_prompt: str
+
+class SceneCompletionResponse(BaseModel):
+    subscenes: List[SubScene]
 
 @router.get("/books/test")
 def test_db(db: Session = Depends(get_db)):
@@ -184,7 +197,7 @@ def update_book(book_id: int, book_update: BookUpdate, db: Session = Depends(get
 
 @router.post("/complete")
 async def stream_completion(request: CompletionRequest):
-    if not openai.api_key:
+    if not client.api_key:
         raise HTTPException(status_code=500, detail="OpenAI API key not configured")
     
     try:
@@ -197,12 +210,11 @@ async def stream_completion(request: CompletionRequest):
         # Create streaming response
         async def generate():
             try:
-                stream = openai.ChatCompletion.create(
-                    model="gpt-4o-mini",
+                stream = client.chat.completions.create(
+                    model=OPENAI_MODEL,
                     messages=messages,
                     stream=True,
-                    temperature=0.7,
-                    max_tokens=500
+                    temperature=0.7
                 )
                 
                 for chunk in stream:
@@ -220,7 +232,7 @@ async def stream_completion(request: CompletionRequest):
             headers={
                 "Cache-Control": "no-cache",
                 "Connection": "keep-alive",
-                "X-Accel-Buffering": "no"  # This helps with nginx buffering
+                "X-Accel-Buffering": "no"
             }
         )
     except Exception as e:
@@ -263,11 +275,10 @@ async def generate_chapter_outline(book_id: int, request: OutlineRequest, db: Se
     ]
 
     try:
-        response = await openai.ChatCompletion.acreate(
-            model="gpt-4o-mini",
+        response = await client.chat.completions.create(
+            model=OPENAI_MODEL,
             messages=messages,
-            temperature=0.7,
-            max_tokens=1000
+            temperature=0.7
         )
         
         # Parse the response
@@ -333,11 +344,10 @@ async def generate_next_chapter(book_id: int, request: NextChapterRequest, db: S
     ]
 
     try:
-        response = await openai.ChatCompletion.acreate(
-            model="gpt-4o-mini",
+        response = await client.chat.completions.create(
+            model=OPENAI_MODEL,
             messages=messages,
-            temperature=0.7,
-            max_tokens=2000
+            temperature=0.7
         )
         
         # Parse the response to separate title and content
@@ -485,6 +495,119 @@ def get_scenes(chapter_id: Optional[int] = None, db: Session = Depends(get_db)):
     query = db.query(Scene)
     if chapter_id is not None:
         query = query.filter(Scene.chapter_id == chapter_id)
-    return query.all() 
+    return query.all()
+
+@router.post("/scenes/{scene_id}/completion", response_model=SceneCompletionResponse)
+async def stream_scene_completion(scene_id: int, request: SceneCompletionRequest, db: Session = Depends(get_db)):
+    # Get the scene and its chapter
+    scene = db.query(Scene).filter(Scene.id == scene_id).first()
+    if not scene:
+        raise HTTPException(status_code=404, detail="Scene not found")
+    
+    chapter = db.query(Chapter).filter(Chapter.id == scene.chapter_id).first()
+    if not chapter:
+        raise HTTPException(status_code=404, detail="Chapter not found")
+    
+    # Get all previous chapters in order
+    previous_chapters = db.query(Chapter).filter(
+        Chapter.book_id == chapter.book_id,
+        Chapter.chapter_no < chapter.chapter_no
+    ).order_by(Chapter.chapter_no).all()
+    
+    # Get all previous scenes in the current chapter
+    previous_scenes = db.query(Scene).filter(
+        Scene.chapter_id == chapter.id,
+        Scene.scene_number < scene.scene_number
+    ).order_by(Scene.scene_number).all()
+    
+    # Prepare context from previous chapters
+    previous_chapters_context = "\n\n".join([
+        f"Chapter {ch.chapter_no}: {ch.title}\n{ch.content}"
+        for ch in previous_chapters
+    ])
+    
+    # Prepare context from previous scenes
+    previous_scenes_context = "\n\n".join([
+        f"Scene {s.scene_number}: {s.title}\nCharacters: {', '.join(c.name for c in s.characters)}"
+        for s in previous_scenes
+    ])
+    
+    # Get current scene's characters
+    current_characters = ", ".join(c.name for c in scene.characters)
+    
+    # Prepare the messages for GPT
+    messages = [
+        {
+            "role": "system",
+            "content": """You are a creative writing assistant specialized in creating scene outlines.
+            Based on the previous chapters, previous scenes, and the current scene's characters,
+            create a structured outline for the scene broken down into subscenes.
+            
+            Each subscene should be concise and focused on a specific moment or event.
+            The content should be minimal and outline the key points rather than detailed narrative.
+            
+            Format your response as a JSON array of subscenes, where each subscene has:
+            - title: A brief, descriptive title for the subscene
+            - content: A minimal outline of what happens in this subscene
+            
+            Keep the content high-level and focused on plot points rather than detailed descriptions.
+            
+            Example format:
+            [
+                {
+                    "title": "Initial Meeting",
+                    "content": "Brief description of what happens"
+                },
+                {
+                    "title": "Rising Tension",
+                    "content": "Brief description of what happens"
+                }
+            ]"""
+        },
+        {
+            "role": "user",
+            "content": f"""Previous Chapters:\n{previous_chapters_context}\n\n
+            Previous Scenes in Current Chapter:\n{previous_scenes_context}\n\n
+            Current Scene Information:
+            - Scene Number: {scene.scene_number}
+            - Title: {scene.title}
+            - Characters: {current_characters}\n\n
+            User's Request: {request.user_prompt}\n\n
+            Please provide a structured outline for this scene:"""
+        }
+    ]
+
+    try:
+        response = client.chat.completions.create(
+            model=OPENAI_MODEL,
+            messages=messages,
+            temperature=0.7,
+            max_tokens=1000
+        )
+        
+        # Parse the response
+        try:
+            # Extract the JSON array from the response
+            response_text = response.choices[0].message.content
+            # Clean up the response text to ensure it's valid JSON
+            response_text = response_text.strip()
+            if response_text.startswith('```json'):
+                response_text = response_text[7:]
+            if response_text.endswith('```'):
+                response_text = response_text[:-3]
+            response_text = response_text.strip()
+            
+            # Parse the JSON into our response model
+            subscenes_data = json.loads(response_text)
+            return SceneCompletionResponse(subscenes=subscenes_data)
+            
+        except json.JSONDecodeError as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to parse the AI response into proper format: {str(e)}"
+            )
+            
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) 
     
 
