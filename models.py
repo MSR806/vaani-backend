@@ -47,6 +47,7 @@ class Scene(Base):
     scene_number = Column(Integer, nullable=False)
     title = Column(String, nullable=False)
     chapter_id = Column(Integer, ForeignKey("chapters.id"), nullable=False)
+    content = Column(Text, nullable=False)
     
     # Relationships
     chapter = relationship("Chapter", back_populates="scenes")

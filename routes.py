@@ -69,25 +69,57 @@ class CharacterUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
 
+class CharacterInScene(BaseModel):
+    name: str
+    description: str
+
 class SceneCreate(BaseModel):
     scene_number: int
     title: str
     chapter_id: int
-    character_ids: List[int]
+    content: str
+    characters: List[CharacterInScene]
 
 class SceneUpdate(BaseModel):
     scene_number: Optional[int] = None
     title: Optional[str] = None
-    character_ids: Optional[List[int]] = None
+    content: Optional[str] = None
+    characters: Optional[List[CharacterInScene]] = None
 
 class SubScene(BaseModel):
     title: str
     content: str
 
 class SceneCompletionRequest(BaseModel):
-    user_prompt: str
+    outline: str
 
 class SceneCompletionResponse(BaseModel):
+    subscenes: List[SubScene]
+
+class CharacterResponse(BaseModel):
+    id: int
+    name: str
+    description: str
+    book_id: int
+
+    class Config:
+        from_attributes = True
+
+class SceneResponse(BaseModel):
+    id: int
+    scene_number: int
+    title: str
+    chapter_id: int
+    content: str
+    characters: List[CharacterResponse]
+
+    class Config:
+        from_attributes = True
+
+class SceneOutlineRequest(BaseModel):
+    user_prompt: str
+
+class SceneOutlineResponse(BaseModel):
     subscenes: List[SubScene]
 
 @router.get("/books/test")
@@ -158,6 +190,18 @@ def create_chapter(book_id: int, chapter: ChapterCreate, db: Session = Depends(g
     
     # Set the next chapter number
     next_chapter_no = 1 if not max_chapter else max_chapter.chapter_no + 1
+    
+    # Check if a chapter with this number already exists in the book
+    existing_chapter = db.query(Chapter).filter(
+        Chapter.book_id == book_id,
+        Chapter.chapter_no == next_chapter_no
+    ).first()
+    
+    if existing_chapter:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Chapter {next_chapter_no} already exists in this book"
+        )
     
     db_chapter = Chapter(
         book_id=book_id,
@@ -275,7 +319,7 @@ async def generate_chapter_outline(book_id: int, request: OutlineRequest, db: Se
     ]
 
     try:
-        response = client.chat.completions.create(
+        response = await client.chat.completions.create(
             model=OPENAI_MODEL,
             messages=messages,
             temperature=0.7
@@ -344,7 +388,7 @@ async def generate_next_chapter(book_id: int, request: NextChapterRequest, db: S
     ]
 
     try:
-        response = client.chat.completions.create(
+        response = await client.chat.completions.create(
             model=OPENAI_MODEL,
             messages=messages,
             temperature=0.7
@@ -452,17 +496,35 @@ def create_scene(scene: SceneCreate, db: Session = Depends(get_db)):
     if not chapter:
         raise HTTPException(status_code=404, detail="Chapter not found")
     
-    # Check if all characters exist
-    characters = db.query(Character).filter(Character.id.in_(scene.character_ids)).all()
-    if len(characters) != len(scene.character_ids):
-        raise HTTPException(status_code=404, detail="One or more characters not found")
+    # Get or create characters
+    scene_characters = []
+    for char_data in scene.characters:
+        # Check if character with same name exists in the book
+        existing_char = db.query(Character).filter(
+            Character.name == char_data.name,
+            Character.book_id == chapter.book_id  # Use the book_id from the chapter
+        ).first()
+        
+        if existing_char:
+            scene_characters.append(existing_char)
+        else:
+            # Create new character with the correct book_id
+            new_char = Character(
+                name=char_data.name,
+                description=char_data.description,
+                book_id=chapter.book_id  # Use the book_id from the chapter
+            )
+            db.add(new_char)
+            db.flush()  # Flush to get the new character's ID
+            scene_characters.append(new_char)
     
     # Create the scene
     db_scene = Scene(
         scene_number=scene.scene_number,
         title=scene.title,
         chapter_id=scene.chapter_id,
-        characters=characters
+        content=scene.content,
+        characters=scene_characters
     )
     db.add(db_scene)
     db.commit()
@@ -479,26 +541,46 @@ def update_scene(scene_id: int, scene_update: SceneUpdate, db: Session = Depends
         scene.scene_number = scene_update.scene_number
     if scene_update.title is not None:
         scene.title = scene_update.title
-    if scene_update.character_ids is not None:
-        # Check if all characters exist
-        characters = db.query(Character).filter(Character.id.in_(scene_update.character_ids)).all()
-        if len(characters) != len(scene_update.character_ids):
-            raise HTTPException(status_code=404, detail="One or more characters not found")
-        scene.characters = characters
+    if scene_update.content is not None:
+        scene.content = scene_update.content
+    if scene_update.characters is not None:
+        # Get or create characters
+        scene_characters = []
+        for char_data in scene_update.characters:
+            # Check if character with same name exists in the book
+            existing_char = db.query(Character).filter(
+                Character.name == char_data.name,
+                Character.book_id == scene.chapter.book_id  # Use the book_id from the chapter
+            ).first()
+            
+            if existing_char:
+                scene_characters.append(existing_char)
+            else:
+                # Create new character with the correct book_id
+                new_char = Character(
+                    name=char_data.name,
+                    description=char_data.description,
+                    book_id=scene.chapter.book_id  # Use the book_id from the chapter
+                )
+                db.add(new_char)
+                db.flush()  # Flush to get the new character's ID
+                scene_characters.append(new_char)
+        
+        scene.characters = scene_characters
     
     db.commit()
     db.refresh(scene)
     return scene
 
-@router.get("/scenes")
+@router.get("/scenes", response_model=List[SceneResponse])
 def get_scenes(chapter_id: Optional[int] = None, db: Session = Depends(get_db)):
     query = db.query(Scene)
     if chapter_id is not None:
         query = query.filter(Scene.chapter_id == chapter_id)
     return query.all()
 
-@router.post("/scenes/{scene_id}/completion", response_model=SceneCompletionResponse)
-async def stream_scene_completion(scene_id: int, request: SceneCompletionRequest, db: Session = Depends(get_db)):
+@router.post("/scenes/{scene_id}/outline-generation", response_model=SceneOutlineResponse)
+async def generate_scene_outline(scene_id: int, request: SceneOutlineRequest, db: Session = Depends(get_db)):
     # Get the scene and its chapter
     scene = db.query(Scene).filter(Scene.id == scene_id).first()
     if not scene:
@@ -581,8 +663,7 @@ async def stream_scene_completion(scene_id: int, request: SceneCompletionRequest
         response = client.chat.completions.create(
             model=OPENAI_MODEL,
             messages=messages,
-            temperature=0.7,
-            max_tokens=1000
+            temperature=0.7
         )
         
         # Parse the response
@@ -599,7 +680,7 @@ async def stream_scene_completion(scene_id: int, request: SceneCompletionRequest
             
             # Parse the JSON into our response model
             subscenes_data = json.loads(response_text)
-            return SceneCompletionResponse(subscenes=subscenes_data)
+            return SceneOutlineResponse(subscenes=subscenes_data)
             
         except json.JSONDecodeError as e:
             raise HTTPException(
@@ -607,6 +688,107 @@ async def stream_scene_completion(scene_id: int, request: SceneCompletionRequest
                 detail=f"Failed to parse the AI response into proper format: {str(e)}"
             )
             
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/scenes/{scene_id}/completion")
+async def stream_scene_completion(scene_id: int, request: SceneCompletionRequest, db: Session = Depends(get_db)):
+    # Get the scene and its chapter
+    scene = db.query(Scene).filter(Scene.id == scene_id).first()
+    if not scene:
+        raise HTTPException(status_code=404, detail="Scene not found")
+    
+    chapter = db.query(Chapter).filter(Chapter.id == scene.chapter_id).first()
+    if not chapter:
+        raise HTTPException(status_code=404, detail="Chapter not found")
+    
+    # Get all previous chapters in order
+    previous_chapters = db.query(Chapter).filter(
+        Chapter.book_id == chapter.book_id,
+        Chapter.chapter_no < chapter.chapter_no
+    ).order_by(Chapter.chapter_no).all()
+    
+    # Get all previous scenes in the current chapter
+    previous_scenes = db.query(Scene).filter(
+        Scene.chapter_id == chapter.id,
+        Scene.scene_number < scene.scene_number
+    ).order_by(Scene.scene_number).all()
+    
+    # Prepare context from previous chapters
+    previous_chapters_context = "\n\n".join([
+        f"Chapter {ch.chapter_no}: {ch.title}\n{ch.content}"
+        for ch in previous_chapters
+    ])
+    
+    # Prepare context from previous scenes
+    previous_scenes_context = "\n\n".join([
+        f"Scene {s.scene_number}: {s.title}\nCharacters: {', '.join(c.name for c in s.characters)}\n{s.content}"
+        for s in previous_scenes
+    ])
+    
+    # Get current scene's characters
+    current_characters = ", ".join(c.name for c in scene.characters)
+    
+    # Prepare the messages for GPT
+    messages = [
+        {
+            "role": "system",
+            "content": """You are a creative writing assistant specialized in writing detailed scenes.
+            Based on the previous chapters, previous scenes, and the provided outline,
+            write a complete, engaging scene that maintains consistency with the story's style and narrative.
+            
+            Your scene should:
+            1. Follow the provided outline structure
+            2. Include vivid descriptions and engaging dialogue
+            3. Maintain consistent character voices and personalities
+            4. Create a natural flow between different moments
+            5. Include sensory details and emotional depth
+            6. End in a way that maintains narrative momentum
+            
+            Write in a natural, flowing style that brings the scene to life."""
+        },
+        {
+            "role": "user",
+            "content": f"""Previous Chapters:\n{previous_chapters_context}\n\n
+            Previous Scenes in Current Chapter:\n{previous_scenes_context}\n\n
+            Current Scene Information:
+            - Scene Number: {scene.scene_number}
+            - Title: {scene.title}
+            - Characters: {current_characters}\n\n
+            Scene Outline:\n{request.outline}\n\n
+            Please write the complete scene:"""
+        }
+    ]
+
+    try:
+        # Create streaming response
+        async def generate():
+            try:
+                stream = client.chat.completions.create(
+                    model=OPENAI_MODEL,
+                    messages=messages,
+                    stream=True,
+                    temperature=0.7
+                )
+                
+                for chunk in stream:
+                    if hasattr(chunk.choices[0].delta, 'content') and chunk.choices[0].delta.content:
+                        yield f"data: {json.dumps({'content': chunk.choices[0].delta.content})}\n\n"
+                
+                yield "data: [DONE]\n\n"
+            except Exception as e:
+                yield f"data: {json.dumps({'error': str(e)})}\n\n"
+                yield "data: [DONE]\n\n"
+
+        return StreamingResponse(
+            generate(),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "X-Accel-Buffering": "no"
+            }
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) 
     
