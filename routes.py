@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
-from models import Book, Chapter, Character
+from models import Book, Chapter, Character, Scene
 from pydantic import BaseModel
 from typing import Optional, List
 import openai
@@ -65,6 +65,17 @@ class CharacterCreate(BaseModel):
 class CharacterUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
+
+class SceneCreate(BaseModel):
+    scene_number: int
+    title: str
+    chapter_id: int
+    character_ids: List[int]
+
+class SceneUpdate(BaseModel):
+    scene_number: Optional[int] = None
+    title: Optional[str] = None
+    character_ids: Optional[List[int]] = None
 
 @router.get("/books/test")
 def test_db(db: Session = Depends(get_db)):
@@ -422,6 +433,58 @@ def get_characters(book_id: Optional[int] = None, db: Session = Depends(get_db))
     query = db.query(Character)
     if book_id is not None:
         query = query.filter(Character.book_id == book_id)
+    return query.all()
+
+@router.post("/scenes")
+def create_scene(scene: SceneCreate, db: Session = Depends(get_db)):
+    # Check if chapter exists
+    chapter = db.query(Chapter).filter(Chapter.id == scene.chapter_id).first()
+    if not chapter:
+        raise HTTPException(status_code=404, detail="Chapter not found")
+    
+    # Check if all characters exist
+    characters = db.query(Character).filter(Character.id.in_(scene.character_ids)).all()
+    if len(characters) != len(scene.character_ids):
+        raise HTTPException(status_code=404, detail="One or more characters not found")
+    
+    # Create the scene
+    db_scene = Scene(
+        scene_number=scene.scene_number,
+        title=scene.title,
+        chapter_id=scene.chapter_id,
+        characters=characters
+    )
+    db.add(db_scene)
+    db.commit()
+    db.refresh(db_scene)
+    return db_scene
+
+@router.put("/scenes/{scene_id}")
+def update_scene(scene_id: int, scene_update: SceneUpdate, db: Session = Depends(get_db)):
+    scene = db.query(Scene).filter(Scene.id == scene_id).first()
+    if not scene:
+        raise HTTPException(status_code=404, detail="Scene not found")
+    
+    if scene_update.scene_number is not None:
+        scene.scene_number = scene_update.scene_number
+    if scene_update.title is not None:
+        scene.title = scene_update.title
+    if scene_update.character_ids is not None:
+        # Check if all characters exist
+        characters = db.query(Character).filter(Character.id.in_(scene_update.character_ids)).all()
+        if len(characters) != len(scene_update.character_ids):
+            raise HTTPException(status_code=404, detail="One or more characters not found")
+        scene.characters = characters
+    
+    db.commit()
+    db.refresh(scene)
+    return scene
+
+@router.get("/scenes")
+def get_scenes(chapter_id: Optional[int] = None, db: Session = Depends(get_db)):
+    query = db.query(Scene)
+    if chapter_id is not None:
+        query = query.filter(Scene.chapter_id == chapter_id)
     return query.all() 
     
 

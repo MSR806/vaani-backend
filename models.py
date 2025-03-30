@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Text, ForeignKey, String
+from sqlalchemy import Column, Integer, Text, ForeignKey, String, Table
 from sqlalchemy.orm import relationship
 from database import Base
 
@@ -20,6 +20,7 @@ class Chapter(Base):
     chapter_no = Column(Integer, nullable=False)
     content = Column(Text, nullable=False)
     book = relationship("Book", back_populates="chapters")
+    scenes = relationship("Scene", back_populates="chapter")
 
 class Character(Base):
     __tablename__ = "characters"
@@ -29,4 +30,24 @@ class Character(Base):
     description = Column(String)
     book_id = Column(Integer, ForeignKey("books.id"))
 
-    book = relationship("Book", back_populates="characters") 
+    book = relationship("Book", back_populates="characters")
+
+# Association table for scene-character many-to-many relationship
+scene_characters = Table(
+    'scene_characters',
+    Base.metadata,
+    Column('scene_id', Integer, ForeignKey('scenes.id')),
+    Column('character_id', Integer, ForeignKey('characters.id'))
+)
+
+class Scene(Base):
+    __tablename__ = "scenes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    scene_number = Column(Integer, nullable=False)
+    title = Column(String, nullable=False)
+    chapter_id = Column(Integer, ForeignKey("chapters.id"), nullable=False)
+    
+    # Relationships
+    chapter = relationship("Chapter", back_populates="scenes")
+    characters = relationship("Character", secondary=scene_characters, backref="scenes") 
