@@ -30,6 +30,11 @@ from .services.scene_service import (
 from .services.chat_service import (
     chat_with_ai, stream_chat, chat_as_character, stream_chat_as_character
 )
+from .services.chat_completion_service import stream_completion
+from .services.ai_service import get_openai_client
+from .config import OPENAI_MODEL
+from fastapi.responses import StreamingResponse
+import json
 
 router = APIRouter()
 
@@ -172,4 +177,9 @@ async def chat_as_character_route(request: ChatRequest, db: Session = Depends(ge
 
 @router.post("/chat/character/stream")
 async def stream_chat_as_character_route(request: ChatRequest, db: Session = Depends(get_db)):
-    return await stream_chat_as_character(request, db) 
+    return await stream_chat_as_character(request, db)
+
+@router.post("/complete")
+async def stream_completion_route(request: CompletionRequest):
+    client = get_openai_client()
+    return await stream_completion(request.context, request.user_prompt, client) 
