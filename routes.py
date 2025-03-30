@@ -3,12 +3,17 @@ from sqlalchemy.orm import Session
 from database import get_db
 from models import Book, Chapter, Character, Scene
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional, List, Dict
 import openai
 from fastapi.responses import StreamingResponse
 import json
 import os
 from dotenv import load_dotenv
+from langchain_openai import ChatOpenAI
+from langchain.schema import HumanMessage, AIMessage, SystemMessage
+from langchain.memory import ConversationBufferMemory
+from langchain.chains import ConversationChain
+from langchain.prompts import PromptTemplate
 
 # Load environment variables
 load_dotenv()
@@ -18,6 +23,40 @@ OPENAI_MODEL = "gpt-4o-mini"
 
 # Initialize OpenAI client
 client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+# Initialize LangChain components
+chat = ChatOpenAI(
+    model=OPENAI_MODEL,
+    temperature=0.7,
+    api_key=os.getenv("OPENAI_API_KEY")
+)
+
+# Create a conversation template
+template = """The following is a friendly conversation between a human and an AI. The AI is talkative and provides lots of specific details from its context.
+
+Current conversation:
+{history}
+Human: {input}
+AI:"""
+
+prompt = PromptTemplate(
+    input_variables=["history", "input"],
+    template=template
+)
+
+# Initialize conversation memory
+memory = ConversationBufferMemory(
+    return_messages=True,
+    memory_key="history"
+)
+
+# Initialize conversation chain
+conversation = ConversationChain(
+    llm=chat,
+    memory=memory,
+    prompt=prompt,
+    verbose=True
+)
 
 router = APIRouter()
 
@@ -86,15 +125,11 @@ class SceneUpdate(BaseModel):
     content: Optional[str] = None
     characters: Optional[List[CharacterInScene]] = None
 
-class SubScene(BaseModel):
-    title: str
-    content: str
-
 class SceneCompletionRequest(BaseModel):
     outline: str
 
 class SceneCompletionResponse(BaseModel):
-    subscenes: List[SubScene]
+    content: str
 
 class CharacterResponse(BaseModel):
     id: int
@@ -123,13 +158,35 @@ class SceneOutlineResponse(BaseModel):
     scene_number: int
     title: str
     characters: List[CharacterInScene]
-    subscenes: List[SubScene]
+    content: str
 
 class ChapterOutlineResponse(BaseModel):
     scenes: List[SceneOutlineResponse]
 
 class ChapterGenerateRequest(BaseModel):
     user_prompt: str
+
+class ChatMessage(BaseModel):
+    role: str
+    content: str
+
+class ChatRequest(BaseModel):
+    messages: List[ChatMessage]
+    system_prompt: Optional[str] = "You are a helpful AI assistant."
+    character_name: Optional[str] = None
+    chapter_id: Optional[int] = None
+
+class ChatResponse(BaseModel):
+    message: str
+
+class ExtractedCharacter(BaseModel):
+    name: str
+    description: str
+    gender: str
+    image_url: str
+
+class ChapterCharactersResponse(BaseModel):
+    characters: List[ExtractedCharacter]
 
 @router.get("/books/test")
 def test_db(db: Session = Depends(get_db)):
@@ -579,10 +636,21 @@ async def generate_scene_outline(scene_id: int, request: SceneOutlineRequest, db
             "role": "system",
             "content": """You are a creative writing assistant specialized in creating scene outlines.
             Based on the previous chapters, previous scenes, and the current scene's characters,
-            create a structured outline for the scene broken down into subscenes.
+            create a structured outline for the scene.
             
-            Each subscene should be concise and focused on a specific moment or event.
-            The content should be minimal and outline the key points rather than detailed narrative.
+            Format your response as HTML with the following rules:
+            1. Each section title should be wrapped in <h3> tags
+            2. The main content should be in <p> tags
+            3. Use <br> tags for line breaks between paragraphs
+            4. Do not include any other HTML tags
+            5. Keep the HTML simple and clean
+            
+            Example format:
+            <h3>Section Title</h3>
+            <p>Content goes here...</p>
+            <br>
+            <h3>Next Section</h3>
+            <p>More content...</p>
             
             Your response must be a valid JSON object with the following structure:
             {
@@ -594,12 +662,7 @@ async def generate_scene_outline(scene_id: int, request: SceneOutlineRequest, db
                         "description": "Character's description and role in the scene"
                     }
                 ],
-                "subscenes": [
-                    {
-                        "title": "Subscene title",
-                        "content": "Brief description of what happens"
-                    }
-                ]
+                "content": "HTML formatted content with section titles and content"
             }
             
             Keep the content high-level and focused on plot points rather than detailed descriptions.
@@ -680,31 +743,11 @@ Please provide a structured outline for this scene:"""
                 if not isinstance(char["description"], str) or not char["description"].strip():
                     raise ValueError(f"Character {char_idx} description must be a non-empty string")
             
-            if "subscenes" not in scene_data:
-                raise ValueError("Response must have subscenes")
+            if "content" not in scene_data:
+                raise ValueError("Response must have content")
             
-            if not isinstance(scene_data["subscenes"], list):
-                raise ValueError("Subscenes must be an array")
-            
-            if not scene_data["subscenes"]:
-                raise ValueError("Response must have at least one subscene")
-            
-            # Validate each subscene
-            for subscene_idx, subscene in enumerate(scene_data["subscenes"]):
-                if not isinstance(subscene, dict):
-                    raise ValueError(f"Subscene {subscene_idx} must be an object")
-                
-                if "title" not in subscene:
-                    raise ValueError(f"Subscene {subscene_idx} must have a title")
-                
-                if not isinstance(subscene["title"], str) or not subscene["title"].strip():
-                    raise ValueError(f"Subscene {subscene_idx} title must be a non-empty string")
-                
-                if "content" not in subscene:
-                    raise ValueError(f"Subscene {subscene_idx} must have content")
-                
-                if not isinstance(subscene["content"], str) or not subscene["content"].strip():
-                    raise ValueError(f"Subscene {subscene_idx} content must be a non-empty string")
+            if not isinstance(scene_data["content"], str) or not scene_data["content"].strip():
+                raise ValueError("Content must be a non-empty string")
             
             return SceneOutlineResponse(**scene_data)
             
@@ -732,12 +775,7 @@ Please provide a structured outline for this scene:"""
                                 "description": "Character's description and role in the scene"
                             }}
                         ],
-                        "subscenes": [
-                            {{
-                                "title": "Subscene Title",
-                                "content": "Description of what happens"
-                            }}
-                        ]
+                        "content": "HTML formatted content with section titles and content"
                     }}
                     
                     Available characters: {', '.join(c['name'] for c in current_characters)}"""
@@ -760,7 +798,7 @@ Please provide a structured outline for this scene:"""
                 retry_data["scene_number"] = scene.scene_number
                 
                 # Validate the retry response with the same checks
-                if not isinstance(retry_data, dict) or "title" not in retry_data or "characters" not in retry_data or "subscenes" not in retry_data:
+                if not isinstance(retry_data, dict) or "title" not in retry_data or "characters" not in retry_data or "content" not in retry_data:
                     raise HTTPException(
                         status_code=500,
                         detail=f"Failed to generate a properly structured response after retry: {str(e)}"
@@ -836,7 +874,19 @@ async def stream_scene_completion(scene_id: int, request: SceneCompletionRequest
             5. Include sensory details and emotional depth
             6. End in a way that maintains narrative momentum
             
-            Write in a natural, flowing style that brings the scene to life."""
+            Format your response as HTML with the following rules:
+            1. Each section title should be wrapped in <h3> tags
+            2. The main content should be in <p> tags
+            3. Use <br> tags for line breaks between paragraphs
+            4. Do not include any other HTML tags
+            5. Keep the HTML simple and clean
+            
+            Example format:
+            <h3>Section Title</h3>
+            <p>Content goes here...</p>
+            <br>
+            <h3>Next Section</h3>
+            <p>More content...</p>"""
         },
         {
             "role": "user",
@@ -854,7 +904,7 @@ Current Scene Information:
 Scene Outline:
 {request.outline}
 
-Please write the complete scene:"""
+Please write the complete scene in HTML format:"""
         }
     ]
 
@@ -952,8 +1002,19 @@ async def generate_chapter_outline(book_id: int, request: OutlineRequest, db: Se
             Based on the previous chapters, previous scenes, and the available characters,
             create a structured outline for the chapter broken down into multiple scenes.
             
-            Each scene should be concise and focused on specific events or character interactions.
-            The content should be minimal and outline the key points rather than detailed narrative.
+            Format your response as HTML with the following rules:
+            1. Each section title should be wrapped in <h3> tags
+            2. The main content should be in <p> tags
+            3. Use <br> tags for line breaks between paragraphs
+            4. Do not include any other HTML tags
+            5. Keep the HTML simple and clean
+            
+            Example format:
+            <h3>Section Title</h3>
+            <p>Content goes here...</p>
+            <br>
+            <h3>Next Section</h3>
+            <p>More content...</p>
             
             Your response must be a valid JSON object with the following structure:
             {
@@ -967,12 +1028,7 @@ async def generate_chapter_outline(book_id: int, request: OutlineRequest, db: Se
                                 "description": "Character's description and role in the scene"
                             }
                         ],
-                        "subscenes": [
-                            {
-                                "title": "Subscene title",
-                                "content": "Brief description of what happens"
-                            }
-                        ]
+                        "content": "HTML formatted content with section titles and content"
                     }
                 ]
             }
@@ -1036,7 +1092,7 @@ Please provide a structured outline for this chapter:"""
             # Get all available character names for validation
             available_characters = {c.name for c in characters}
             
-            # Validate each scene and subscene
+            # Validate each scene
             for scene_idx, scene in enumerate(scenes_data["scenes"]):
                 if not isinstance(scene, dict):
                     raise ValueError(f"Scene {scene_idx} must be an object")
@@ -1060,30 +1116,11 @@ Please provide a structured outline for this chapter:"""
                     if char_name not in available_characters:
                         raise ValueError(f"Character '{char_name}' in scene {scene_idx} is not in the available characters list")
                 
-                if "subscenes" not in scene:
-                    raise ValueError(f"Scene {scene_idx} must have subscenes")
+                if "content" not in scene:
+                    raise ValueError(f"Scene {scene_idx} must have content")
                 
-                if not isinstance(scene["subscenes"], list):
-                    raise ValueError(f"Scene {scene_idx} subscenes must be an array")
-                
-                if not scene["subscenes"]:
-                    raise ValueError(f"Scene {scene_idx} must have at least one subscene")
-                
-                for subscene_idx, subscene in enumerate(scene["subscenes"]):
-                    if not isinstance(subscene, dict):
-                        raise ValueError(f"Subscene {subscene_idx} in scene {scene_idx} must be an object")
-                    
-                    if "title" not in subscene:
-                        raise ValueError(f"Subscene {subscene_idx} in scene {scene_idx} must have a title")
-                    
-                    if not isinstance(subscene["title"], str) or not subscene["title"].strip():
-                        raise ValueError(f"Subscene {subscene_idx} in scene {scene_idx} must have a non-empty title")
-                    
-                    if "content" not in subscene:
-                        raise ValueError(f"Subscene {subscene_idx} in scene {scene_idx} must have content")
-                    
-                    if not isinstance(subscene["content"], str) or not subscene["content"].strip():
-                        raise ValueError(f"Subscene {subscene_idx} in scene {scene_idx} must have non-empty content")
+                if not isinstance(scene["content"], str) or not scene["content"].strip():
+                    raise ValueError(f"Scene {scene_idx} must have non-empty content")
             
             # If validation passes, create the response model
             return ChapterOutlineResponse(**scenes_data)
@@ -1114,12 +1151,7 @@ Please provide a structured outline for this chapter:"""
                                         "description": "Character's description and role in the scene"
                                     }}
                                 ],
-                                "subscenes": [
-                                    {{
-                                        "title": "Subscene Title",
-                                        "content": "Description of what happens"
-                                    }}
-                                ]
+                                "content": "HTML formatted content with section titles and content"
                             }}
                         ]
                     }}
@@ -1305,6 +1337,386 @@ Please write the complete chapter:"""
                 detail=f"Failed to process the generated chapter: {str(e)}"
             )
             
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/chat", response_model=ChatResponse)
+async def chat_with_ai(request: ChatRequest):
+    if not client.api_key:
+        raise HTTPException(status_code=500, detail="OpenAI API key not configured")
+    
+    try:
+        # Get the last user message
+        last_user_message = None
+        for msg in reversed(request.messages):
+            if msg.role == "user":
+                last_user_message = msg.content
+                break
+        
+        if not last_user_message:
+            raise HTTPException(status_code=400, detail="No user message found in the request")
+        
+        # Use LangChain's conversation chain
+        response = conversation.predict(input=last_user_message)
+        
+        return ChatResponse(message=response)
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/chat/stream")
+async def stream_chat(request: ChatRequest):
+    if not client.api_key:
+        raise HTTPException(status_code=500, detail="OpenAI API key not configured")
+    
+    try:
+        # Get the last user message
+        last_user_message = None
+        for msg in reversed(request.messages):
+            if msg.role == "user":
+                last_user_message = msg.content
+                break
+        
+        if not last_user_message:
+            raise HTTPException(status_code=400, detail="No user message found in the request")
+        
+        # Create streaming response
+        async def generate():
+            try:
+                # Create messages for OpenAI
+                messages = []
+                if request.system_prompt:
+                    messages.append({"role": "system", "content": request.system_prompt})
+                messages.append({"role": "user", "content": last_user_message})
+                
+                # Use OpenAI's streaming directly
+                stream = client.chat.completions.create(
+                    model=OPENAI_MODEL,
+                    messages=messages,
+                    stream=True,
+                    temperature=0.7
+                )
+                
+                for chunk in stream:
+                    if chunk.choices[0].delta.content:
+                        yield f"data: {json.dumps({'content': chunk.choices[0].delta.content})}\n\n"
+                
+                yield "data: [DONE]\n\n"
+            except Exception as e:
+                yield f"data: {json.dumps({'error': str(e)})}\n\n"
+                yield "data: [DONE]\n\n"
+
+        return StreamingResponse(
+            generate(),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "X-Accel-Buffering": "no"
+            }
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/chapters/{chapter_id}/characters", response_model=ChapterCharactersResponse)
+async def extract_chapter_characters(chapter_id: int, db: Session = Depends(get_db)):
+    # Get the chapter
+    chapter = db.query(Chapter).filter(Chapter.id == chapter_id).first()
+    if not chapter:
+        raise HTTPException(status_code=404, detail="Chapter not found")
+    
+    # Prepare the messages for GPT
+    messages = [
+        {
+            "role": "system",
+            "content": """You are a literary analysis assistant specialized in character extraction and gender analysis.
+            Your task is to analyze the chapter content and identify all characters mentioned in it.
+            For each character, provide:
+            1. A brief, one-line description that captures their essential nature or role
+            2. Their gender (male, female, or unknown if not clear from context)
+            
+            Your response must be a valid JSON array of objects, where each object has:
+            - name: The character's name
+            - description: A single-line description of the character's nature or role (max 100 characters)
+            - gender: The character's gender (male, female, or unknown)
+            
+            Only include characters that are actually mentioned or appear in the chapter.
+            Keep descriptions concise and focused on the character's core nature.
+            If a character appears multiple times, combine their characteristics into a single entry.
+            Analyze pronouns, titles, and context to determine gender when possible."""
+        },
+        {
+            "role": "user",
+            "content": f"""Chapter Title: {chapter.title}
+            Chapter Content:
+            {chapter.content}
+            
+            Please extract all characters from this chapter and provide their descriptions and gender."""
+        }
+    ]
+
+    try:
+        response = client.chat.completions.create(
+            model=OPENAI_MODEL,
+            messages=messages,
+            temperature=0.7,
+            response_format={"type": "json_object"}
+        )
+        
+        # Parse the response
+        try:
+            # Extract the JSON object from the response
+            response_text = response.choices[0].message.content
+            # Clean up the response text to ensure it's valid JSON
+            response_text = response_text.strip()
+            
+            # Parse the JSON
+            characters_data = json.loads(response_text)
+            
+            # Validate the response structure
+            if not isinstance(characters_data, dict):
+                raise ValueError("Response must be a JSON object")
+            
+            if "characters" not in characters_data:
+                raise ValueError("Response must contain a 'characters' array")
+            
+            if not isinstance(characters_data["characters"], list):
+                raise ValueError("'characters' must be an array")
+            
+            # Process each character to add image URLs
+            for char in characters_data["characters"]:
+                if not isinstance(char, dict):
+                    raise ValueError("Each character must be an object")
+                
+                if "name" not in char:
+                    raise ValueError("Each character must have a name")
+                
+                if not isinstance(char["name"], str) or not char["name"].strip():
+                    raise ValueError("Character name must be a non-empty string")
+                
+                if "description" not in char:
+                    raise ValueError("Each character must have a description")
+                
+                if not isinstance(char["description"], str) or not char["description"].strip():
+                    raise ValueError("Character description must be a non-empty string")
+                
+                if "gender" not in char:
+                    raise ValueError("Each character must have a gender")
+                
+                if not isinstance(char["gender"], str) or not char["gender"].strip():
+                    raise ValueError("Character gender must be a non-empty string")
+                
+                # Generate cartoon profile image URL based on gender
+                gender = char["gender"].lower()
+                if gender == "male":
+                    char["image_url"] = "https://api.dicebear.com/7.x/adventurer/svg?seed=" + char["name"].replace(" ", "") + "&backgroundColor=b6e3f4"
+                elif gender == "female":
+                    char["image_url"] = "https://api.dicebear.com/7.x/adventurer/svg?seed=" + char["name"].replace(" ", "") + "&backgroundColor=ffd5dc"
+                else:
+                    char["image_url"] = "https://api.dicebear.com/7.x/adventurer/svg?seed=" + char["name"].replace(" ", "") + "&backgroundColor=c0aede"
+            
+            return ChapterCharactersResponse(**characters_data)
+            
+        except json.JSONDecodeError as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to parse the AI response into proper JSON format: {str(e)}"
+            )
+        except ValueError as e:
+            # If the response doesn't match our schema, try to fix it with another API call
+            retry_messages = messages + [
+                {
+                    "role": "assistant",
+                    "content": response_text
+                },
+                {
+                    "role": "user",
+                    "content": """The previous response did not match the required format. Please provide a response in exactly this format:
+                    {
+                        "characters": [
+                            {
+                                "name": "Character Name",
+                                "description": "Character's description and role in the chapter",
+                                "gender": "male/female/unknown"
+                            }
+                        ]
+                    }"""
+                }
+            ]
+            
+            try:
+                retry_response = client.chat.completions.create(
+                    model=OPENAI_MODEL,
+                    messages=retry_messages,
+                    temperature=0.7,
+                    response_format={"type": "json_object"}
+                )
+                
+                retry_text = retry_response.choices[0].message.content.strip()
+                retry_data = json.loads(retry_text)
+                
+                # Validate the retry response
+                if not isinstance(retry_data, dict) or "characters" not in retry_data:
+                    raise HTTPException(
+                        status_code=500,
+                        detail=f"Failed to generate a properly structured response after retry: {str(e)}"
+                    )
+                
+                # Process each character to add image URLs
+                for char in retry_data["characters"]:
+                    gender = char["gender"].lower()
+                    if gender == "male":
+                        char["image_url"] = "https://api.dicebear.com/7.x/adventurer/svg?seed=" + char["name"].replace(" ", "") + "&backgroundColor=b6e3f4"
+                    elif gender == "female":
+                        char["image_url"] = "https://api.dicebear.com/7.x/adventurer/svg?seed=" + char["name"].replace(" ", "") + "&backgroundColor=ffd5dc"
+                    else:
+                        char["image_url"] = "https://api.dicebear.com/7.x/adventurer/svg?seed=" + char["name"].replace(" ", "") + "&backgroundColor=c0aede"
+                
+                return ChapterCharactersResponse(**retry_data)
+                
+            except Exception as retry_error:
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Failed to generate a valid response even after retry: {str(retry_error)}"
+                )
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Error processing the response: {str(e)}"
+            )
+            
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/chat/character", response_model=ChatResponse)
+async def chat_as_character(request: ChatRequest, db: Session = Depends(get_db)):
+    if not client.api_key:
+        raise HTTPException(status_code=500, detail="OpenAI API key not configured")
+    
+    if not request.character_name or not request.chapter_id:
+        raise HTTPException(status_code=400, detail="character_name and chapter_id are required")
+    
+    try:
+        # Get the chapter
+        chapter = db.query(Chapter).filter(Chapter.id == request.chapter_id).first()
+        if not chapter:
+            raise HTTPException(status_code=404, detail="Chapter not found")
+        
+        # Get the last user message
+        last_user_message = None
+        for msg in reversed(request.messages):
+            if msg.role == "user":
+                last_user_message = msg.content
+                break
+        
+        if not last_user_message:
+            raise HTTPException(status_code=400, detail="No user message found in the request")
+        
+        # Prepare the messages for GPT
+        messages = [
+            {
+                "role": "system",
+                "content": f"""You are {request.character_name}, a character from the chapter "{chapter.title}".
+                You should respond to messages as this character, maintaining their personality, knowledge, and context from the chapter.
+                Stay in character at all times and respond based on what the character knows and how they would think and speak.
+                If the character's gender or other characteristics are mentioned in the chapter, incorporate those into your responses.
+                Keep responses concise and natural, as if you're actually the character speaking."""
+            },
+            {
+                "role": "user",
+                "content": f"""Chapter Title: {chapter.title}
+                Chapter Content:
+                {chapter.content}
+                
+                Now, respond to this message as {request.character_name}:
+                {last_user_message}"""
+            }
+        ]
+        
+        response = client.chat.completions.create(
+            model=OPENAI_MODEL,
+            messages=messages,
+            temperature=0.7
+        )
+        
+        return ChatResponse(message=response.choices[0].message.content)
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/chat/character/stream")
+async def stream_chat_as_character(request: ChatRequest, db: Session = Depends(get_db)):
+    if not client.api_key:
+        raise HTTPException(status_code=500, detail="OpenAI API key not configured")
+    
+    if not request.character_name or not request.chapter_id:
+        raise HTTPException(status_code=400, detail="character_name and chapter_id are required")
+    
+    try:
+        # Get the chapter
+        chapter = db.query(Chapter).filter(Chapter.id == request.chapter_id).first()
+        if not chapter:
+            raise HTTPException(status_code=404, detail="Chapter not found")
+        
+        # Get the last user message
+        last_user_message = None
+        for msg in reversed(request.messages):
+            if msg.role == "user":
+                last_user_message = msg.content
+                break
+        
+        if not last_user_message:
+            raise HTTPException(status_code=400, detail="No user message found in the request")
+        
+        # Create streaming response
+        async def generate():
+            try:
+                # Prepare the messages for GPT
+                messages = [
+                    {
+                        "role": "system",
+                        "content": f"""You are {request.character_name}, a character from the chapter "{chapter.title}".
+                        You should respond to messages as this character, maintaining their personality, knowledge, and context from the chapter.
+                        Stay in character at all times and respond based on what the character knows and how they would think and speak.
+                        If the character's gender or other characteristics are mentioned in the chapter, incorporate those into your responses.
+                        Keep responses concise and natural, as if you're actually the character speaking."""
+                    },
+                    {
+                        "role": "user",
+                        "content": f"""Chapter Title: {chapter.title}
+                        Chapter Content:
+                        {chapter.content}
+                        
+                        Now, respond to this message as {request.character_name}:
+                        {last_user_message}"""
+                    }
+                ]
+                
+                stream = client.chat.completions.create(
+                    model=OPENAI_MODEL,
+                    messages=messages,
+                    stream=True,
+                    temperature=0.7
+                )
+                
+                for chunk in stream:
+                    if chunk.choices[0].delta.content:
+                        yield f"data: {json.dumps({'content': chunk.choices[0].delta.content})}\n\n"
+                
+                yield "data: [DONE]\n\n"
+            except Exception as e:
+                yield f"data: {json.dumps({'error': str(e)})}\n\n"
+                yield "data: [DONE]\n\n"
+
+        return StreamingResponse(
+            generate(),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "X-Accel-Buffering": "no"
+            }
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) 
     
