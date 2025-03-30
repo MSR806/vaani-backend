@@ -275,7 +275,7 @@ async def generate_chapter_outline(book_id: int, request: OutlineRequest, db: Se
     ]
 
     try:
-        response = await client.chat.completions.create(
+        response = client.chat.completions.create(
             model=OPENAI_MODEL,
             messages=messages,
             temperature=0.7
@@ -344,7 +344,7 @@ async def generate_next_chapter(book_id: int, request: NextChapterRequest, db: S
     ]
 
     try:
-        response = await client.chat.completions.create(
+        response = client.chat.completions.create(
             model=OPENAI_MODEL,
             messages=messages,
             temperature=0.7
