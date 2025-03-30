@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
-from models import Book, Chapter
+from models import Book, Chapter, Character
 from pydantic import BaseModel
 from typing import Optional, List
 import openai
@@ -56,6 +56,15 @@ class ChapterResponse(BaseModel):
     title: str
     chapter_no: int
     content: str
+
+class CharacterCreate(BaseModel):
+    name: str
+    description: str
+    book_id: int
+
+class CharacterUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
 
 @router.get("/books/test")
 def test_db(db: Session = Depends(get_db)):
@@ -374,6 +383,45 @@ async def generate_next_chapter(book_id: int, request: NextChapterRequest, db: S
             )
             
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) 
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/characters")
+def create_character(character: CharacterCreate, db: Session = Depends(get_db)):
+    # Check if book exists
+    book = db.query(Book).filter(Book.id == character.book_id).first()
+    if not book:
+        raise HTTPException(status_code=404, detail="Book not found")
+    
+    db_character = Character(
+        name=character.name,
+        description=character.description,
+        book_id=character.book_id
+    )
+    db.add(db_character)
+    db.commit()
+    db.refresh(db_character)
+    return db_character
+
+@router.put("/characters/{character_id}")
+def update_character(character_id: int, character_update: CharacterUpdate, db: Session = Depends(get_db)):
+    character = db.query(Character).filter(Character.id == character_id).first()
+    if not character:
+        raise HTTPException(status_code=404, detail="Character not found")
+    
+    if character_update.name is not None:
+        character.name = character_update.name
+    if character_update.description is not None:
+        character.description = character_update.description
+    
+    db.commit()
+    db.refresh(character)
+    return character
+
+@router.get("/characters")
+def get_characters(book_id: Optional[int] = None, db: Session = Depends(get_db)):
+    query = db.query(Character)
+    if book_id is not None:
+        query = query.filter(Character.book_id == book_id)
+    return query.all() 
     
 
