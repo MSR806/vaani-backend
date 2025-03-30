@@ -81,9 +81,13 @@ def create_chapter_route(book_id: int, chapter: ChapterCreate, db: Session = Dep
 
 @router.get("/books/{book_id}/chapters")
 def get_book_chapters_route(book_id: int, db: Session = Depends(get_db)):
-    chapters = get_book_chapters(db, book_id)
-    if not chapters:
+    # First check if the book exists
+    book = get_book(db, book_id)
+    if not book:
         raise HTTPException(status_code=404, detail="Book not found")
+    
+    # Then get the chapters
+    chapters = get_book_chapters(db, book_id)
     return chapters
 
 @router.get("/books/{book_id}/chapters/{chapter_id}")
