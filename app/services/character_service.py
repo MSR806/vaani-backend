@@ -58,13 +58,21 @@ async def extract_chapter_characters(db: Session, chapter_id: int):
         {
             "role": "system",
             "content": """You are a literary analysis assistant specialized in character extraction and gender analysis.
-            Your task is to analyze the chapter content and identify all characters mentioned in it.
-            For each character, provide:
+            Your task is to analyze the chapter content and identify ONLY named characters (proper nouns) mentioned in it.
+            
+            Important rules:
+            1. ONLY include characters with specific names (proper nouns)
+            2. DO NOT include generic terms like "the elders", "neighbors", "villagers", "the crowd", etc.
+            3. DO NOT include unnamed characters or generic roles
+            4. If a character is referred to by a title (like "Doctor Smith" or "Professor Johnson"), include them
+            5. If a character is referred to by a specific epithet (like "the tall man" or "the red-haired woman"), DO NOT include them unless they have a name
+            
+            For each named character, provide:
             1. A brief, one-line description that captures their essential nature or role
             2. Their gender (male, female, or unknown if not clear from context)
             
             Your response must be a valid JSON array of objects, where each object has:
-            - name: The character's name
+            - name: The character's name (must be a proper noun)
             - description: A single-line description of the character's nature or role (max 100 characters)
             - gender: The character's gender (male, female, or unknown)
             
@@ -79,7 +87,7 @@ async def extract_chapter_characters(db: Session, chapter_id: int):
             Chapter Content:
             {chapter.content}
             
-            Please extract all characters from this chapter and provide their descriptions and gender."""
+            Please extract only the named characters from this chapter and provide their descriptions and gender."""
         }
     ]
 
