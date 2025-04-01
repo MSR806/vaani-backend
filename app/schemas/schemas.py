@@ -148,6 +148,10 @@ class ExtractedCharacter(BaseModel):
 class ChapterCharactersResponse(BaseModel):
     characters: List[ExtractedCharacter]
 
+class BookCoverResponse(BaseModel):
+    book_id: int
+    cover_url: str
+
 # Completion schemas
 class CompletionRequest(BaseModel):
     context: str

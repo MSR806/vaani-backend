@@ -1,10 +1,12 @@
 from sqlalchemy.orm import Session
-from ..models.models import Book, Chapter
+from ..models.models import Book, Chapter, Image
 from ..schemas.schemas import BookCreate, BookUpdate, ChapterGenerateRequest
 from fastapi import HTTPException
 import openai
 import os
 from dotenv import load_dotenv
+from .image_service import store_image_from_url
+from .placeholder_image import generate_placeholder_image
 
 # Load environment variables
 load_dotenv()
@@ -12,11 +14,37 @@ load_dotenv()
 # Initialize OpenAI client
 client = openai.AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-def create_book(db: Session, book: BookCreate) -> Book:
+async def create_book(db: Session, book: BookCreate) -> Book:
+    # Create the book record
     db_book = Book(title=book.title, author=book.author)
     db.add(db_book)
     db.commit()
     db.refresh(db_book)
+    
+    # Generate a placeholder image for the book cover
+    try:
+        # Get placeholder image URL using our helper function
+        placeholder_url = await generate_placeholder_image(text=f"Title: {db_book.title}\nAuthor: {db_book.author}")
+        
+        # Use the image service to store the image from the URL
+        placeholder_image = await store_image_from_url(
+            db=db,
+            url=placeholder_url,
+            name=f"placeholder_book_cover_{db_book.id}"
+        )
+        
+        # Create the internal image URL using the /images/:id format
+        internal_image_url = f"/images/{placeholder_image.id}"
+        
+        # Update book with placeholder URL and image ID
+        db_book.cover_url = internal_image_url
+        db_book.cover_image_id = placeholder_image.id
+        db.commit()
+        db.refresh(db_book)
+    except Exception as e:
+        # If placeholder image generation fails, log the error but continue
+        print(f"Failed to generate placeholder cover for book {db_book.id}: {str(e)}")
+    
     return db_book
 
 def get_book(db: Session, book_id: int) -> Book:
@@ -90,7 +118,7 @@ Please write the complete chapter:"""
 
     try:
         response = await client.chat.completions.create(
-            model="gpt-4",
+            model="gpt-4o-mini",
             messages=messages,
             temperature=0.7
         )
@@ -210,7 +238,7 @@ Please create a detailed outline for this chapter:"""
 
     try:
         response = await client.chat.completions.create(
-            model="gpt-4",
+            model="gpt-4o-mini",
             messages=messages,
             temperature=0.7
         )
@@ -290,7 +318,7 @@ Please write the complete chapter:"""
 
     try:
         response = await client.chat.completions.create(
-            model="gpt-4",
+            model="gpt-4o-mini",
             messages=messages,
             temperature=0.7
         )
@@ -348,4 +376,136 @@ Please write the complete chapter:"""
             )
             
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) 
+            raise HTTPException(status_code=500, detail=str(e))
+
+async def generate_book_cover(db: Session, book_id: int):
+    """
+    Generate a book cover for a book using OpenAI's DALL-E model.
+    
+    Args:
+        db: Database session
+        book_id: ID of the book to generate a cover for
+        
+    Returns:
+        The book object with updated cover image information
+    """
+    # Step 1: Get the book and validate it exists
+    book = get_book(db, book_id)
+    if not book:
+        raise HTTPException(status_code=404, detail="Book not found")
+    
+    # Step 2: Get all chapters content and extract book information
+    chapters = get_book_chapters(db, book_id)
+    
+    # Prepare content for analysis
+    book_title = book.title
+    book_author = book.author
+    
+    # Extract content from chapters
+    chapters_content = ""
+    for chapter in chapters:
+        # Limit the content to avoid token limits - just use the first 500 chars of each chapter
+        chapter_sample = chapter.content[:500] if chapter.content else ""
+        chapters_content += f"Chapter {chapter.chapter_no}: {chapter.title}\n{chapter_sample}\n\n"
+    
+    # Get the OpenAI client
+    openai_client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    
+    # Step 3: Generate a prompt for the book cover using OpenAI
+    try:
+        # Create a system message that instructs the AI to generate a book cover prompt
+        messages = [
+            {
+                "role": "system",
+                "content": """You are an expert movie poster designer. Based on the book information provided, 
+                create a detailed prompt for DALL-E to generate a MOVIE-STYLE POSTER for this story.
+                Your prompt should capture the essence, themes, mood, and key elements of the book.
+                Format your response as a single paragraph that can be directly used as a DALL-E prompt.
+                The prompt should include style, key visual elements, color scheme, and mood.
+                Design a FLAT 2D movie-style poster - with NO 3D elements or mockups.
+                DO NOT include any explanations, just the prompt itself."""
+            },
+            {
+                "role": "user",
+                "content": f"""Generate a MOVIE-STYLE POSTER prompt for DALL-E based on the following information:\n\n
+                Story Title: {book_title}\n
+                Creator: {book_author}\n
+                Story Content Sample:\n{chapters_content}\n\n
+                Style preference: professional movie poster style\n
+                Color scheme preference: appropriate for the story theme\n
+                Elements to include: key elements from the story\n
+                IMPORTANT: Create a FLAT 2D movie-style poster, with NO book or 3D elements"""
+            }
+        ]
+        
+        # Call OpenAI to generate the prompt
+        response = openai_client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=messages,
+            temperature=0.7
+        )
+        
+        # Extract the generated prompt
+        dalle_prompt = response.choices[0].message.content.strip()
+        
+        # Step 4: Use the generated prompt to create the image with DALL-E
+        try:
+            # Call DALL-E API to generate the image
+            image_response = openai_client.images.generate(
+                model="dall-e-3",
+                prompt=dalle_prompt,
+                size="1024x1792",
+                quality="standard",
+                n=1,
+            )
+            
+            # Get the image URL from the response
+            image_url = image_response.data[0].url
+            
+            # Store the image in the database
+            db_image = await store_image_from_url(
+                db=db,
+                url=image_url,
+                name=f"book_cover_{book_id}_{book_title}"
+            )
+            
+            # Create the internal image URL using the /images/:id format
+            internal_image_url = f"/images/{db_image.id}"
+            
+            # Update book with the internal image URL and image ID
+            book.cover_url = internal_image_url
+            book.cover_image_id = db_image.id
+            db.commit()
+            
+            # Log the successful generation
+            print(f"Generated book cover for '{book_title}' with prompt: {dalle_prompt[:100]}...")
+            
+            # Return the book object
+            return book
+            
+        except Exception as e:
+            # If DALL-E generation fails, use a placeholder image from placehold.co
+            print(f"DALL-E generation failed: {str(e)}")
+            
+            # Get placeholder image URL using our helper function
+            placeholder_url = await generate_placeholder_image(text=f"Title: {db_book.title}\nAuthor: {db_book.author}")
+            
+            # Use the image service to store the image from the URL
+            placeholder_image = await store_image_from_url(
+                db=db,
+                url=placeholder_url,
+                name=f"placeholder_book_cover_{book_id}"
+            )
+            
+            # Create the internal image URL using the /images/:id format
+            internal_image_url = f"/images/{placeholder_image.id}"
+            
+            # Update book with placeholder URL and image ID
+            book.cover_url = internal_image_url
+            book.cover_image_id = placeholder_image.id
+            db.commit()
+            
+            return book
+            
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating book cover: {str(e)}")

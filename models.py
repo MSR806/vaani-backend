@@ -8,6 +8,7 @@ class Book(Base):
     id = Column(Integer, primary_key=True)
     title = Column(Text, nullable=False)
     author = Column(Text, nullable=False)
+    cover_url = Column(Text, nullable=True)  # URL to the generated book cover
     chapters = relationship("Chapter", back_populates="book")
     characters = relationship("Character", back_populates="book")
 

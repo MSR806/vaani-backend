@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, Table
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, Table, LargeBinary
 from sqlalchemy.orm import relationship
 from ..database import Base
 
@@ -10,12 +10,22 @@ scene_characters = Table(
     Column('character_id', Integer, ForeignKey('characters.id'))
 )
 
+class Image(Base):
+    __tablename__ = "images"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, index=True)
+    mime_type = Column(String)
+    data = Column(LargeBinary)
+    external_url = Column(Text, nullable=True)  # Store the original external URL
+
 class Book(Base):
     __tablename__ = "books"
 
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, index=True)
     author = Column(String)
+    cover_url = Column(Text, nullable=True)  # URL to the generated book cover
     chapters = relationship("Chapter", back_populates="book")
 
 class Chapter(Base):

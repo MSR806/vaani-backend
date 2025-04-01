@@ -1,20 +1,16 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from .database import get_db
-from .models.models import Book, Chapter, Character, Scene
+from .models.models import Book, Chapter
 from .schemas.schemas import (
     BookCreate, BookUpdate, ChapterCreate, ChapterUpdate,
     CharacterCreate, CharacterUpdate, SceneCreate, SceneUpdate,
-    ChatRequest, ChatResponse, ChapterResponse, CharacterResponse,
-    SceneResponse, ChapterOutlineResponse, SceneOutlineResponse,
-    ChapterGenerateRequest, SceneCompletionRequest, SceneCompletionResponse,
-    ChapterCharactersResponse, CompletionRequest, NextChapterRequest,
-    OutlineRequest, SceneOutlineRequest
+    ChatRequest, SceneOutlineRequest, BookCoverResponse, ChapterGenerateRequest, SceneCompletionRequest, CompletionRequest
 )
 from .services.book_service import (
     create_book, get_book, get_books, update_book,
     generate_next_chapter, generate_chapter_outline, generate_chapter_content,
-    get_book_chapters
+    get_book_chapters, generate_book_cover
 )
 from .services.chapter_service import (
     create_chapter, update_chapter, get_chapter
@@ -33,7 +29,8 @@ from .services.chat_service import (
 from .services.chat_completion_service import stream_completion
 from .services.ai_service import get_openai_client
 from .config import OPENAI_MODEL
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, Response
+from .services.image_service import get_image
 import json
 
 router = APIRouter()
@@ -67,8 +64,8 @@ def get_book_route(book_id: int, db: Session = Depends(get_db)):
     return book
 
 @router.post("/books")
-def create_book_route(book: BookCreate, db: Session = Depends(get_db)):
-    return create_book(db, book)
+async def create_book_route(book: BookCreate, db: Session = Depends(get_db)):
+    return await create_book(db, book)
 
 @router.put("/books/{book_id}")
 def update_book_route(book_id: int, book_update: BookUpdate, db: Session = Depends(get_db)):
@@ -183,3 +180,36 @@ async def stream_chat_as_character_route(request: ChatRequest, db: Session = Dep
 async def stream_completion_route(request: CompletionRequest):
     client = get_openai_client()
     return await stream_completion(request.context, request.user_prompt, client) 
+
+@router.post("/books/{book_id}/generate-cover")
+async def generate_book_cover_route(book_id: int, db: Session = Depends(get_db)):
+    # Call the book service to generate the cover
+    try:
+        book = await generate_book_cover(db, book_id)
+        return BookCoverResponse(book_id=book_id, cover_url=book.cover_url)
+    except HTTPException as e:
+        # Re-raise HTTP exceptions from the service
+        raise e
+    except Exception as e:
+        # Handle any other exceptions
+        raise HTTPException(status_code=500, detail=f"Error generating book cover: {str(e)}")
+
+@router.get("/images/{image_id}")
+async def get_image_route(image_id: int, db: Session = Depends(get_db)):
+    """
+    Retrieve an image from the database by ID and serve it with the appropriate content type.
+    
+    Args:
+        image_id: ID of the image to retrieve
+        db: Database session
+        
+    Returns:
+        The image data with the appropriate content type
+    """
+    # Get the image from the database
+    image = get_image(db, image_id)
+    if not image:
+        raise HTTPException(status_code=404, detail="Image not found")
+    
+    # Return the image data with the appropriate content type
+    return Response(content=image.data, media_type=image.mime_type)
