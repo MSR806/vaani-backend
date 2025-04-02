@@ -4,6 +4,7 @@ from ..schemas.schemas import ChatRequest, ChatResponse
 from ..services.ai_service import get_openai_client, get_conversation_chain
 from ..config import OPENAI_MODEL
 import json
+from fastapi.responses import StreamingResponse
 
 async def chat_with_ai(request: ChatRequest):
     if not get_openai_client().api_key:
@@ -58,7 +59,7 @@ async def stream_chat(request: ChatRequest):
             temperature=0.7
         )
         
-        return stream
+        return await create_streaming_response(stream)
         
     except Exception as e:
         raise Exception(str(e))
@@ -118,6 +119,31 @@ async def chat_as_character(request: ChatRequest, db: Session):
     except Exception as e:
         raise Exception(str(e))
 
+async def create_streaming_response(stream):
+    """
+    Creates a properly formatted streaming response from an OpenAI stream.
+    """
+    async def generate():
+        try:
+            for chunk in stream:
+                if chunk.choices[0].delta.content:
+                    yield f"data: {chunk.choices[0].delta.content}\n\n"
+            
+            yield "data: [DONE]\n\n"
+        except Exception as e:
+            yield f"data: error: {str(e)}\n\n"
+            yield "data: [DONE]\n\n"
+
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no"
+        }
+    )
+
 async def stream_chat_as_character(request: ChatRequest, db: Session):
     if not get_openai_client().api_key:
         raise Exception("OpenAI API key not configured")
@@ -169,7 +195,7 @@ async def stream_chat_as_character(request: ChatRequest, db: Session):
             temperature=0.7
         )
         
-        return stream
+        return await create_streaming_response(stream)
         
     except Exception as e:
         raise Exception(str(e)) 

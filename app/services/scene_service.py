@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from ..models.models import Scene, Chapter, Character
 from ..schemas.schemas import (
     SceneCreate, SceneUpdate, SceneResponse, SceneOutlineRequest,
@@ -93,7 +93,7 @@ def get_scene(db: Session, scene_id: int):
     return db.query(Scene).filter(Scene.id == scene_id).first()
 
 def get_scenes(db: Session, chapter_id: int = None):
-    query = db.query(Scene)
+    query = db.query(Scene).options(joinedload(Scene.characters))
     if chapter_id is not None:
         query = query.filter(Scene.chapter_id == chapter_id)
     return query.all()

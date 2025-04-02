@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from ..database import get_db
 from ..models.models import Scene, Chapter, Character
 from ..schemas.schemas import (
@@ -10,6 +10,7 @@ from ..services.ai_service import get_openai_client
 from ..config import OPENAI_MODEL
 import json
 from fastapi.responses import StreamingResponse
+from typing import List, Optional
 
 router = APIRouter()
 
@@ -98,7 +99,7 @@ def update_scene(scene_id: int, scene_update: SceneUpdate, db: Session = Depends
 
 @router.get("/scenes", response_model=List[SceneResponse])
 def get_scenes(chapter_id: Optional[int] = None, db: Session = Depends(get_db)):
-    query = db.query(Scene)
+    query = db.query(Scene).options(joinedload(Scene.characters))
     if chapter_id is not None:
         query = query.filter(Scene.chapter_id == chapter_id)
     return query.all()

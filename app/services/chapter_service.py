@@ -2,11 +2,14 @@ from sqlalchemy.orm import Session
 from ..models.models import Chapter, Book, Scene, Character
 from ..schemas.schemas import (
     ChapterCreate, ChapterUpdate, ChapterResponse, OutlineRequest,
-    ChapterOutlineResponse, ChapterGenerateRequest
+    ChapterOutlineResponse, ChapterGenerateRequest, SceneOutlineResponse
 )
 from ..services.ai_service import get_openai_client
 from ..config import OPENAI_MODEL
+from fastapi import HTTPException
 import json
+from typing import List
+from fastapi.responses import StreamingResponse
 
 def create_chapter(db: Session, book_id: int, chapter: ChapterCreate):
     # Check if book exists
@@ -61,107 +64,106 @@ def get_chapter(db: Session, book_id: int, chapter_id: int):
         Chapter.book_id == book_id
     ).first()
 
-async def generate_chapter_outline(db: Session, book_id: int, request: OutlineRequest):
-    # Get the book and its latest chapter
-    book = db.query(Book).filter(Book.id == book_id).first()
-    if not book:
-        return None
-    
-    # Get the latest chapter
-    chapter = db.query(Chapter).filter(
-        Chapter.book_id == book_id
-    ).order_by(Chapter.chapter_no.desc()).first()
-    
-    if not chapter:
-        return None
-    
-    # Get all previous chapters in order
-    previous_chapters = db.query(Chapter).filter(
-        Chapter.book_id == book_id,
-        Chapter.chapter_no < chapter.chapter_no
-    ).order_by(Chapter.chapter_no).all()
-    
-    # Get all scenes from previous chapters
-    previous_scenes = []
-    for prev_chapter in previous_chapters:
-        scenes = db.query(Scene).filter(
-            Scene.chapter_id == prev_chapter.id
-        ).order_by(Scene.scene_number).all()
-        previous_scenes.extend(scenes)
-    
-    # Get all characters from the book
-    characters = db.query(Character).filter(
-        Character.book_id == book_id
-    ).all()
-    
-    # Prepare context from previous chapters
-    previous_chapters_context = "\n\n".join([
-        f"Chapter {ch.chapter_no}: {ch.title}\n{ch.content}"
-        for ch in previous_chapters
-    ])
-    
-    # Prepare context from previous scenes
-    previous_scenes_context = "\n\n".join([
-        f"Scene {s.scene_number} from Chapter {s.chapter.chapter_no}: {s.title}\n"
-        f"Characters: {', '.join(c.name for c in s.characters)}\n"
-        f"Content: {s.content}"
-        for s in previous_scenes
-    ])
-    
-    # Get all characters in the book
-    characters_context = "\n".join([
-        f"- {c.name}: {c.description}"
-        for c in characters
-    ])
-    
-    # Prepare the messages for GPT
-    messages = [
-        {
-            "role": "system",
-            "content": """You are a creative writing assistant specialized in creating chapter outlines.
-            Based on the previous chapters, previous scenes, and the available characters,
-            create a structured outline for the chapter broken down into multiple scenes.
-            
-            Format your response as HTML with the following rules:
-            1. Each section title should be wrapped in <h3> tags
-            2. The main content should be in <p> tags
-            3. Use <br> tags for line breaks between paragraphs
-            4. Do not include any other HTML tags
-            5. Keep the HTML simple and clean
-            
-            Example format:
-            <h3>Section Title</h3>
-            <p>Content goes here...</p>
-            <br>
-            <h3>Next Section</h3>
-            <p>More content...</p>
-            
-            Your response must be a valid JSON object with the following structure:
+async def generate_chapter_outline(db: Session, book_id: int, chapter_id: int, user_prompt: str) -> List[SceneOutlineResponse]:
+    try:
+        # Initialize OpenAI client
+        client = get_openai_client()
+        
+        # Get the chapter
+        chapter = db.query(Chapter).filter(
+            Chapter.id == chapter_id,
+            Chapter.book_id == book_id
+        ).first()
+        if not chapter:
+            raise HTTPException(status_code=404, detail="Chapter not found")
+        
+        # Get all previous chapters in order
+        previous_chapters = db.query(Chapter).filter(
+            Chapter.book_id == book_id,
+            Chapter.chapter_no < chapter.chapter_no
+        ).order_by(Chapter.chapter_no).all()
+        
+        # Get all scenes from previous chapters
+        previous_scenes = []
+        for prev_chapter in previous_chapters:
+            scenes = db.query(Scene).filter(
+                Scene.chapter_id == prev_chapter.id
+            ).order_by(Scene.scene_number).all()
+            previous_scenes.extend(scenes)
+        
+        # Get all characters from the book
+        characters = db.query(Character).filter(
+            Character.book_id == book_id
+        ).all()
+        
+        # Prepare context from previous chapters
+        previous_chapters_context = "\n\n".join([
+            f"Chapter {ch.chapter_no}: {ch.title}\n{ch.content}"
+            for ch in previous_chapters
+        ])
+        
+        # Prepare context from previous scenes
+        previous_scenes_context = "\n\n".join([
+            f"Scene {s.scene_number} from Chapter {s.chapter.chapter_no}: {s.title}\n"
+            f"Characters: {', '.join(c.name for c in s.characters)}\n"
+            f"Content: {s.content}"
+            for s in previous_scenes
+        ])
+        
+        # Get all characters in the book
+        characters_context = "\n".join([
+            f"- {c.name}: {c.description}"
+            for c in characters
+        ])
+        
+        # Prepare the messages for GPT
+        messages = [
             {
-                "scenes": [
-                    {
-                        "scene_number": 1,
-                        "title": "Scene title",
-                        "characters": [
-                            {
-                                "name": "Character Name",
-                                "description": "Character's description and role in the scene"
-                            }
-                        ],
-                        "content": "HTML formatted content with section titles and content"
-                    }
-                ]
-            }
-            
-            Keep the content high-level and focused on plot points rather than detailed descriptions.
-            Ensure your response strictly follows this JSON structure.
-            Include relevant characters for each scene from the available characters list.
-            Each scene must have a scene_number field starting from 1.
-            Each character must be an object with name and description fields."""
-        },
-        {
-            "role": "user",
-            "content": f"""Previous Chapters:
+                "role": "system",
+                "content": """You are a creative writing assistant specialized in creating chapter outlines.
+                Based on the previous chapters, previous scenes, and the available characters,
+                create a structured outline for the chapter broken down into multiple scenes.
+                
+                Format your response as HTML with the following rules:
+                1. Each section title should be wrapped in <h3> tags
+                2. The main content should be in <p> tags
+                3. Use <br> tags for line breaks between paragraphs
+                4. Do not include any other HTML tags
+                5. Keep the HTML simple and clean
+                
+                Example format:
+                <h3>Section Title</h3>
+                <p>Content goes here...</p>
+                <br>
+                <h3>Next Section</h3>
+                <p>More content...</p>
+                
+                Your response must be a valid JSON object with the following structure:
+                {
+                    "scenes": [
+                        {
+                            "scene_number": 1,
+                            "title": "Scene title",
+                            "characters": [
+                                {
+                                    "name": "Character Name",
+                                    "description": "Character's description and role in the scene"
+                                }
+                            ],
+                            "content": "HTML formatted content with section titles and content"
+                        }
+                    ]
+                }
+                
+                Keep the content high-level and focused on plot points rather than detailed descriptions.
+                Ensure your response strictly follows this JSON structure.
+                Include relevant characters for each scene from the available characters list.
+                Each scene must have a scene_number field starting from 1.
+                Each character must be an object with name and description fields."""
+            },
+            {
+                "role": "user",
+                "content": f"""Previous Chapters:
 {previous_chapters_context}
 
 Previous Scenes:
@@ -174,135 +176,139 @@ Current Chapter Information:
 - Chapter Number: {chapter.chapter_no}
 - Title: {chapter.title}
 
-User's Request: {request.user_prompt}
+User's Request: {user_prompt}
 
 Please provide a structured outline for this chapter:"""
-        }
-    ]
+            }
+        ]
 
-    try:
-        client = get_openai_client()
-        response = client.chat.completions.create(
-            model=OPENAI_MODEL,
-            messages=messages,
-            temperature=0.7,
-            max_tokens=2000,
-            response_format={"type": "json_object"}
-        )
-        
-        # Parse the response
         try:
-            # Extract the JSON object from the response
-            response_text = response.choices[0].message.content
-            # Clean up the response text to ensure it's valid JSON
-            response_text = response_text.strip()
+            response = client.chat.completions.create(
+                model=OPENAI_MODEL,
+                messages=messages,
+                temperature=0.7,
+                max_tokens=2000,
+                response_format={"type": "json_object"}
+            )
             
-            # Parse the JSON
-            scenes_data = json.loads(response_text)
-            
-            # Validate the response structure
-            if not isinstance(scenes_data, dict):
-                raise ValueError("Response must be a JSON object")
-            
-            if "scenes" not in scenes_data:
-                raise ValueError("Response must contain a 'scenes' array")
-            
-            if not isinstance(scenes_data["scenes"], list):
-                raise ValueError("'scenes' must be an array")
-            
-            # Get all available character names for validation
-            available_characters = {c.name for c in characters}
-            
-            # Validate each scene
-            for scene_idx, scene in enumerate(scenes_data["scenes"]):
-                if not isinstance(scene, dict):
-                    raise ValueError(f"Scene {scene_idx} must be an object")
-                
-                if "title" not in scene:
-                    raise ValueError(f"Scene {scene_idx} must have a title")
-                
-                if not isinstance(scene["title"], str) or not scene["title"].strip():
-                    raise ValueError(f"Scene {scene_idx} must have a non-empty title")
-                
-                if "characters" not in scene:
-                    raise ValueError(f"Scene {scene_idx} must have a characters array")
-                
-                if not isinstance(scene["characters"], list):
-                    raise ValueError(f"Scene {scene_idx} characters must be an array")
-                
-                # Validate each character exists in our available characters
-                for char_idx, char_name in enumerate(scene["characters"]):
-                    if not isinstance(char_name, str) or not char_name.strip():
-                        raise ValueError(f"Character {char_idx} in scene {scene_idx} must be a non-empty string")
-                    if char_name not in available_characters:
-                        raise ValueError(f"Character '{char_name}' in scene {scene_idx} is not in the available characters list")
-                
-                if "content" not in scene:
-                    raise ValueError(f"Scene {scene_idx} must have content")
-                
-                if not isinstance(scene["content"], str) or not scene["content"].strip():
-                    raise ValueError(f"Scene {scene_idx} must have non-empty content")
-            
-            # If validation passes, create the response model
-            return ChapterOutlineResponse(**scenes_data)
-            
-        except json.JSONDecodeError as e:
-            raise Exception(f"Failed to parse the AI response into proper JSON format: {str(e)}")
-        except ValueError as e:
-            # If the response doesn't match our schema, try to fix it with another API call
-            retry_messages = messages + [
-                {
-                    "role": "assistant",
-                    "content": response_text
-                },
-                {
-                    "role": "user",
-                    "content": f"""The previous response did not match the required format. Please provide a response in exactly this format:
-                    {{
-                        "scenes": [
-                            {{
-                                "scene_number": 1,
-                                "title": "Scene Title",
-                                "characters": [
-                                    {{
-                                        "name": "Character Name",
-                                        "description": "Character's description and role in the scene"
-                                    }}
-                                ],
-                                "content": "HTML formatted content with section titles and content"
-                            }}
-                        ]
-                    }}
-                    
-                    Available characters: {', '.join(available_characters)}"""
-                }
-            ]
-            
+            # Parse the response
             try:
-                retry_response = client.chat.completions.create(
-                    model=OPENAI_MODEL,
-                    messages=retry_messages,
-                    temperature=0.7,
-                    max_tokens=2000,
-                    response_format={"type": "json_object"}
+                # Extract the JSON object from the response
+                response_text = response.choices[0].message.content
+                # Clean up the response text to ensure it's valid JSON
+                response_text = response_text.strip()
+                
+                # Parse the JSON
+                scenes_data = json.loads(response_text)
+                
+                # Validate the response structure
+                if not isinstance(scenes_data, dict):
+                    raise ValueError("Response must be a JSON object")
+                
+                if "scenes" not in scenes_data:
+                    raise ValueError("Response must contain a 'scenes' array")
+                
+                if not isinstance(scenes_data["scenes"], list):
+                    raise ValueError("'scenes' must be an array")
+                
+                # Get all available character names for validation
+                available_characters = {c.name for c in characters}
+                
+                # Store scenes in the database and create response objects
+                scene_responses = []
+                for scene_idx, scene_data in enumerate(scenes_data["scenes"]):
+                    # Validate scene structure
+                    if not isinstance(scene_data, dict):
+                        raise ValueError(f"Scene {scene_idx} must be an object")
+                    
+                    if "title" not in scene_data:
+                        raise ValueError(f"Scene {scene_idx} must have a title")
+                    
+                    if not isinstance(scene_data["title"], str) or not scene_data["title"].strip():
+                        raise ValueError(f"Scene {scene_idx} must have a non-empty title")
+                    
+                    if "characters" not in scene_data:
+                        raise ValueError(f"Scene {scene_idx} must have a characters array")
+                    
+                    if not isinstance(scene_data["characters"], list):
+                        raise ValueError(f"Scene {scene_idx} characters must be an array")
+                    
+                    # Create scene in database
+                    scene = Scene(
+                        chapter_id=chapter_id,
+                        scene_number=scene_idx + 1,
+                        title=scene_data["title"],
+                        content=scene_data["content"]
+                    )
+                    db.add(scene)
+                    db.flush()  # Get the scene ID without committing
+                    
+                    # Process characters for the scene
+                    scene_characters = []
+                    for char_data in scene_data["characters"]:
+                        if not isinstance(char_data, dict):
+                            raise ValueError(f"Character data must be an object")
+                        
+                        if "name" not in char_data:
+                            raise ValueError(f"Character must have a name")
+                        
+                        if not isinstance(char_data["name"], str) or not char_data["name"].strip():
+                            raise ValueError(f"Character name must be a non-empty string")
+                        
+                        # Check if character exists
+                        character = db.query(Character).filter(
+                            Character.name == char_data["name"],
+                            Character.book_id == book_id
+                        ).first()
+                        
+                        # If character doesn't exist, create it
+                        if not character:
+                            character = Character(
+                                name=char_data["name"],
+                                description=char_data.get("description", ""),
+                                book_id=book_id
+                            )
+                            db.add(character)
+                            db.flush()
+                        
+                        # Add character to scene
+                        scene.characters.append(character)
+                        scene_characters.append(character)
+                    
+                    # Create response object
+                    scene_response = SceneOutlineResponse(
+                        scene_number=scene.scene_number,
+                        title=scene.title,
+                        characters=[{"name": c.name, "description": c.description} for c in scene_characters],
+                        content=scene.content
+                    )
+                    scene_responses.append(scene_response)
+                
+                # Commit all scenes and new characters at once
+                db.commit()
+                return scene_responses
+                
+            except json.JSONDecodeError as e:
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Failed to parse the AI response into proper format: {str(e)}"
+                )
+            except ValueError as e:
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Invalid response format: {str(e)}"
+                )
+            except Exception as e:
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Error processing the response: {str(e)}"
                 )
                 
-                retry_text = retry_response.choices[0].message.content.strip()
-                retry_data = json.loads(retry_text)
-                
-                # Validate the retry response with the same checks
-                if not isinstance(retry_data, dict) or "scenes" not in retry_data:
-                    raise Exception(f"Failed to generate a properly structured response after retry: {str(e)}")
-                
-                return ChapterOutlineResponse(**retry_data)
-                
-            except Exception as retry_error:
-                raise Exception(f"Failed to generate a valid response even after retry: {str(retry_error)}")
         except Exception as e:
-            raise Exception(f"Error processing the response: {str(e)}")
+            raise HTTPException(status_code=500, detail=str(e))
             
     except Exception as e:
-        raise Exception(str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 async def generate_chapter_content(db: Session, book_id: int, chapter_id: int, request: ChapterGenerateRequest):
     # Get the book and chapter
@@ -444,4 +450,145 @@ Please write the complete chapter:"""
             raise Exception(f"Failed to process the generated chapter: {str(e)}")
             
     except Exception as e:
-        raise Exception(str(e)) 
+        raise Exception(str(e))
+
+async def stream_chapter_content(db: Session, book_id: int, chapter_id: int, request: ChapterGenerateRequest):
+    # Get the book and chapter
+    book = db.query(Book).filter(Book.id == book_id).first()
+    if not book:
+        raise HTTPException(status_code=404, detail="Book not found")
+    
+    chapter = db.query(Chapter).filter(
+        Chapter.id == chapter_id,
+        Chapter.book_id == book_id
+    ).first()
+    if not chapter:
+        raise HTTPException(status_code=404, detail="Chapter not found")
+    
+    # Get all previous chapters in order
+    previous_chapters = db.query(Chapter).filter(
+        Chapter.book_id == book_id,
+        Chapter.chapter_no < chapter.chapter_no
+    ).order_by(Chapter.chapter_no).all()
+    
+    # Get all scenes for the current chapter
+    scenes = db.query(Scene).filter(
+        Scene.chapter_id == chapter_id
+    ).order_by(Scene.scene_number).all()
+    
+    # Prepare context from previous chapters
+    previous_chapters_context = "\n\n".join([
+        f"Chapter {ch.chapter_no}: {ch.title}\n{ch.content}"
+        for ch in previous_chapters
+    ])
+    
+    # Prepare context from scenes if they exist
+    scenes_context = ""
+    if scenes:
+        scenes_context = "\n\n".join([
+            f"Scene {s.scene_number}: {s.title}\n"
+            f"Characters: {', '.join(c.name for c in s.characters)}\n"
+            f"Content: {s.content}"
+            for s in scenes
+        ])
+    
+    # Prepare the messages for GPT
+    messages = [
+        {
+            "role": "system",
+            "content": """You are a creative writing assistant specialized in writing novel chapters.
+            Based on the previous chapters and the provided context (including scenes if available),
+            write a complete, engaging chapter that maintains consistency with the story's style and narrative.
+            
+            If scenes are provided:
+            1. Follow the scene structure exactly as provided
+            2. Each scene should be a distinct section in the chapter
+            3. Maintain the characters and their roles as specified in each scene
+            4. Expand on the scene content while staying true to its core elements
+            5. Ensure smooth transitions between scenes
+            
+            If no scenes are provided:
+            1. Create a well-structured chapter with natural flow
+            2. Include vivid descriptions and engaging dialogue
+            3. Advance the plot while maintaining suspense
+            4. End in a way that hooks readers for the next chapter
+            
+            Start your response with a suitable chapter title in the format: TITLE: Your Chapter Title
+            Then continue with the chapter content."""
+        },
+        {
+            "role": "user",
+            "content": f"""Previous Chapters:
+{previous_chapters_context}
+
+{'Scenes for Current Chapter:' + scenes_context if scenes_context else ''}
+
+Current Chapter Information:
+- Chapter Number: {chapter.chapter_no}
+- Title: {chapter.title}
+
+User's Request: {request.user_prompt}
+
+Please write the complete chapter:"""
+        }
+    ]
+
+    try:
+        client = get_openai_client()
+        stream = client.chat.completions.create(
+            model=OPENAI_MODEL,
+            messages=messages,
+            temperature=0.7,
+            stream=True  # Enable streaming
+        )
+        
+        async def generate():
+            full_response = ""
+            title = None
+            
+            try:
+                for chunk in stream:
+                    if chunk.choices[0].delta.content:
+                        content = chunk.choices[0].delta.content
+                        full_response += content
+                        
+                        # Try to extract title from accumulated response if not found yet
+                        if not title and "TITLE:" in full_response:
+                            title_line = next((line for line in full_response.split('\n') if "TITLE:" in line), None)
+                            if title_line:
+                                title = title_line.replace("TITLE:", "").strip()
+                        
+                        # Format as SSE
+                        yield f"data: {content}\n\n"
+                
+                # After streaming is complete, update the chapter in the database
+                if not title:
+                    # If no title found in format, use first non-empty line or default
+                    lines = full_response.split('\n')
+                    title = next((line.strip() for line in lines if line.strip()), f"Chapter {chapter.chapter_no}")
+                
+                chapter.title = title
+                chapter.content = full_response
+                db.commit()
+                
+                # Send completion signal
+                yield "data: [DONE]\n\n"
+                
+            except Exception as e:
+                # Send error and completion signal
+                yield f"data: error: {str(e)}\n\n"
+                yield "data: [DONE]\n\n"
+                raise HTTPException(status_code=500, detail=str(e))
+
+        return StreamingResponse(
+            generate(),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "X-Accel-Buffering": "no"
+            }
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) 

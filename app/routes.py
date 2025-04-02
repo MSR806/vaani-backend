@@ -1,19 +1,21 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from .database import get_db
-from .models.models import Book, Chapter
+from .models.models import Book, Chapter, Scene, Character
 from .schemas.schemas import (
     BookCreate, BookUpdate, ChapterCreate, ChapterUpdate,
     CharacterCreate, CharacterUpdate, SceneCreate, SceneUpdate,
-    ChatRequest, SceneOutlineRequest, BookCoverResponse, ChapterGenerateRequest, SceneCompletionRequest, CompletionRequest
+    ChatRequest, SceneOutlineRequest, BookCoverResponse, ChapterGenerateRequest, SceneCompletionRequest, CompletionRequest, SceneResponse,
+    SceneOutlineResponse, SceneCompletionResponse, CharacterResponse
 )
 from .services.book_service import (
     create_book, get_book, get_books, update_book,
-    generate_next_chapter, generate_chapter_outline, generate_chapter_content,
+    generate_next_chapter,
     get_book_chapters, generate_book_cover
 )
 from .services.chapter_service import (
-    create_chapter, update_chapter, get_chapter
+    create_chapter, update_chapter, get_chapter,
+    generate_chapter_outline, generate_chapter_content, stream_chapter_content
 )
 from .services.character_service import (
     create_character, update_character, get_characters,
@@ -30,7 +32,9 @@ from .services.chat_completion_service import stream_completion
 from .services.ai_service import get_openai_client
 from .config import OPENAI_MODEL
 from fastapi.responses import StreamingResponse, Response
+from sse_starlette.sse import EventSourceResponse
 from .services.image_service import get_image
+from typing import List, Optional
 import json
 
 router = APIRouter()
@@ -110,13 +114,20 @@ def update_chapter_route(book_id: int, chapter_id: int, chapter_update: ChapterU
 async def generate_next_chapter_route(book_id: int, request: ChapterGenerateRequest, db: Session = Depends(get_db)):
     return await generate_next_chapter(db, book_id, request)
 
-@router.post("/books/{book_id}/chapters/outline")
-async def generate_chapter_outline_route(book_id: int, request: ChapterGenerateRequest, db: Session = Depends(get_db)):
-    return await generate_chapter_outline(db, book_id, request)
+@router.post("/books/{book_id}/chapters/{chapter_id}/outline", response_model=List[SceneOutlineResponse])
+async def generate_chapter_outline_route(book_id: int, chapter_id: int, request: ChapterGenerateRequest, db: Session = Depends(get_db)):
+    return await generate_chapter_outline(db, book_id, chapter_id, request.user_prompt)
 
 @router.post("/books/{book_id}/chapters/{chapter_id}/generate")
 async def generate_chapter_content_route(book_id: int, chapter_id: int, request: ChapterGenerateRequest, db: Session = Depends(get_db)):
-    return await generate_chapter_content(db, book_id, chapter_id, request)
+    """
+    Generate chapter content with streaming support.
+    The response is streamed as Server-Sent Events (SSE), and the final content is saved to the database.
+    """
+    try:
+        return await stream_chapter_content(db, book_id, chapter_id, request)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/characters")
 def create_character_route(character: CharacterCreate, db: Session = Depends(get_db)):
@@ -144,9 +155,12 @@ def update_scene_route(scene_id: int, scene_update: SceneUpdate, db: Session = D
         raise HTTPException(status_code=404, detail="Scene not found")
     return scene
 
-@router.get("/scenes")
+@router.get("/scenes", response_model=List[SceneResponse])
 def get_scenes_route(chapter_id: int = None, db: Session = Depends(get_db)):
-    return get_scenes(db, chapter_id)
+    query = db.query(Scene).options(joinedload(Scene.characters))
+    if chapter_id is not None:
+        query = query.filter(Scene.chapter_id == chapter_id)
+    return query.all()
 
 @router.post("/scenes/{scene_id}/outline-generation")
 async def generate_scene_outline_route(scene_id: int, request: SceneOutlineRequest, db: Session = Depends(get_db)):
@@ -166,7 +180,10 @@ async def chat_with_ai_route(request: ChatRequest):
 
 @router.post("/chat/stream")
 async def stream_chat_route(request: ChatRequest):
-    return await stream_chat(request)
+    try:
+        return await stream_chat(request)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/chat/character")
 async def chat_as_character_route(request: ChatRequest, db: Session = Depends(get_db)):
@@ -174,12 +191,18 @@ async def chat_as_character_route(request: ChatRequest, db: Session = Depends(ge
 
 @router.post("/chat/character/stream")
 async def stream_chat_as_character_route(request: ChatRequest, db: Session = Depends(get_db)):
-    return await stream_chat_as_character(request, db)
+    try:
+        return await stream_chat_as_character(request, db)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/complete")
 async def stream_completion_route(request: CompletionRequest):
-    client = get_openai_client()
-    return await stream_completion(request.context, request.user_prompt, client) 
+    try:
+        client = get_openai_client()
+        return await stream_completion(request.context, request.user_prompt, client)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/books/{book_id}/generate-cover")
 async def generate_book_cover_route(book_id: int, db: Session = Depends(get_db)):

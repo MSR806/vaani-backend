@@ -7,6 +7,9 @@ import os
 from dotenv import load_dotenv
 from .image_service import store_image_from_url
 from .placeholder_image import generate_placeholder_image
+from .ai_service import get_openai_client
+from ..config import OPENAI_MODEL
+import json
 
 # Load environment variables
 load_dotenv()
@@ -237,10 +240,12 @@ Please create a detailed outline for this chapter:"""
     ]
 
     try:
+        # Use the global client instead of getting a new one
         response = await client.chat.completions.create(
-            model="gpt-4o-mini",
+            model=OPENAI_MODEL,
             messages=messages,
-            temperature=0.7
+            temperature=0.7,
+            response_format={"type": "json_object"}
         )
         
         # Parse the response
@@ -248,7 +253,8 @@ Please create a detailed outline for this chapter:"""
             outline_data = response.choices[0].message.content.strip()
             # Clean up any potential markdown formatting
             outline_data = outline_data.replace('```json', '').replace('```', '').strip()
-            return outline_data
+            # Parse the JSON string into a Python object
+            return json.loads(outline_data)
             
         except Exception as e:
             raise HTTPException(

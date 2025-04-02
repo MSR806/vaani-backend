@@ -11,7 +11,7 @@ async def stream_completion(context: str, user_prompt: str, client: OpenAI):
     try:
         # Prepare the messages for GPT
         messages = [
-            {"role": "system", "content": "You are a creative writing assistant. Your task is to continue the story based on the provided context and user prompt. Write in a natural, engaging style that matches the existing narrative."},
+            {"role": "system", "content": "You are a creative writing assistant. Your task is to continue the story based on the provided context and user prompt. Write in a natural, engaging style that matches the existing narrative. Keep the content concise and to the point unless the user prompt asks for more details."},
             {"role": "user", "content": f"Context: {context}\n\nUser Prompt: {user_prompt}\n\nPlease continue the story:"}
         ]
 
