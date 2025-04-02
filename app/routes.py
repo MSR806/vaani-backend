@@ -32,7 +32,6 @@ from .services.chat_completion_service import stream_completion
 from .services.ai_service import get_openai_client
 from .config import OPENAI_MODEL
 from fastapi.responses import StreamingResponse, Response
-from sse_starlette.sse import EventSourceResponse
 from .services.image_service import get_image
 from typing import List, Optional
 import json
