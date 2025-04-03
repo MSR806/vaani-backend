@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from ..models.models import Character, Book, Chapter
 from ..schemas.schemas import (
     CharacterCreate, CharacterUpdate, CharacterResponse,
-    ChapterCharactersResponse, ExtractedCharacter
+    ChapterCharactersResponse, ExtractedCharacter, CharacterOutlineRequest
 )
 from ..services.ai_service import get_openai_client
 from ..config import OPENAI_MODEL
@@ -212,3 +212,56 @@ async def extract_chapter_characters(db: Session, chapter_id: int):
             
     except Exception as e:
         raise Exception(str(e)) 
+
+async def generate_character_outline(db: Session, character_id: int, request: CharacterOutlineRequest):
+    # Get the character
+    character = db.query(Character).filter(Character.id == character_id).first()
+    if not character:
+        return None
+    
+    # Prepare the messages for GPT
+    messages = [
+        {
+            "role": "system",
+            "content": """You are a creative writing assistant that generates character descriptions.
+            Based on the character's name, existing description, and the user's prompt,
+            generate a concise and engaging character description.
+            
+            You can use simple HTML formatting:
+            - <b> for section headings
+            - <p> for paragraphs
+            - <br> for line breaks
+            
+            Generate the character description directly without any introductory text like 'here is your character description'.
+            Focus on what makes this character unique and interesting."""
+        },
+        {
+            "role": "user",
+            "content": f"""Character Information:
+- Name: {character.name}
+- Description: {character.description}
+
+User's Request: {request.user_prompt}"""
+        }
+    ]
+
+    try:
+        client = get_openai_client()
+        response = client.chat.completions.create(
+            model=OPENAI_MODEL,
+            messages=messages,
+            temperature=0.7,
+            max_tokens=2000
+        )
+        
+        # Extract the content from the response
+        content = response.choices[0].message.content.strip()
+        
+        # Return the content directly
+        return {
+            "name": character.name,
+            "description": content
+        }
+            
+    except Exception as e:
+        raise Exception(str(e))

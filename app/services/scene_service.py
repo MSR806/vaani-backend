@@ -144,17 +144,17 @@ async def generate_scene_outline(db: Session, scene_id: int, request: SceneOutli
             create a structured outline for the scene.
             
             Format your response as HTML with the following rules:
-            1. Each section title should be wrapped in <h3> tags
+            1. Each section title should be wrapped in <b> tags
             2. The main content should be in <p> tags
             3. Use <br> tags for line breaks between paragraphs
             4. Do not include any other HTML tags
             5. Keep the HTML simple and clean
             
             Example format:
-            <h3>Section Title</h3>
+            <b>Section Title</b>
             <p>Content goes here...</p>
             <br>
-            <h3>Next Section</h3>
+            <b>Next Section</b>
             <p>More content...</p>
             
             Your response must be a valid JSON object with the following structure:

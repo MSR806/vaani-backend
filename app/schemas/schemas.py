@@ -112,6 +112,9 @@ class ChapterGenerateRequest(BaseModel):
 class SceneOutlineRequest(BaseModel):
     user_prompt: str
 
+class CharacterOutlineRequest(BaseModel):
+    user_prompt: str
+
 class SceneCompletionRequest(BaseModel):
     outline: str
 
@@ -158,4 +161,4 @@ class CompletionRequest(BaseModel):
     user_prompt: str
 
 class NextChapterRequest(BaseModel):
-    user_prompt: str 
+    user_prompt: str

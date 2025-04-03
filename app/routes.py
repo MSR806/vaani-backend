@@ -5,7 +5,7 @@ from .models.models import Book, Chapter, Scene, Character
 from .schemas.schemas import (
     BookCreate, BookUpdate, ChapterCreate, ChapterUpdate,
     CharacterCreate, CharacterUpdate, SceneCreate, SceneUpdate,
-    ChatRequest, SceneOutlineRequest, BookCoverResponse, ChapterGenerateRequest, SceneCompletionRequest, CompletionRequest, SceneResponse,
+    ChatRequest, SceneOutlineRequest, CharacterOutlineRequest, BookCoverResponse, ChapterGenerateRequest, SceneCompletionRequest, CompletionRequest, SceneResponse,
     SceneOutlineResponse, SceneCompletionResponse, CharacterResponse
 )
 from .services.book_service import (
@@ -19,7 +19,7 @@ from .services.chapter_service import (
 )
 from .services.character_service import (
     create_character, update_character, get_characters,
-    extract_chapter_characters
+    extract_chapter_characters, generate_character_outline
 )
 from .services.scene_service import (
     create_scene, update_scene, get_scenes,
@@ -164,6 +164,10 @@ def get_scenes_route(chapter_id: int = None, db: Session = Depends(get_db)):
 @router.post("/scenes/{scene_id}/outline-generation")
 async def generate_scene_outline_route(scene_id: int, request: SceneOutlineRequest, db: Session = Depends(get_db)):
     return await generate_scene_outline(db, scene_id, request)
+
+@router.post("/characters/{character_id}/description-generation")
+async def generate_character_outline_route(character_id: int, request: CharacterOutlineRequest, db: Session = Depends(get_db)):
+    return await generate_character_outline(db, character_id, request)
 
 @router.post("/scenes/{scene_id}/completion")
 async def generate_scene_content_route(scene_id: int, request: SceneCompletionRequest, db: Session = Depends(get_db)):
