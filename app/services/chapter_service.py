@@ -102,14 +102,6 @@ async def generate_chapter_outline(db: Session, book_id: int, chapter_id: int, u
             for ch in previous_chapters
         ])
         
-        # Prepare context from previous scenes
-        previous_scenes_context = "\n\n".join([
-            f"Scene {s.scene_number} from Chapter {s.chapter.chapter_no}: {s.title}\n"
-            f"Characters: {', '.join(c.name for c in s.characters)}\n"
-            f"Content: {s.content}"
-            for s in previous_scenes
-        ])
-        
         # Get all characters in the book
         characters_context = "\n".join([
             f"- {c.name}: {c.description}"
@@ -121,21 +113,21 @@ async def generate_chapter_outline(db: Session, book_id: int, chapter_id: int, u
             {
                 "role": "system",
                 "content": """You are a creative writing assistant specialized in creating chapter outlines.
-                Based on the previous chapters, previous scenes, and the available characters,
+                Based on the previous chapters and the available characters,
                 create a structured outline for the chapter broken down into multiple scenes.
                 
                 Format your response as HTML with the following rules:
-                1. Each section title should be wrapped in <h3> tags
+                1. Each section title should be wrapped in <b> tags
                 2. The main content should be in <p> tags
                 3. Use <br> tags for line breaks between paragraphs
                 4. Do not include any other HTML tags
                 5. Keep the HTML simple and clean
                 
                 Example format:
-                <h3>Section Title</h3>
+                <b>Section Title</b>
                 <p>Content goes here...</p>
                 <br>
-                <h3>Next Section</h3>
+                <b>Next Section</b>
                 <p>More content...</p>
                 
                 Your response must be a valid JSON object with the following structure:
@@ -165,9 +157,6 @@ async def generate_chapter_outline(db: Session, book_id: int, chapter_id: int, u
                 "role": "user",
                 "content": f"""Previous Chapters:
 {previous_chapters_context}
-
-Previous Scenes:
-{previous_scenes_context}
 
 Available Characters:
 {characters_context}
@@ -216,6 +205,13 @@ Please provide a structured outline for this chapter:"""
                 
                 # Store scenes in the database and create response objects
                 scene_responses = []
+                
+                # Delete all existing scenes for this chapter
+                existing_scenes = db.query(Scene).filter(Scene.chapter_id == chapter_id).all()
+                for scene in existing_scenes:
+                    db.delete(scene)
+                db.flush()  # Flush the deletions before adding new scenes
+                
                 for scene_idx, scene_data in enumerate(scenes_data["scenes"]):
                     # Validate scene structure
                     if not isinstance(scene_data, dict):
