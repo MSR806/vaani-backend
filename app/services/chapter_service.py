@@ -116,21 +116,23 @@ async def generate_chapter_outline(db: Session, book_id: int, chapter_id: int, u
                 Based on the previous chapters and the available characters,
                 create a structured outline for the chapter broken down into multiple scenes.
                 
-                Format your response as HTML with the following rules:
-                1. Each section title should be wrapped in <b> tags
-                2. The main content should be in <p> tags
-                3. Use <br> tags for line breaks between paragraphs
-                4. Do not include any other HTML tags
-                5. Keep the HTML simple and clean
+                For character descriptions, use this exact format with HTML tags:
+                <h3>Basic Traits:</h3>
+                <p>Age: [age]<br>
+                Appearance: [physical description]<br>
+                Profession/Background: [career and background]</p>
+
+                <h3>Personality:</h3>
+                <p>Key Traits: [list of traits]<br>
+                Moral Code: [ethical framework]<br>
+                Motivations: [what drives the character]</p>
+
+                <h3>Character Development:</h3>
+                <p>Internal Struggles: [personal conflicts]<br>
+                External Conflicts: [external challenges]<br>
+                Growth Arc: [character's journey]</p>
                 
-                Example format:
-                <b>Section Title</b>
-                <p>Content goes here...</p>
-                <br>
-                <b>Next Section</b>
-                <p>More content...</p>
-                
-                Your response must be a valid JSON object with the following structure:
+                Your response must be a JSON object with this structure:
                 {
                     "scenes": [
                         {
@@ -139,19 +141,13 @@ async def generate_chapter_outline(db: Session, book_id: int, chapter_id: int, u
                             "characters": [
                                 {
                                     "name": "Character Name",
-                                    "description": "Character's description and role in the scene"
+                                    "description": "Character description with HTML tags as shown above"
                                 }
                             ],
-                            "content": "HTML formatted content with section titles and content"
+                            "content": "Scene content"
                         }
                     ]
-                }
-                
-                Keep the content high-level and focused on plot points rather than detailed descriptions.
-                Ensure your response strictly follows this JSON structure.
-                Include relevant characters for each scene from the available characters list.
-                Each scene must have a scene_number field starting from 1.
-                Each character must be an object with name and description fields."""
+                }"""
             },
             {
                 "role": "user",
@@ -182,123 +178,71 @@ Please provide a structured outline for this chapter:"""
             
             # Parse the response
             try:
-                # Extract the JSON object from the response
-                response_text = response.choices[0].message.content
-                # Clean up the response text to ensure it's valid JSON
-                response_text = response_text.strip()
-                
-                # Parse the JSON
+                response_text = response.choices[0].message.content.strip()
                 scenes_data = json.loads(response_text)
                 
-                # Validate the response structure
-                if not isinstance(scenes_data, dict):
-                    raise ValueError("Response must be a JSON object")
-                
-                if "scenes" not in scenes_data:
-                    raise ValueError("Response must contain a 'scenes' array")
-                
-                if not isinstance(scenes_data["scenes"], list):
-                    raise ValueError("'scenes' must be an array")
-                
-                # Get all available character names for validation
-                available_characters = {c.name for c in characters}
+                # Basic validation
+                if not isinstance(scenes_data, dict) or "scenes" not in scenes_data:
+                    raise HTTPException(status_code=500, detail="Invalid response format")
                 
                 # Store scenes in the database and create response objects
                 scene_responses = []
                 
-                # Delete all existing scenes for this chapter
-                existing_scenes = db.query(Scene).filter(Scene.chapter_id == chapter_id).all()
-                for scene in existing_scenes:
-                    db.delete(scene)
-                db.flush()  # Flush the deletions before adding new scenes
+                # Delete existing scenes
+                db.query(Scene).filter(Scene.chapter_id == chapter_id).delete()
+                db.flush()
                 
-                for scene_idx, scene_data in enumerate(scenes_data["scenes"]):
-                    # Validate scene structure
-                    if not isinstance(scene_data, dict):
-                        raise ValueError(f"Scene {scene_idx} must be an object")
-                    
-                    if "title" not in scene_data:
-                        raise ValueError(f"Scene {scene_idx} must have a title")
-                    
-                    if not isinstance(scene_data["title"], str) or not scene_data["title"].strip():
-                        raise ValueError(f"Scene {scene_idx} must have a non-empty title")
-                    
-                    if "characters" not in scene_data:
-                        raise ValueError(f"Scene {scene_idx} must have a characters array")
-                    
-                    if not isinstance(scene_data["characters"], list):
-                        raise ValueError(f"Scene {scene_idx} characters must be an array")
-                    
-                    # Create scene in database
-                    scene = Scene(
+                # Process scenes
+                for idx, scene in enumerate(scenes_data["scenes"]):
+                    # Create scene
+                    db_scene = Scene(
                         chapter_id=chapter_id,
-                        scene_number=scene_idx + 1,
-                        title=scene_data["title"],
-                        content=scene_data["content"]
+                        scene_number=idx + 1,
+                        title=scene.get("title", f"Scene {idx + 1}"),
+                        content=scene.get("content", "")
                     )
-                    db.add(scene)
-                    db.flush()  # Get the scene ID without committing
+                    db.add(db_scene)
+                    db.flush()
                     
-                    # Process characters for the scene
+                    # Process characters
                     scene_characters = []
-                    for char_data in scene_data["characters"]:
-                        if not isinstance(char_data, dict):
-                            raise ValueError(f"Character data must be an object")
-                        
-                        if "name" not in char_data:
-                            raise ValueError(f"Character must have a name")
-                        
-                        if not isinstance(char_data["name"], str) or not char_data["name"].strip():
-                            raise ValueError(f"Character name must be a non-empty string")
-                        
-                        # Check if character exists
-                        character = db.query(Character).filter(
-                            Character.name == char_data["name"],
-                            Character.book_id == book_id
-                        ).first()
-                        
-                        # If character doesn't exist, create it
-                        if not character:
-                            character = Character(
-                                name=char_data["name"],
-                                description=char_data.get("description", ""),
-                                book_id=book_id
-                            )
-                            db.add(character)
-                            db.flush()
-                        
-                        # Add character to scene
-                        scene.characters.append(character)
-                        scene_characters.append(character)
+                    for char in scene.get("characters", []):
+                        if isinstance(char, dict) and "name" in char:
+                            character = db.query(Character).filter(
+                                Character.name == char["name"],
+                                Character.book_id == book_id
+                            ).first()
+                            
+                            if not character:
+                                character = Character(
+                                    name=char["name"],
+                                    description=char.get("description", ""),
+                                    book_id=book_id
+                                )
+                                db.add(character)
+                                db.flush()
+                            
+                            db_scene.characters.append(character)
+                            scene_characters.append(character)
                     
-                    # Create response object
-                    scene_response = SceneOutlineResponse(
-                        scene_number=scene.scene_number,
-                        title=scene.title,
-                        characters=[{"name": c.name, "description": c.description} for c in scene_characters],
-                        content=scene.content
-                    )
-                    scene_responses.append(scene_response)
+                    # Create response
+                    scene_responses.append(SceneOutlineResponse(
+                        scene_number=db_scene.scene_number,
+                        title=db_scene.title,
+                        characters=[{
+                            "name": c.name,
+                            "description": c.description
+                        } for c in scene_characters],
+                        content=db_scene.content
+                    ))
                 
-                # Commit all scenes and new characters at once
                 db.commit()
                 return scene_responses
                 
             except json.JSONDecodeError as e:
-                raise HTTPException(
-                    status_code=500,
-                    detail=f"Failed to parse the AI response into proper format: {str(e)}"
-                )
-            except ValueError as e:
-                raise HTTPException(
-                    status_code=500,
-                    detail=f"Invalid response format: {str(e)}"
-                )
+                raise HTTPException(status_code=500, detail="Invalid JSON response")
             except Exception as e:
-                raise HTTPException(
-                    status_code=500,
-                    detail=f"Error processing the response: {str(e)}"
-                )
+                raise HTTPException(status_code=500, detail=str(e))
                 
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
