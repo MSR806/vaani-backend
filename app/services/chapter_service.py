@@ -117,17 +117,17 @@ async def generate_chapter_outline(db: Session, book_id: int, chapter_id: int, u
                 create a structured outline for the chapter broken down into multiple scenes.
                 
                 For character descriptions, use this exact format with HTML tags:
-                <h3>Basic Traits:</h3>
+                <b>Basic Traits:</b>
                 <p>Age: [age]<br>
                 Appearance: [physical description]<br>
                 Profession/Background: [career and background]</p>
 
-                <h3>Personality:</h3>
+                <b>Personality:</b>
                 <p>Key Traits: [list of traits]<br>
                 Moral Code: [ethical framework]<br>
                 Motivations: [what drives the character]</p>
 
-                <h3>Character Development:</h3>
+                <b>Character Development:</b>
                 <p>Internal Struggles: [personal conflicts]<br>
                 External Conflicts: [external challenges]<br>
                 Growth Arc: [character's journey]</p>
