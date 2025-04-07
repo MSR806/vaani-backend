@@ -457,8 +457,8 @@ async def stream_chapter_content(db: Session, book_id: int, chapter_id: int, req
             3. Advance the plot while maintaining suspense
             4. End in a way that hooks readers for the next chapter
             
-            Start your response with a suitable chapter title in the format: TITLE: Your Chapter Title
-            Then continue with the chapter content."""
+            Important: Start your response directly with the chapter content. Do not include any prefixes like "TITLE:" or other subheadings.
+            The chapter title will be handled separately."""
         },
         {
             "role": "user",
@@ -488,7 +488,6 @@ Please write the complete chapter:"""
         
         async def generate():
             full_response = ""
-            title = None
             
             try:
                 for chunk in stream:
@@ -496,22 +495,11 @@ Please write the complete chapter:"""
                         content = chunk.choices[0].delta.content
                         full_response += content
                         
-                        # Try to extract title from accumulated response if not found yet
-                        if not title and "TITLE:" in full_response:
-                            title_line = next((line for line in full_response.split('\n') if "TITLE:" in line), None)
-                            if title_line:
-                                title = title_line.replace("TITLE:", "").strip()
-                        
-                        # Format as SSE
-                        yield f"data: {content}\n\n"
+                        # Format as SSE with JSON content
+                        json_content = json.dumps({"content": content})
+                        yield f"data: {json_content}\n\n"
                 
                 # After streaming is complete, update the chapter in the database
-                if not title:
-                    # If no title found in format, use first non-empty line or default
-                    lines = full_response.split('\n')
-                    title = next((line.strip() for line in lines if line.strip()), f"Chapter {chapter.chapter_no}")
-                
-                chapter.title = title
                 chapter.content = full_response
                 db.commit()
                 
@@ -520,7 +508,8 @@ Please write the complete chapter:"""
                 
             except Exception as e:
                 # Send error and completion signal
-                yield f"data: error: {str(e)}\n\n"
+                error_json = json.dumps({"error": str(e)})
+                yield f"data: {error_json}\n\n"
                 yield "data: [DONE]\n\n"
                 raise HTTPException(status_code=500, detail=str(e))
 
