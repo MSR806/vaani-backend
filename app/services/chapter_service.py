@@ -132,7 +132,7 @@ async def generate_chapter_outline(db: Session, book_id: int, chapter_id: int, u
                 External Conflicts: [external challenges]<br>
                 Growth Arc: [character's journey]</p>
                 
-                Your response must be a JSON object with this structure:
+                Your response must be a valid JSON object with this structure:
                 {
                     "scenes": [
                         {
@@ -147,7 +147,13 @@ async def generate_chapter_outline(db: Session, book_id: int, chapter_id: int, u
                             "content": "Scene content"
                         }
                     ]
-                }"""
+                }
+                
+                Important:
+                1. Ensure all strings are properly escaped
+                2. Do not include any trailing commas
+                3. Make sure all quotes are properly closed
+                4. Keep the response within the token limit"""
             },
             {
                 "role": "user",
@@ -168,87 +174,85 @@ Please provide a structured outline for this chapter:"""
         ]
 
         try:
-            response = client.chat.completions.create(
+            # Use beta.chat.completions.parse for structured outputs
+            completion = client.beta.chat.completions.parse(
                 model=OPENAI_MODEL,
                 messages=messages,
                 temperature=0.7,
-                max_tokens=2000,
-                response_format={"type": "json_object"}
+                response_format=ChapterOutlineResponse
             )
             
-            # Parse the response
-            try:
-                response_text = response.choices[0].message.content.strip()
-                scenes_data = json.loads(response_text)
-                
-                # Basic validation
-                if not isinstance(scenes_data, dict) or "scenes" not in scenes_data:
-                    raise HTTPException(status_code=500, detail="Invalid response format")
-                
-                # Store scenes in the database and create response objects
-                scene_responses = []
-                
-                # Delete existing scenes
-                db.query(Scene).filter(Scene.chapter_id == chapter_id).delete()
+            # Get the parsed response
+            outline_response = completion.choices[0].message.parsed
+            
+            # Store scenes in the database and create response objects
+            scene_responses = []
+            
+            # Delete existing scenes
+            db.query(Scene).filter(Scene.chapter_id == chapter_id).delete()
+            db.flush()
+            
+            # Process scenes
+            for scene in outline_response.scenes:
+                # Create scene
+                db_scene = Scene(
+                    chapter_id=chapter_id,
+                    scene_number=scene.scene_number,
+                    title=scene.title,
+                    content=scene.content
+                )
+                db.add(db_scene)
                 db.flush()
                 
-                # Process scenes
-                for idx, scene in enumerate(scenes_data["scenes"]):
-                    # Create scene
-                    db_scene = Scene(
-                        chapter_id=chapter_id,
-                        scene_number=idx + 1,
-                        title=scene.get("title", f"Scene {idx + 1}"),
-                        content=scene.get("content", "")
-                    )
-                    db.add(db_scene)
-                    db.flush()
+                # Process characters
+                scene_characters = []
+                for char in scene.characters:
+                    character = db.query(Character).filter(
+                        Character.name == char.name,
+                        Character.book_id == book_id
+                    ).first()
                     
-                    # Process characters
-                    scene_characters = []
-                    for char in scene.get("characters", []):
-                        if isinstance(char, dict) and "name" in char:
-                            character = db.query(Character).filter(
-                                Character.name == char["name"],
-                                Character.book_id == book_id
-                            ).first()
-                            
-                            if not character:
-                                character = Character(
-                                    name=char["name"],
-                                    description=char.get("description", ""),
-                                    book_id=book_id
-                                )
-                                db.add(character)
-                                db.flush()
-                            
-                            db_scene.characters.append(character)
-                            scene_characters.append(character)
+                    if not character:
+                        character = Character(
+                            name=char.name,
+                            description=char.description,
+                            book_id=book_id
+                        )
+                        db.add(character)
+                        db.flush()
                     
-                    # Create response
-                    scene_responses.append(SceneOutlineResponse(
-                        scene_number=db_scene.scene_number,
-                        title=db_scene.title,
-                        characters=[{
-                            "name": c.name,
-                            "description": c.description
-                        } for c in scene_characters],
-                        content=db_scene.content
-                    ))
+                    db_scene.characters.append(character)
+                    scene_characters.append(character)
                 
-                db.commit()
-                return scene_responses
-                
-            except json.JSONDecodeError as e:
-                raise HTTPException(status_code=500, detail="Invalid JSON response")
-            except Exception as e:
-                raise HTTPException(status_code=500, detail=str(e))
-                
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
+                # Create response
+                scene_responses.append(SceneOutlineResponse(
+                    scene_number=db_scene.scene_number,
+                    title=db_scene.title,
+                    characters=[{
+                        "name": c.name,
+                        "description": c.description
+                    } for c in scene_characters],
+                    content=db_scene.content
+                ))
             
+            db.commit()
+            return scene_responses
+            
+        except Exception as e:
+            print(f"OpenAI API error: {str(e)}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"OpenAI API error: {str(e)}"
+            )
+            
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"Unexpected error: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Unexpected error: {str(e)}"
+        )
 
 async def generate_chapter_content(db: Session, book_id: int, chapter_id: int, request: ChapterGenerateRequest):
     # Get the book and chapter
