@@ -210,6 +210,7 @@ class CompletionRequest(BaseModel):
     use_source_content: bool = False
     chapter_id: int | None = None
     book_id: int | None = None
+    llm_model: str | None = None
 
 
 class NextChapterRequest(BaseModel):

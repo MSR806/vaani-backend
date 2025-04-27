@@ -311,7 +311,7 @@ async def stream_completion_route(
     request: CompletionRequest, db: Session = Depends(get_db)
 ):
     try:
-        client = get_openai_client()
+        client = get_openai_client(request.llm_model)
         return await stream_completion(
             request.context,
             request.user_prompt,
@@ -320,6 +320,7 @@ async def stream_completion_route(
             request.use_source_content,
             request.chapter_id,
             request.book_id,
+            request.llm_model,
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

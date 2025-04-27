@@ -15,6 +15,7 @@ async def stream_completion(
     use_source_content: bool = False,
     chapter_id: int | None = None,
     book_id: int | None = None,
+    llm_model: str | None = None,
 ):
     if not client.api_key:
         raise HTTPException(status_code=500, detail="OpenAI API key not configured")
@@ -46,8 +47,11 @@ async def stream_completion(
         # Create streaming response
         async def generate():
             try:
+                # Use provided model if available, otherwise use default
+                model = llm_model if llm_model else OPENAI_MODEL
+
                 stream = client.chat.completions.create(
-                    model=OPENAI_MODEL, messages=messages, stream=True, temperature=0.7
+                    model=model, messages=messages, stream=True, temperature=0.7
                 )
 
                 for chunk in stream:
