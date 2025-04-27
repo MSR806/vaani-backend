@@ -591,3 +591,17 @@ Please write the complete chapter:""",
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+def delete_chapter(db: Session, book_id: int, chapter_id: int):
+    chapter = (
+        db.query(Chapter)
+        .filter(Chapter.id == chapter_id, Chapter.book_id == book_id)
+        .first()
+    )
+    if not chapter:
+        return None
+
+    db.delete(chapter)
+    db.commit()
+    return {"message": "Chapter deleted successfully"}

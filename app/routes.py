@@ -41,6 +41,7 @@ from .services.chapter_service import (
     generate_chapter_content,
     stream_chapter_content,
     patch_chapter_source_text,
+    delete_chapter,
 )
 from .services.character_service import (
     create_character,
@@ -157,6 +158,14 @@ def update_chapter_route(
     if not chapter:
         raise HTTPException(status_code=404, detail="Chapter not found")
     return chapter
+
+
+@router.delete("/books/{book_id}/chapters/{chapter_id}")
+def delete_chapter_route(book_id: int, chapter_id: int, db: Session = Depends(get_db)):
+    result = delete_chapter(db, book_id, chapter_id)
+    if not result:
+        raise HTTPException(status_code=404, detail="Chapter not found")
+    return result
 
 
 @router.post("/books/{book_id}/chapters/next")
