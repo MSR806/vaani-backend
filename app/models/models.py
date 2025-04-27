@@ -4,20 +4,22 @@ from ..database import Base
 
 # Association table for scene-characters many-to-many relationship
 scene_characters = Table(
-    'scene_characters',
+    "scene_characters",
     Base.metadata,
-    Column('scene_id', Integer, ForeignKey('scenes.id')),
-    Column('character_id', Integer, ForeignKey('characters.id'))
+    Column("scene_id", Integer, ForeignKey("scenes.id")),
+    Column("character_id", Integer, ForeignKey("characters.id")),
 )
+
 
 class Image(Base):
     __tablename__ = "images"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True)
     mime_type = Column(String)
     data = Column(LargeBinary)
     external_url = Column(Text, nullable=True)  # Store the original external URL
+
 
 class Book(Base):
     __tablename__ = "books"
@@ -28,16 +30,19 @@ class Book(Base):
     cover_url = Column(Text, nullable=True)  # URL to the generated book cover
     chapters = relationship("Chapter", back_populates="book")
 
+
 class Chapter(Base):
     __tablename__ = "chapters"
 
     id = Column(Integer, primary_key=True, index=True)
-    book_id = Column(Integer, ForeignKey("books.id"))
-    title = Column(String, index=True)
-    chapter_no = Column(Integer)
-    content = Column(Text)
+    book_id = Column(Integer, ForeignKey("books.id"), nullable=False)
+    title = Column(Text, nullable=False)
+    chapter_no = Column(Integer, nullable=False)
+    content = Column(Text, nullable=False)
+    source_text = Column(Text, nullable=True)
     book = relationship("Book", back_populates="chapters")
     scenes = relationship("Scene", back_populates="chapter")
+
 
 class Character(Base):
     __tablename__ = "characters"
@@ -46,7 +51,10 @@ class Character(Base):
     name = Column(String, index=True)
     description = Column(Text)
     book_id = Column(Integer, ForeignKey("books.id"))
-    scenes = relationship("Scene", secondary=scene_characters, back_populates="characters")
+    scenes = relationship(
+        "Scene", secondary=scene_characters, back_populates="characters"
+    )
+
 
 class Scene(Base):
     __tablename__ = "scenes"
@@ -57,4 +65,6 @@ class Scene(Base):
     chapter_id = Column(Integer, ForeignKey("chapters.id"))
     content = Column(Text)
     chapter = relationship("Chapter", back_populates="scenes")
-    characters = relationship("Character", secondary=scene_characters, back_populates="scenes") 
+    characters = relationship(
+        "Character", secondary=scene_characters, back_populates="scenes"
+    )
