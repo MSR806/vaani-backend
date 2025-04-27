@@ -307,10 +307,20 @@ async def stream_chat_as_character_route(
 
 
 @router.post("/complete")
-async def stream_completion_route(request: CompletionRequest):
+async def stream_completion_route(
+    request: CompletionRequest, db: Session = Depends(get_db)
+):
     try:
         client = get_openai_client()
-        return await stream_completion(request.context, request.user_prompt, client)
+        return await stream_completion(
+            request.context,
+            request.user_prompt,
+            client,
+            db,
+            request.use_source_content,
+            request.chapter_id,
+            request.book_id,
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

@@ -207,6 +207,9 @@ class BookCoverResponse(BaseModel):
 class CompletionRequest(BaseModel):
     context: str
     user_prompt: str
+    use_source_content: bool = False
+    chapter_id: int | None = None
+    book_id: int | None = None
 
 
 class NextChapterRequest(BaseModel):
