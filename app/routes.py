@@ -23,6 +23,7 @@ from .schemas.schemas import (
     SceneOutlineResponse,
     CharacterResponse,
     ChapterSourceTextUpdate,
+    ChapterStateUpdate,
 )
 from .services.book_service import (
     create_book,
@@ -42,6 +43,7 @@ from .services.chapter_service import (
     stream_chapter_content,
     patch_chapter_source_text,
     delete_chapter,
+    patch_chapter_state,
 )
 from .services.character_service import (
     create_character,
@@ -360,6 +362,21 @@ def update_chapter_source_text(
     db: Session = Depends(get_db),
 ):
     chapter = patch_chapter_source_text(db, book_id, chapter_id, update.source_text)
+    if not chapter:
+        raise HTTPException(status_code=404, detail="Chapter not found")
+    return chapter
+
+
+@router.patch(
+    "/books/{book_id}/chapters/{chapter_id}/state", response_model=ChapterResponse
+)
+def update_chapter_state(
+    book_id: int,
+    chapter_id: int,
+    update: ChapterStateUpdate,
+    db: Session = Depends(get_db),
+):
+    chapter = patch_chapter_state(db, book_id, chapter_id, update.state)
     if not chapter:
         raise HTTPException(status_code=404, detail="Chapter not found")
     return chapter

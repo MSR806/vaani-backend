@@ -40,6 +40,7 @@ class Chapter(Base):
     chapter_no = Column(Integer, nullable=False)
     content = Column(Text, nullable=False)
     source_text = Column(Text, nullable=True)
+    state = Column(String, nullable=True)
     book = relationship("Book", back_populates="chapters")
     scenes = relationship("Scene", back_populates="chapter")
 

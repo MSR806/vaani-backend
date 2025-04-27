@@ -50,6 +50,7 @@ def create_chapter(db: Session, book_id: int, chapter: ChapterCreate):
         chapter_no=next_chapter_no,
         content=chapter.content,
         source_text=chapter.source_text,
+        state="DRAFT",
     )
     db.add(db_chapter)
     db.commit()
@@ -95,6 +96,21 @@ def patch_chapter_source_text(
         return None
 
     chapter.source_text = source_text
+    db.commit()
+    db.refresh(chapter)
+    return chapter
+
+
+def patch_chapter_state(db: Session, book_id: int, chapter_id: int, state: str | None):
+    chapter = (
+        db.query(Chapter)
+        .filter(Chapter.id == chapter_id, Chapter.book_id == book_id)
+        .first()
+    )
+    if not chapter:
+        return None
+
+    chapter.state = state
     db.commit()
     db.refresh(chapter)
     return chapter

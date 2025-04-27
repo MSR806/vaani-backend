@@ -28,6 +28,7 @@ class ChapterBase(BaseModel):
     title: str
     content: str
     source_text: str | None = None
+    state: str | None = None
 
 
 class ChapterCreate(ChapterBase):
@@ -37,6 +38,7 @@ class ChapterCreate(ChapterBase):
 class ChapterUpdate(BaseModel):
     content: str
     source_text: str | None = None
+    state: str | None = None
 
 
 class ChapterSourceTextUpdate(BaseModel):
@@ -50,9 +52,14 @@ class ChapterResponse(BaseModel):
     chapter_no: int
     content: str
     source_text: str | None = None
+    state: str | None = None
 
     class Config:
         from_attributes = True
+
+
+class ChapterStateUpdate(BaseModel):
+    state: str | None = None
 
 
 # Character schemas
