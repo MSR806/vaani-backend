@@ -5,15 +5,26 @@ from typing import Optional, List, Dict
 # Book schemas
 class BookBase(BaseModel):
     title: str
-    author: str
+    author: str | None = None
+    author_id: str | None = None
 
 
-class BookCreate(BookBase):
-    pass
+class BookCreate(BaseModel):
+    title: str
 
 
 class BookUpdate(BaseModel):
     title: str
+
+
+class BookResponse(BaseModel):
+    id: int
+    title: str
+    author: str | None = None
+    cover_url: str | None = None
+
+    class Config:
+        from_attributes = True
 
 
 class Book(BookBase):

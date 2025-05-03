@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from ..models.models import Book, Chapter, Image
-from ..schemas.schemas import BookCreate, BookUpdate, ChapterGenerateRequest
+from ..schemas.schemas import BookCreate, BookUpdate, ChapterGenerateRequest, BookBase
 from fastapi import HTTPException
 import openai
 import os
@@ -17,9 +17,13 @@ load_dotenv()
 # Initialize OpenAI client
 client = openai.AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-async def create_book(db: Session, book: BookCreate) -> Book:
+async def create_book(db: Session, book: BookBase) -> Book:
     # Create the book record
-    db_book = Book(title=book.title, author=book.author)
+    db_book = Book(
+        title=book.title, 
+        author=book.author,
+        author_id=book.author_id
+    )
     db.add(db_book)
     db.commit()
     db.refresh(db_book)

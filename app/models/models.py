@@ -27,6 +27,7 @@ class Book(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, index=True)
     author = Column(String)
+    author_id = Column(String, nullable=False)  # Auth0 user ID of the book creator
     cover_url = Column(Text, nullable=True)  # URL to the generated book cover
     chapters = relationship("Chapter", back_populates="book")
 

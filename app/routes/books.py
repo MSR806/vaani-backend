@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from ..database import get_db
 from ..models.models import Book, Chapter
-from ..schemas.schemas import BookCreate, BookUpdate, BookCoverResponse
+from ..schemas.schemas import BookCreate, BookUpdate, BookCoverResponse, BookBase, BookResponse
 from ..services.book_service import (
     create_book,
     get_book,
@@ -11,6 +11,8 @@ from ..services.book_service import (
     get_book_chapters,
     generate_book_cover,
 )
+from ..auth import get_auth0_user_details, get_current_user, security
+from fastapi.security import HTTPAuthorizationCredentials
 
 router = APIRouter(tags=["books"])
 
@@ -30,12 +32,12 @@ def test_db(db: Session = Depends(get_db)):
     return {"message": "Database test successful", "book_id": book.id}
 
 
-@router.get("/books")
+@router.get("/books", response_model=list[BookResponse])
 def get_books_route(db: Session = Depends(get_db)):
     return get_books(db)
 
 
-@router.get("/books/{book_id}")
+@router.get("/books/{book_id}", response_model=BookResponse)
 def get_book_route(book_id: int, db: Session = Depends(get_db)):
     book = get_book(db, book_id)
     if not book:
@@ -43,12 +45,26 @@ def get_book_route(book_id: int, db: Session = Depends(get_db)):
     return book
 
 
-@router.post("/books")
-async def create_book_route(book: BookCreate, db: Session = Depends(get_db)):
-    return await create_book(db, book)
+@router.post("/books", response_model=BookResponse)
+async def create_book_route(
+    book: BookCreate, 
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    # Get user details from Auth0 UserInfo endpoint
+    user_details = await get_auth0_user_details(credentials.credentials)
+    
+    # Create a BookBase instance with the title and user information
+    book_data = BookBase(
+        title=book.title,
+        author_id=current_user["user_id"],
+        author=user_details["name"]  # Use the name from UserInfo
+    )
+    return await create_book(db, book_data)
 
 
-@router.put("/books/{book_id}")
+@router.put("/books/{book_id}", response_model=BookResponse)
 def update_book_route(
     book_id: int, book_update: BookUpdate, db: Session = Depends(get_db)
 ):

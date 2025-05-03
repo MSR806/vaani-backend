@@ -41,6 +41,7 @@ def get_signing_key(token):
                 
                 numbers = RSAPublicNumbers(e, n)
                 public_key = numbers.public_key()
+                
                 pem = public_key.public_bytes(
                     encoding=serialization.Encoding.PEM,
                     format=serialization.PublicFormat.SubjectPublicKeyInfo
@@ -115,3 +116,33 @@ async def get_current_user(
         "permissions": payload.get("permissions", []),
         "email": payload.get("email")
     }
+
+async def get_auth0_user_details(access_token: str) -> dict:
+    """Get user details from Auth0 UserInfo endpoint"""
+    try:
+        # Make request to Auth0 UserInfo endpoint
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Accept": "application/json"
+        }
+        response = requests.get(
+            f"https://{AUTH0_DOMAIN}/userinfo",
+            headers=headers
+        )
+        
+        if response.status_code != 200:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Failed to fetch user details from Auth0"
+            )
+            
+        user_data = response.json()
+        return {
+            "name": user_data.get("name") or user_data.get("nickname") or user_data.get("email", "Anonymous"),
+            "email": user_data.get("email", "Anonymous")
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Error fetching user details: {str(e)}"
+        )
