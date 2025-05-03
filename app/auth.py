@@ -5,6 +5,8 @@ from jwt.exceptions import InvalidTokenError, ExpiredSignatureError
 import requests
 from functools import lru_cache
 from .config import AUTH0_DOMAIN, AUTH0_API_AUDIENCE, AUTH0_ISSUER, AUTH0_ALGORITHMS
+import base64
+import struct
 
 # Security scheme for Swagger UI
 security = HTTPBearer()
@@ -29,15 +31,21 @@ def get_signing_key(token):
         print(f"Unverified header: {unverified_header}")
         for key in jwks["keys"]:
             if key["kid"] == unverified_header["kid"]:
-                rsa_key = {
-                    "kty": key["kty"],
-                    "kid": key["kid"],
-                    "use": key["use"],
-                    "n": key["n"],
-                    "e": key["e"]
-                }
-                print(f"RSA key: {rsa_key}")
-                return rsa_key
+                # Convert the RSA key components to PEM format
+                n = int.from_bytes(base64.urlsafe_b64decode(key["n"] + "=" * (-len(key["n"]) % 4)), byteorder='big')
+                e = int.from_bytes(base64.urlsafe_b64decode(key["e"] + "=" * (-len(key["e"]) % 4)), byteorder='big')
+                
+                # Construct the RSA public key in PEM format
+                from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicNumbers
+                from cryptography.hazmat.primitives import serialization
+                
+                numbers = RSAPublicNumbers(e, n)
+                public_key = numbers.public_key()
+                pem = public_key.public_bytes(
+                    encoding=serialization.Encoding.PEM,
+                    format=serialization.PublicFormat.SubjectPublicKeyInfo
+                )
+                return pem
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token signing key",
