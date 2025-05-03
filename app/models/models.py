@@ -52,9 +52,6 @@ class Character(Base):
     name = Column(String, index=True)
     description = Column(Text)
     book_id = Column(Integer, ForeignKey("books.id"))
-    scenes = relationship(
-        "Scene", secondary=scene_characters, back_populates="characters"
-    )
 
 
 class Scene(Base):
@@ -66,6 +63,3 @@ class Scene(Base):
     chapter_id = Column(Integer, ForeignKey("chapters.id"))
     content = Column(Text)
     chapter = relationship("Chapter", back_populates="scenes")
-    characters = relationship(
-        "Character", secondary=scene_characters, back_populates="scenes"
-    )

@@ -88,16 +88,10 @@ class CharacterResponse(BaseModel):
 
 
 # Scene schemas
-class CharacterInScene(BaseModel):
-    name: str
-    description: str
-
-
 class SceneBase(BaseModel):
     scene_number: int
     title: str
     content: str
-    characters: List[CharacterInScene]
 
 
 class SceneCreate(SceneBase):
@@ -108,7 +102,6 @@ class SceneUpdate(BaseModel):
     scene_number: Optional[int] = None
     title: Optional[str] = None
     content: Optional[str] = None
-    characters: Optional[List[CharacterInScene]] = None
 
 
 class SceneResponse(BaseModel):
@@ -117,7 +110,6 @@ class SceneResponse(BaseModel):
     title: str
     chapter_id: int
     content: str
-    characters: List[CharacterResponse]
 
     class Config:
         from_attributes = True
@@ -178,7 +170,6 @@ class ChapterOutline(BaseModel):
 class SceneOutlineResponse(BaseModel):
     scene_number: int
     title: str
-    characters: List[CharacterInScene]
     content: str
 
 
