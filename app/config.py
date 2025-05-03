@@ -10,7 +10,7 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 XAI_API_KEY = os.getenv("XAI_API_KEY")
 
 # Auth0 Configuration
-AUTH0_DOMAIN = os.getenv("AUTH0_DOMAIN")
-AUTH0_API_AUDIENCE = os.getenv("AUTH0_API_AUDIENCE")
+AUTH0_DOMAIN = "dev-6m3v7tgivuzrs5we.us.auth0.com"
+AUTH0_API_AUDIENCE = "9a24492f-803c-461c-b051-f1dd7ce3c504"
 AUTH0_ISSUER = f"https://{AUTH0_DOMAIN}/"
 AUTH0_ALGORITHMS = ["RS256"]

@@ -10,18 +10,23 @@ from .config import AUTH0_DOMAIN, AUTH0_API_AUDIENCE, AUTH0_ISSUER, AUTH0_ALGORI
 security = HTTPBearer()
 
 
-@lru_cache()
 def get_auth0_jwks():
+    print(f"AUTH0_DOMAIN: {AUTH0_DOMAIN}")
     """Cache and return Auth0 JSON Web Key Set for verifying tokens"""
     jwks_url = f"https://{AUTH0_DOMAIN}/.well-known/jwks.json"
-    return requests.get(jwks_url).json()
+    print(f"JWKS URL: {jwks_url}")
+    response = requests.get(jwks_url)
+    print(f"Response: {response}")
+    return response.json()
 
 
 def get_signing_key(token):
     """Get the signing key used to sign the token"""
     try:
         jwks = get_auth0_jwks()
+        print(f"JWKS: {jwks}")
         unverified_header = jwt.get_unverified_header(token)
+        print(f"Unverified header: {unverified_header}")
         for key in jwks["keys"]:
             if key["kid"] == unverified_header["kid"]:
                 rsa_key = {
@@ -31,6 +36,7 @@ def get_signing_key(token):
                     "n": key["n"],
                     "e": key["e"]
                 }
+                print(f"RSA key: {rsa_key}")
                 return rsa_key
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -47,6 +53,7 @@ def verify_token(token: str):
     """Verify an Auth0 JWT token"""
     try:
         key = get_signing_key(token)
+        print(f"Key: {key}")
         payload = jwt.decode(
             token,
             key,
@@ -54,6 +61,7 @@ def verify_token(token: str):
             audience=AUTH0_API_AUDIENCE,
             issuer=AUTH0_ISSUER,
         )
+        print(f"Payload: {payload}")
         return payload
     except ExpiredSignatureError:
         raise HTTPException(
@@ -77,7 +85,9 @@ async def get_current_user(
 ):
     """Dependency to enforce authentication and extract user details"""
     token = credentials.credentials
+    print(f"Token: {token}")
     payload = verify_token(token)
+    print(f"Payload: {payload}")
     
     # Extract user information from the token
     # 'sub' is the Auth0 user ID, typically in format 'auth0|user_id'
