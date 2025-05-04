@@ -11,7 +11,7 @@ from ..services.book_service import (
     get_book_chapters,
     generate_book_cover,
 )
-from ..auth import get_auth0_user_details, get_current_user, security
+from ..auth import get_auth0_user_details, get_current_user, security, require_write_permission
 from fastapi.security import HTTPAuthorizationCredentials
 
 router = APIRouter(tags=["books"])
@@ -49,7 +49,7 @@ def get_book_route(book_id: int, db: Session = Depends(get_db)):
 async def create_book_route(
     book: BookCreate, 
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user),
+    current_user: dict = Depends(require_write_permission),
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
     # Get user details from Auth0 UserInfo endpoint
@@ -66,7 +66,10 @@ async def create_book_route(
 
 @router.put("/books/{book_id}", response_model=BookResponse)
 def update_book_route(
-    book_id: int, book_update: BookUpdate, db: Session = Depends(get_db)
+    book_id: int, 
+    book_update: BookUpdate, 
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_write_permission)
 ):
     book = update_book(db, book_id, book_update)
     if not book:
@@ -75,7 +78,11 @@ def update_book_route(
 
 
 @router.post("/books/{book_id}/generate-cover")
-async def generate_book_cover_route(book_id: int, db: Session = Depends(get_db)):
+async def generate_book_cover_route(
+    book_id: int, 
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_write_permission)
+):
     # Call the book service to generate the cover
     try:
         book = await generate_book_cover(db, book_id)

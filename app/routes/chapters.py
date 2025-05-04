@@ -26,13 +26,17 @@ from ..services.book_service import (
     generate_next_chapter,
 )
 from ..services.character_service import extract_chapter_characters
+from ..auth import require_write_permission
 
 router = APIRouter(tags=["chapters"])
 
 
 @router.post("/books/{book_id}/chapters")
 def create_chapter_route(
-    book_id: int, chapter: ChapterCreate, db: Session = Depends(get_db)
+    book_id: int, 
+    chapter: ChapterCreate, 
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_write_permission)
 ):
     chapter = create_chapter(db, book_id, chapter)
     if not chapter:
@@ -66,6 +70,7 @@ def update_chapter_route(
     chapter_id: int,
     chapter_update: ChapterUpdate,
     db: Session = Depends(get_db),
+    current_user: dict = Depends(require_write_permission)
 ):
     chapter = update_chapter(db, book_id, chapter_id, chapter_update)
     if not chapter:
@@ -83,7 +88,10 @@ def delete_chapter_route(book_id: int, chapter_id: int, db: Session = Depends(ge
 
 @router.post("/books/{book_id}/generate-chapter")
 async def generate_next_chapter_route(
-    book_id: int, request: ChapterGenerateRequest, db: Session = Depends(get_db)
+    book_id: int, 
+    request: ChapterGenerateRequest, 
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_write_permission)
 ):
     return await generate_next_chapter(db, book_id, request)
 
@@ -94,6 +102,7 @@ async def generate_chapter_outline_route(
     chapter_id: int,
     request: ChapterGenerateRequest,
     db: Session = Depends(get_db),
+    current_user: dict = Depends(require_write_permission)
 ):
     return await generate_chapter_outline(db, book_id, chapter_id, request)
 
@@ -104,6 +113,7 @@ async def generate_chapter_content_route(
     chapter_id: int,
     request: ChapterGenerateRequest,
     db: Session = Depends(get_db),
+    current_user: dict = Depends(require_write_permission)
 ):
     """
     Generate chapter content with streaming support.

@@ -12,18 +12,26 @@ from ..services.scene_service import (
     get_scenes,
     generate_scene_content,
 )
+from ..auth import require_write_permission
 
 router = APIRouter(tags=["scenes"])
 
 
 @router.post("/scenes")
-def create_scene_route(scene: SceneCreate, db: Session = Depends(get_db)):
+def create_scene_route(
+    scene: SceneCreate, 
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_write_permission)
+):
     return create_scene(db, scene)
 
 
 @router.put("/scenes/{scene_id}")
 def update_scene_route(
-    scene_id: int, scene_update: SceneUpdate, db: Session = Depends(get_db)
+    scene_id: int, 
+    scene_update: SceneUpdate, 
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_write_permission)
 ):
     scene = update_scene(db, scene_id, scene_update)
     if not scene:
@@ -38,6 +46,9 @@ def get_scenes_route(chapter_id: int = None, db: Session = Depends(get_db)):
 
 @router.post("/scenes/{scene_id}/completion")
 async def generate_scene_content_route(
-    scene_id: int, request: SceneCompletionRequest, db: Session = Depends(get_db)
+    scene_id: int, 
+    request: SceneCompletionRequest, 
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_write_permission)
 ):
     return await generate_scene_content(db, scene_id, request)

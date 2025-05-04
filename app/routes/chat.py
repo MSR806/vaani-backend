@@ -10,17 +10,24 @@ from ..services.chat_service import (
 )
 from ..services.chat_completion_service import stream_completion
 from ..services.ai_service import get_openai_client
+from ..auth import require_write_permission
 
 router = APIRouter(tags=["chat"])
 
 
 @router.post("/chat")
-async def chat_with_ai_route(request: ChatRequest):
+async def chat_with_ai_route(
+    request: ChatRequest,
+    current_user: dict = Depends(require_write_permission)
+):
     return await chat_with_ai(request)
 
 
 @router.post("/chat/stream")
-async def stream_chat_route(request: ChatRequest):
+async def stream_chat_route(
+    request: ChatRequest,
+    current_user: dict = Depends(require_write_permission)
+):
     try:
         return await stream_chat(request)
     except Exception as e:
@@ -28,13 +35,19 @@ async def stream_chat_route(request: ChatRequest):
 
 
 @router.post("/chat/character")
-async def chat_as_character_route(request: ChatRequest, db: Session = Depends(get_db)):
+async def chat_as_character_route(
+    request: ChatRequest, 
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_write_permission)
+):
     return await chat_as_character(request, db)
 
 
 @router.post("/chat/character/stream")
 async def stream_chat_as_character_route(
-    request: ChatRequest, db: Session = Depends(get_db)
+    request: ChatRequest, 
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_write_permission)
 ):
     try:
         return await stream_chat_as_character(request, db)
@@ -44,7 +57,9 @@ async def stream_chat_as_character_route(
 
 @router.post("/complete")
 async def stream_completion_route(
-    request: CompletionRequest, db: Session = Depends(get_db)
+    request: CompletionRequest, 
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_write_permission)
 ):
     try:
         client = get_openai_client(request.llm_model)
