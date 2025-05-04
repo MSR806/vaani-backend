@@ -140,20 +140,6 @@ async def generate_chapter_outline(
             .all()
         )
 
-        # Get all scenes from previous chapters
-        previous_scenes = []
-        for prev_chapter in previous_chapters:
-            scenes = (
-                db.query(Scene)
-                .filter(Scene.chapter_id == prev_chapter.id)
-                .order_by(Scene.scene_number)
-                .all()
-            )
-            previous_scenes.extend(scenes)
-
-        # Get all characters from the book
-        characters = db.query(Character).filter(Character.book_id == book_id).all()
-
         # Prepare context from previous chapters
         previous_chapters_context = "\n\n".join(
             [
@@ -162,34 +148,13 @@ async def generate_chapter_outline(
             ]
         )
 
-        # Get all characters in the book
-        characters_context = "\n".join(
-            [f"- {c.name}: {c.description}" for c in characters]
-        )
-
         # Prepare the messages for GPT
         messages = [
             {
                 "role": "system",
                 "content": """You are a creative writing assistant specialized in creating chapter outlines.
-                Based on the previous chapters and the available characters,
+                Based on the previous chapters and the current chapter basic edit,
                 create a structured outline for the chapter broken down into multiple scenes.
-                
-                For character descriptions, use this exact format with HTML tags:
-                <b>Basic Traits:</b>
-                <p>Age: [age]<br>
-                Appearance: [physical description]<br>
-                Profession/Background: [career and background]</p>
-
-                <b>Personality:</b>
-                <p>Key Traits: [list of traits]<br>
-                Moral Code: [ethical framework]<br>
-                Motivations: [what drives the character]</p>
-
-                <b>Character Development:</b>
-                <p>Internal Struggles: [personal conflicts]<br>
-                External Conflicts: [external challenges]<br>
-                Growth Arc: [character's journey]</p>
                 
                 Your response must be a valid JSON object with this structure:
                 {
@@ -197,12 +162,6 @@ async def generate_chapter_outline(
                         {
                             "scene_number": 1,
                             "title": "Scene title",
-                            "characters": [
-                                {
-                                    "name": "Character Name",
-                                    "description": "Character description with HTML tags as shown above"
-                                }
-                            ],
                             "content": "Scene content"
                         }
                     ]
@@ -219,12 +178,10 @@ async def generate_chapter_outline(
                 "content": f"""Previous Chapters:
 {previous_chapters_context}
 
-Available Characters:
-{characters_context}
-
 Current Chapter Information:
 - Chapter Number: {chapter.chapter_no}
 - Title: {chapter.title}
+- basic edit: {chapter.source_text}
 
 User's Request: {user_prompt}
 
@@ -263,38 +220,11 @@ Please provide a structured outline for this chapter:""",
                 db.add(db_scene)
                 db.flush()
 
-                # Process characters
-                scene_characters = []
-                for char in scene.characters:
-                    character = (
-                        db.query(Character)
-                        .filter(
-                            Character.name == char.name, Character.book_id == book_id
-                        )
-                        .first()
-                    )
-
-                    if not character:
-                        character = Character(
-                            name=char.name,
-                            description=char.description,
-                            book_id=book_id,
-                        )
-                        db.add(character)
-                        db.flush()
-
-                    db_scene.characters.append(character)
-                    scene_characters.append(character)
-
                 # Create response
                 scene_responses.append(
                     SceneOutlineResponse(
                         scene_number=db_scene.scene_number,
                         title=db_scene.title,
-                        characters=[
-                            {"name": c.name, "description": c.description}
-                            for c in scene_characters
-                        ],
                         content=db_scene.content,
                     )
                 )
@@ -357,12 +287,7 @@ async def generate_chapter_content(
     scenes_context = ""
     if scenes:
         scenes_context = "\n\n".join(
-            [
-                f"Scene {s.scene_number}: {s.title}\n"
-                f"Characters: {', '.join(c.name for c in s.characters)}\n"
-                f"Content: {s.content}"
-                for s in scenes
-            ]
+            [f"Scene {s.scene_number}: {s.title}\nContent: {s.content}" for s in scenes]
         )
 
     # Prepare the messages for GPT
@@ -371,7 +296,7 @@ async def generate_chapter_content(
             "role": "system",
             "content": """You are a creative writing assistant specialized in writing novel chapters.
             Based on the previous chapters and the provided context (including scenes if available),
-            write a complete, engaging chapter that maintains consistency with the story's style and narrative.
+            write a complete, engaging chapter that maintains consistency with the existing story's style and narrative.
             
             Your chapter should:
             1. Follow any provided scene structure if available
@@ -529,9 +454,8 @@ async def stream_chapter_content(
             If scenes are provided:
             1. Follow the scene structure exactly as provided
             2. Each scene should be a distinct section in the chapter
-            3. Maintain the characters and their roles as specified in each scene
-            4. Expand on the scene content while staying true to its core elements
-            5. Ensure smooth transitions between scenes
+            3. Expand on the scene content while staying true to its core elements
+            4. Ensure smooth transitions between scenes
             
             If no scenes are provided:
             1. Create a well-structured chapter with natural flow

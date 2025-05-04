@@ -112,7 +112,7 @@ async def generate_chapter_content_route(
     return await stream_chapter_content(db, book_id, chapter_id, request)
 
 
-@router.get("/chapters/{chapter_id}/characters")
+@router.get("/chapters/{chapter_id}/characters", deprecated=True)
 async def extract_chapter_characters_route(
     chapter_id: int, db: Session = Depends(get_db)
 ):
