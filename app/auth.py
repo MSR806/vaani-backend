@@ -141,7 +141,7 @@ async def require_write_permission(
     current_user: dict = Depends(get_current_user)
 ):
     """Dependency to check for write:books permission"""
-    if "write:books" not in current_user.get("permissions", []):
+    if "book:write" not in current_user.get("permissions", []):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You don't have permission to perform this action"

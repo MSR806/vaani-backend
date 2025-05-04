@@ -63,7 +63,7 @@ To use this API with a client application:
 You can configure additional permissions and roles in Auth0:
 
 1. In your API settings, go to the "Permissions" tab
-2. Add permissions (e.g., `read:books`, `write:books`)
+2. Add permissions (e.g., `book:read`, `book:write`)
 3. Create roles and assign permissions to them
 4. Assign roles to users
 
