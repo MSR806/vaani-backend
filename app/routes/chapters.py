@@ -96,7 +96,7 @@ async def generate_next_chapter_route(
     return await generate_next_chapter(db, book_id, request)
 
 
-@router.post("/books/{book_id}/chapters/{chapter_id}/generate-outline")
+@router.post("/books/{book_id}/chapters/{chapter_id}/generate-scenes")
 async def generate_chapter_outline_route(
     book_id: int,
     chapter_id: int,

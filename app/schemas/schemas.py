@@ -155,15 +155,6 @@ class SceneOutlineRequest(BaseModel):
 class CharacterOutlineRequest(BaseModel):
     user_prompt: str
 
-
-class SceneCompletionRequest(BaseModel):
-    outline: str
-
-
-class SceneCompletionResponse(BaseModel):
-    content: str
-
-
 # Outline schemas
 class OutlineRequest(BaseModel):
     user_prompt: str

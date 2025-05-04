@@ -34,11 +34,6 @@ prompt = PromptTemplate(input_variables=["history", "input"], template=template)
 memory = ConversationBufferMemory(return_messages=True, memory_key="history")
 
 
-def get_conversation_chain():
-    """Get a configured conversation chain for chat interactions."""
-    return ConversationChain(llm=chat, memory=memory, prompt=prompt, verbose=True)
-
-
 def get_openai_client(model: str | None = None):
     # Check if it's a Grok model
     if model and model.startswith("grok"):
@@ -46,18 +41,3 @@ def get_openai_client(model: str | None = None):
 
     # Default to OpenAI
     return OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-
-def get_chat_model():
-    """Get the LangChain chat model instance."""
-    return chat
-
-
-def get_memory():
-    """Get the conversation memory instance."""
-    return memory
-
-
-def get_prompt_template():
-    """Get the prompt template for conversations."""
-    return prompt

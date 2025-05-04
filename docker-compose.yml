@@ -14,6 +14,9 @@ services:
       - POSTGRES_HOST=db
       - POSTGRES_PORT=5432
       - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - AUTH0_DOMAIN=${AUTH0_DOMAIN}
+      - AUTH0_API_AUDIENCE=${AUTH0_API_AUDIENCE}
+      - AUTH0_ALGORITHMS=${AUTH0_ALGORITHMS}
     depends_on:
       db:
         condition: service_healthy

@@ -3,7 +3,6 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from ..schemas.schemas import ChatRequest, CompletionRequest
 from ..services.chat_service import (
-    chat_with_ai,
     stream_chat,
     chat_as_character,
     stream_chat_as_character,
@@ -13,14 +12,6 @@ from ..services.ai_service import get_openai_client
 from ..auth import require_write_permission
 
 router = APIRouter(tags=["chat"])
-
-
-@router.post("/chat")
-async def chat_with_ai_route(
-    request: ChatRequest,
-    current_user: dict = Depends(require_write_permission)
-):
-    return await chat_with_ai(request)
 
 
 @router.post("/chat/stream")

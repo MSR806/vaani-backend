@@ -1,34 +1,9 @@
 from sqlalchemy.orm import Session
 from ..models.models import Chapter
 from ..schemas.schemas import ChatRequest, ChatResponse
-from ..services.ai_service import get_openai_client, get_conversation_chain
+from ..services.ai_service import get_openai_client
 from ..config import OPENAI_MODEL
-import json
 from fastapi.responses import StreamingResponse
-
-async def chat_with_ai(request: ChatRequest):
-    if not get_openai_client().api_key:
-        raise Exception("OpenAI API key not configured")
-    
-    try:
-        # Get the last user message
-        last_user_message = None
-        for msg in reversed(request.messages):
-            if msg.role == "user":
-                last_user_message = msg.content
-                break
-        
-        if not last_user_message:
-            raise Exception("No user message found in the request")
-        
-        # Use LangChain's conversation chain
-        conversation = get_conversation_chain()
-        response = conversation.predict(input=last_user_message)
-        
-        return ChatResponse(message=response)
-        
-    except Exception as e:
-        raise Exception(str(e))
 
 async def stream_chat(request: ChatRequest):
     if not get_openai_client().api_key:

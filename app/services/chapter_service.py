@@ -1,10 +1,9 @@
 from sqlalchemy.orm import Session
-from ..models.models import Chapter, Book, Scene, Character
+from ..models.models import Chapter, Book, Scene
 from ..schemas.schemas import (
     ChapterCreate,
     ChapterUpdate,
     ChapterResponse,
-    OutlineRequest,
     ChapterOutlineResponse,
     ChapterGenerateRequest,
     SceneOutlineResponse,
@@ -301,10 +300,9 @@ async def generate_chapter_content(
             Your chapter should:
             1. Follow any provided scene structure if available
             2. Be well-structured with natural flow between scenes
-            3. Maintain consistent character voices and personalities
-            4. Include vivid descriptions and engaging dialogue
-            5. Advance the plot while maintaining suspense
-            6. End in a way that hooks readers for the next chapter
+            3. Include vivid descriptions and engaging dialogue
+            4. Advance the plot while maintaining suspense
+            5. End in a way that hooks readers for the next chapter
             
             Start your response with a suitable chapter title in the format: TITLE: Your Chapter Title
             Then continue with the chapter content.""",
@@ -437,7 +435,6 @@ async def stream_chapter_content(
         scenes_context = "\n\n".join(
             [
                 f"Scene {s.scene_number}: {s.title}\n"
-                f"Characters: {', '.join(c.name for c in s.characters)}\n"
                 f"Content: {s.content}"
                 for s in scenes
             ]
