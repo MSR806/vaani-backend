@@ -15,10 +15,8 @@ async def stream_completion(
     use_source_content: bool = False,
     chapter_id: int | None = None,
     book_id: int | None = None,
-    llm_model: str | None = None,
 ):
     try:
-        client = get_openai_client(llm_model)
 
         # If use_source_content is True, get the chapter's source_text
         if use_source_content and db and chapter_id and book_id:
@@ -35,11 +33,11 @@ async def stream_completion(
         messages = [
             {
                 "role": "system",
-                "content": "You are a creative writing assistant. Your task is to continue the story based on the provided context and user prompt. Write in a natural, engaging style that matches the existing narrative. Keep the content concise and to the point unless the user prompt asks for more details.",
+                "content": "You are a creative writing assistant. Your task is to follow user prompt. Write in a natural, engaging style that matches the existing narrative. Keep the content concise and to the point unless the user prompt asks for more details.",
             },
             {
                 "role": "user",
-                "content": f"Context: {context}\n\nUser Prompt: {user_prompt}\n\nPlease continue the story:",
+                "content": f"Context: {context}\n\nUser Prompt: {user_prompt}, \n\nOnly output the answer, do not include any additional text.",
             },
         ]
 
@@ -49,14 +47,14 @@ async def stream_completion(
                 # If db is provided, get settings from database
                 if db:
                     # Get AI model and temperature settings
-                    ai_model_setting = get_setting_by_key(db, "chapter_select_and_replace_ai_model")
-                    temperature_setting = get_setting_by_key(db, "chapter_select_and_replace_temperature")
-                    model = llm_model if llm_model else ai_model_setting.value
-                    temperature = float(temperature_setting.value)
+                    model = get_setting_by_key(db, "chapter_select_and_replace_ai_model").value
+                    temperature = float(get_setting_by_key(db, "chapter_select_and_replace_temperature").value)
                 else:
                     # Use provided model if available, otherwise use default
-                    model = llm_model if llm_model else OPENAI_MODEL
+                    model = OPENAI_MODEL
                     temperature = 0.7
+
+                client = get_openai_client(model)
                 
                 stream = client.chat.completions.create(
                     model=model, messages=messages, stream=True, temperature=temperature
