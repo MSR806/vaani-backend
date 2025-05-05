@@ -97,7 +97,3 @@ class Setting(Base):
     description = Column(Text, nullable=True)
     type = Column(String, nullable=False, default="string")  # string or list
     options = Column(Text, nullable=True)  # JSON string of options
-    created_at = Column(BigInteger, nullable=False)  # Unix timestamp
-    updated_at = Column(BigInteger, nullable=False)  # Unix timestamp
-    created_by = Column(String, nullable=False)  # User ID
-    updated_by = Column(String, nullable=False)  # User ID

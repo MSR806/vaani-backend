@@ -92,7 +92,7 @@ async def generate_chapter_outline_route(
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_write_permission)
 ):
-    return await generate_chapter_outline(db, book_id, chapter_id, request)
+    return await generate_chapter_outline(db, book_id, chapter_id, request.user_prompt, current_user["user_id"])
 
 
 @router.post("/books/{book_id}/chapters/{chapter_id}/generate-content")

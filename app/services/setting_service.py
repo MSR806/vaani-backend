@@ -43,7 +43,8 @@ def create_setting(db: Session, setting: SettingCreate):
         db.commit()
         db.refresh(db_setting)
         return db_setting
-    except IntegrityError:
+    except IntegrityError as e:
+        print(e)
         db.rollback()
         raise HTTPException(status_code=400, detail="Setting key already exists")
 

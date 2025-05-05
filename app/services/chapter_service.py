@@ -130,7 +130,7 @@ def patch_chapter_state(db: Session, book_id: int, chapter_id: int, state: str |
 
 
 async def generate_chapter_outline(
-    db: Session, book_id: int, chapter_id: int, user_prompt: str
+    db: Session, book_id: int, chapter_id: int, user_prompt: str, user_id: str
 ) -> List[SceneOutlineResponse]:
     try:
         # Get AI model and temperature settings
@@ -205,6 +205,7 @@ async def generate_chapter_outline(
             db.query(Scene).filter(Scene.chapter_id == chapter_id).delete()
             db.flush()
 
+            current_time = int(time.time())
             # Process scenes
             for scene in outline_response.scenes:
                 # Create scene
@@ -213,6 +214,10 @@ async def generate_chapter_outline(
                     scene_number=scene.scene_number,
                     title=scene.title,
                     content=scene.content,
+                    created_at=current_time,
+                    updated_at=current_time,
+                    created_by=user_id,
+                    updated_by=user_id
                 )
                 db.add(db_scene)
                 db.flush()
