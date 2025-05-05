@@ -64,3 +64,16 @@ class Scene(Base):
     chapter_id = Column(Integer, ForeignKey("chapters.id"))
     content = Column(Text)
     chapter = relationship("Chapter", back_populates="scenes")
+
+
+class Setting(Base):
+    __tablename__ = "settings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    key = Column(String, unique=True, index=True)
+    title = Column(String, nullable=True)  # User-friendly title
+    section = Column(String, nullable=True)  # Grouping category for settings
+    value = Column(Text, nullable=False)
+    description = Column(Text, nullable=True)
+    type = Column(String, nullable=False, default="string")  # string or list
+    options = Column(Text, nullable=True)  # JSON string of options

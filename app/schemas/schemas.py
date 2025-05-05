@@ -208,3 +208,41 @@ class CompletionRequest(BaseModel):
 
 class NextChapterRequest(BaseModel):
     user_prompt: str
+
+
+# Setting schemas
+class SettingBase(BaseModel):
+    key: str
+    title: str | None = None
+    section: str | None = None
+    value: str
+    description: str | None = None
+    type: str = "string"  # string or list
+    options: str | None = None  # JSON string of options
+
+
+class SettingCreate(SettingBase):
+    pass
+
+
+class SettingUpdate(BaseModel):
+    id: int
+    value: str
+
+
+class SettingResponse(BaseModel):
+    id: int
+    key: str
+    title: str | None = None
+    section: str | None = None
+    value: str
+    description: str | None = None
+    type: str
+    options: str | None = None
+
+    class Config:
+        from_attributes = True
+
+
+class SettingBatchUpdate(BaseModel):
+    settings: List[SettingUpdate]
