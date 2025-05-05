@@ -4,12 +4,14 @@ from ..database import get_db
 from ..schemas.schemas import (
     SceneCreate,
     SceneUpdate,
+    SceneReorderRequest,
 )
 from ..services.scene_service import (
     create_scene,
     update_scene,
     get_scenes,
     delete_scene,
+    reorder_scenes,
 )
 from ..auth import require_write_permission, require_delete_permission
 
@@ -23,6 +25,21 @@ def create_scene_route(
     current_user: dict = Depends(require_write_permission)
 ):
     return create_scene(db, scene)
+
+@router.put("/scenes/reorder")
+def reorder_scenes_route(
+    reorder_request: SceneReorderRequest,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_write_permission)
+):
+    scene_updates = [{"id": scene.id, "scene_number": scene.scene_number} for scene in reorder_request.scenes]
+    
+    updated_scenes = reorder_scenes(db, scene_updates)
+    
+    if updated_scenes is None:
+        raise HTTPException(status_code=404, detail="One or more scenes not found or scenes from different chapters")
+    
+    return updated_scenes
 
 
 @router.put("/scenes/{scene_id}")

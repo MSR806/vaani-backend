@@ -72,3 +72,54 @@ def delete_scene(db: Session, scene_id: int):
     # Commit all changes
     db.commit()
     return True
+
+def reorder_scenes(db: Session, scene_updates: list):
+    """
+    Reorder scenes based on the provided scene_id and new scene_number pairs.
+    
+    Args:
+        db: Database session
+        scene_updates: List of dictionaries with scene_id and new scene_number
+        
+    Returns:
+        List of updated scenes or None if any scene is not found
+    """
+    # Collect all scenes to update - ensure scene IDs are integers
+    scene_ids = [int(scene_update["id"]) for scene_update in scene_updates]
+    scenes = db.query(Scene).filter(Scene.id.in_(scene_ids)).all()
+    
+    # Create a mapping of scene_id to scene object
+    scene_map = {scene.id: scene for scene in scenes}
+    
+    # Check if all scenes exist
+    if len(scenes) != len(scene_updates):
+        return None
+    
+    # Get the chapter_id from the first scene (all scenes should be in the same chapter)
+    if not scenes:
+        return None
+    
+    chapter_id = scenes[0].chapter_id
+    
+    # Ensure all scenes belong to the same chapter
+    if not all(scene.chapter_id == chapter_id for scene in scenes):
+        return None
+    
+    # Apply the new scene numbers - ensure scene numbers are integers
+    for scene_update in scene_updates:
+        scene_id = int(scene_update["id"])
+        new_scene_number = int(scene_update["scene_number"])
+        
+        if scene_id in scene_map:
+            scene_map[scene_id].scene_number = new_scene_number
+    
+    # Commit the changes
+    db.commit()
+    
+    # Refresh the scenes to get the updated values
+    updated_scenes = []
+    for scene_id in scene_ids:
+        db.refresh(scene_map[scene_id])
+        updated_scenes.append(scene_map[scene_id])
+    
+    return updated_scenes

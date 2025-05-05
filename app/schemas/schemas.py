@@ -126,6 +126,15 @@ class SceneResponse(BaseModel):
         from_attributes = True
 
 
+# Scene reordering schema
+class SceneReorderItem(BaseModel):
+    id: int
+    scene_number: int
+
+class SceneReorderRequest(BaseModel):
+    scenes: List[SceneReorderItem]
+
+
 # Chat schemas
 class ChatMessage(BaseModel):
     role: str
