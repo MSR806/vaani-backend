@@ -19,6 +19,14 @@ def get_setting_by_id(db: Session, setting_id: int):
     return setting
 
 
+def get_setting_by_key(db: Session, key: str):
+    """Get a setting by its key"""
+    setting = db.query(Setting).filter(Setting.key == key).first()
+    if not setting:
+        raise HTTPException(status_code=404, detail=f"Setting with key '{key}' not found")
+    return setting
+
+
 def create_setting(db: Session, setting: SettingCreate):
     """Create a new setting"""
     try:

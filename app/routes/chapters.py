@@ -14,7 +14,6 @@ from ..services.chapter_service import (
     update_chapter,
     get_chapter,
     generate_chapter_outline,
-    generate_chapter_content,
     stream_chapter_content,
     patch_chapter_source_text,
     delete_chapter,
@@ -23,7 +22,6 @@ from ..services.chapter_service import (
 from ..services.book_service import (
     get_book,
     get_book_chapters,
-    generate_next_chapter,
 )
 from ..services.character_service import extract_chapter_characters
 from ..auth import require_write_permission
@@ -84,16 +82,6 @@ def delete_chapter_route(book_id: int, chapter_id: int, db: Session = Depends(ge
     if not success:
         raise HTTPException(status_code=404, detail="Chapter not found")
     return {"detail": "Chapter deleted successfully"}
-
-
-@router.post("/books/{book_id}/generate-chapter")
-async def generate_next_chapter_route(
-    book_id: int, 
-    request: ChapterGenerateRequest, 
-    db: Session = Depends(get_db),
-    current_user: dict = Depends(require_write_permission)
-):
-    return await generate_next_chapter(db, book_id, request)
 
 
 @router.post("/books/{book_id}/chapters/{chapter_id}/generate-scenes")

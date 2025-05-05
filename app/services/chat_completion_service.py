@@ -1,26 +1,25 @@
 from fastapi import HTTPException
-from openai import OpenAI
-from ..config import OPENAI_MODEL
 import json
+from ..config import OPENAI_MODEL
 from fastapi.responses import StreamingResponse
 from ..models.models import Chapter
 from sqlalchemy.orm import Session
+from ..services.setting_service import get_setting_by_key
+from ..services.ai_service import get_openai_client
 
 
 async def stream_completion(
     context: str,
     user_prompt: str,
-    client: OpenAI,
     db: Session = None,
     use_source_content: bool = False,
     chapter_id: int | None = None,
     book_id: int | None = None,
     llm_model: str | None = None,
 ):
-    if not client.api_key:
-        raise HTTPException(status_code=500, detail="OpenAI API key not configured")
-
     try:
+        client = get_openai_client(llm_model)
+
         # If use_source_content is True, get the chapter's source_text
         if use_source_content and db and chapter_id and book_id:
             chapter = (
@@ -47,11 +46,20 @@ async def stream_completion(
         # Create streaming response
         async def generate():
             try:
-                # Use provided model if available, otherwise use default
-                model = llm_model if llm_model else OPENAI_MODEL
-
+                # If db is provided, get settings from database
+                if db:
+                    # Get AI model and temperature settings
+                    ai_model_setting = get_setting_by_key(db, "chapter_select_and_replace_ai_model")
+                    temperature_setting = get_setting_by_key(db, "chapter_select_and_replace_temperature")
+                    model = llm_model if llm_model else ai_model_setting.value
+                    temperature = float(temperature_setting.value)
+                else:
+                    # Use provided model if available, otherwise use default
+                    model = llm_model if llm_model else OPENAI_MODEL
+                    temperature = 0.7
+                
                 stream = client.chat.completions.create(
-                    model=model, messages=messages, stream=True, temperature=0.7
+                    model=model, messages=messages, stream=True, temperature=temperature
                 )
 
                 for chunk in stream:
