@@ -3,8 +3,9 @@ from fastapi import HTTPException
 import requests
 from ..models.models import Image
 import io
+import time
 
-async def store_image_from_url(db: Session, url: str, name: str = "image") -> Image:
+async def store_image_from_url(db: Session, url: str, name: str = "image", user_id: str = None) -> Image:
     """
     Download an image from a URL and store it in the database.
     
@@ -12,6 +13,7 @@ async def store_image_from_url(db: Session, url: str, name: str = "image") -> Im
         db: Database session
         url: URL of the image to download
         name: Name to give the image
+        user_id: ID of the user creating the image
         
     Returns:
         The created Image object
@@ -24,12 +26,17 @@ async def store_image_from_url(db: Session, url: str, name: str = "image") -> Im
         # Get the content type
         mime_type = response.headers.get('Content-Type', 'image/jpeg')
         
+        current_time = int(time.time())
         # Create a new image record
         db_image = Image(
             name=name,
             mime_type=mime_type,
             data=response.content,
-            external_url=url  # Store the original external URL
+            external_url=url,  # Store the original external URL
+            created_at=current_time,
+            updated_at=current_time,
+            created_by=user_id,
+            updated_by=user_id
         )
         
         # Save to database
@@ -57,13 +64,14 @@ def get_image(db: Session, image_id: int) -> Image:
     """
     return db.query(Image).filter(Image.id == image_id).first()
 
-def delete_image(db: Session, image_id: int) -> bool:
+def delete_image(db: Session, image_id: int, user_id: str = None) -> bool:
     """
     Delete an image from the database.
     
     Args:
         db: Database session
         image_id: ID of the image to delete
+        user_id: ID of the user deleting the image
         
     Returns:
         True if the image was deleted, False otherwise

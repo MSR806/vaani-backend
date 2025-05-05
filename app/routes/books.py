@@ -61,7 +61,7 @@ async def create_book_route(
         author_id=current_user["user_id"],
         author=user_details["name"]  # Use the name from UserInfo
     )
-    return await create_book(db, book_data)
+    return await create_book(db, book_data, current_user["user_id"])
 
 
 @router.put("/books/{book_id}", response_model=BookResponse)
@@ -71,7 +71,7 @@ def update_book_route(
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_write_permission)
 ):
-    book = update_book(db, book_id, book_update)
+    book = update_book(db, book_id, book_update, current_user["user_id"])
     if not book:
         raise HTTPException(status_code=404, detail="Book not found")
     return book
@@ -85,7 +85,7 @@ async def generate_book_cover_route(
 ):
     # Call the book service to generate the cover
     try:
-        book = await generate_book_cover(db, book_id)
+        book = await generate_book_cover(db, book_id, current_user["user_id"])
         return BookCoverResponse(book_id=book_id, cover_url=book.cover_url)
     except HTTPException as e:
         # Re-raise HTTP exceptions from the service

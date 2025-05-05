@@ -16,9 +16,10 @@ from typing import List
 from fastapi.responses import StreamingResponse
 from ..services.setting_service import get_setting_by_key
 from app.prompts import format_prompt
+import time
 
 
-def create_chapter(db: Session, book_id: int, chapter: ChapterCreate):
+def create_chapter(db: Session, book_id: int, chapter: ChapterCreate, user_id: str):
     # Check if book exists
     book = db.query(Book).filter(Book.id == book_id).first()
     if not book:
@@ -45,6 +46,7 @@ def create_chapter(db: Session, book_id: int, chapter: ChapterCreate):
     if existing_chapter:
         return None
 
+    current_time = int(time.time())
     db_chapter = Chapter(
         book_id=book_id,
         title=chapter.title,
@@ -52,6 +54,10 @@ def create_chapter(db: Session, book_id: int, chapter: ChapterCreate):
         content=chapter.content,
         source_text=chapter.source_text,
         state="DRAFT",
+        created_at=current_time,
+        updated_at=current_time,
+        created_by=user_id,
+        updated_by=user_id
     )
     db.add(db_chapter)
     db.commit()
@@ -60,7 +66,7 @@ def create_chapter(db: Session, book_id: int, chapter: ChapterCreate):
 
 
 def update_chapter(
-    db: Session, book_id: int, chapter_id: int, chapter_update: ChapterUpdate
+    db: Session, book_id: int, chapter_id: int, chapter_update: ChapterUpdate, user_id: str
 ):
     chapter = (
         db.query(Chapter)
@@ -72,6 +78,8 @@ def update_chapter(
 
     chapter.content = chapter_update.content
     chapter.source_text = chapter_update.source_text
+    chapter.updated_at = int(time.time())
+    chapter.updated_by = user_id
     db.commit()
     db.refresh(chapter)
     return chapter
@@ -86,7 +94,7 @@ def get_chapter(db: Session, book_id: int, chapter_id: int):
 
 
 def patch_chapter_source_text(
-    db: Session, book_id: int, chapter_id: int, source_text: str | None
+    db: Session, book_id: int, chapter_id: int, source_text: str | None, user_id: str
 ):
     chapter = (
         db.query(Chapter)
@@ -97,12 +105,14 @@ def patch_chapter_source_text(
         return None
 
     chapter.source_text = source_text
+    chapter.updated_at = int(time.time())
+    chapter.updated_by = user_id
     db.commit()
     db.refresh(chapter)
     return chapter
 
 
-def patch_chapter_state(db: Session, book_id: int, chapter_id: int, state: str | None):
+def patch_chapter_state(db: Session, book_id: int, chapter_id: int, state: str | None, user_id: str):
     chapter = (
         db.query(Chapter)
         .filter(Chapter.id == chapter_id, Chapter.book_id == book_id)
@@ -112,6 +122,8 @@ def patch_chapter_state(db: Session, book_id: int, chapter_id: int, state: str |
         return None
 
     chapter.state = state
+    chapter.updated_at = int(time.time())
+    chapter.updated_by = user_id
     db.commit()
     db.refresh(chapter)
     return chapter

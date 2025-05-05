@@ -10,6 +10,7 @@ from .placeholder_image import generate_placeholder_image
 from .ai_service import get_openai_client
 from ..config import OPENAI_MODEL
 import json
+import time
 
 # Load environment variables
 load_dotenv()
@@ -17,12 +18,17 @@ load_dotenv()
 # Initialize OpenAI client
 client = openai.AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-async def create_book(db: Session, book: BookBase) -> Book:
+async def create_book(db: Session, book: BookBase, user_id: str) -> Book:
+    current_time = int(time.time())
     # Create the book record
     db_book = Book(
         title=book.title, 
         author=book.author,
-        author_id=book.author_id
+        author_id=book.author_id,
+        created_at=current_time,
+        updated_at=current_time,
+        created_by=user_id,
+        updated_by=user_id
     )
     db.add(db_book)
     db.commit()
@@ -37,7 +43,8 @@ async def create_book(db: Session, book: BookBase) -> Book:
         placeholder_image = await store_image_from_url(
             db=db,
             url=placeholder_url,
-            name=f"placeholder_book_cover_{db_book.id}"
+            name=f"placeholder_book_cover_{db_book.id}",
+            user_id=user_id
         )
         
         # Create the internal image URL using the /images/:id format
@@ -46,6 +53,8 @@ async def create_book(db: Session, book: BookBase) -> Book:
         # Update book with placeholder URL and image ID
         db_book.cover_url = internal_image_url
         db_book.cover_image_id = placeholder_image.id
+        db_book.updated_at = int(time.time())
+        db_book.updated_by = user_id
         db.commit()
         db.refresh(db_book)
     except Exception as e:
@@ -60,12 +69,14 @@ def get_book(db: Session, book_id: int) -> Book:
 def get_books(db: Session) -> list[Book]:
     return db.query(Book).all()
 
-def update_book(db: Session, book_id: int, book_update: BookUpdate) -> Book:
+def update_book(db: Session, book_id: int, book_update: BookUpdate, user_id: str) -> Book:
     book = get_book(db, book_id)
     if not book:
         return None
     
     book.title = book_update.title
+    book.updated_at = int(time.time())
+    book.updated_by = user_id
     db.commit()
     db.refresh(book)
     return book
@@ -276,13 +287,14 @@ Please write the complete chapter:"""
     except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
-async def generate_book_cover(db: Session, book_id: int):
+async def generate_book_cover(db: Session, book_id: int, user_id: str):
     """
     Generate a book cover for a book using OpenAI's DALL-E model.
     
     Args:
         db: Database session
         book_id: ID of the book to generate a cover for
+        user_id: ID of the user generating the cover
         
     Returns:
         The book object with updated cover image information
@@ -364,7 +376,8 @@ async def generate_book_cover(db: Session, book_id: int):
             db_image = await store_image_from_url(
                 db=db,
                 url=image_url,
-                name=f"book_cover_{book_id}_{book_title}"
+                name=f"book_cover_{book_id}_{book_title}",
+                user_id=user_id
             )
             
             # Create the internal image URL using the /images/:id format
@@ -373,6 +386,8 @@ async def generate_book_cover(db: Session, book_id: int):
             # Update book with the internal image URL and image ID
             book.cover_url = internal_image_url
             book.cover_image_id = db_image.id
+            book.updated_at = int(time.time())
+            book.updated_by = user_id
             db.commit()
             
             # Log the successful generation
@@ -386,13 +401,14 @@ async def generate_book_cover(db: Session, book_id: int):
             print(f"DALL-E generation failed: {str(e)}")
             
             # Get placeholder image URL using our helper function
-            placeholder_url = await generate_placeholder_image(text=f"Title: {db_book.title}\nAuthor: {db_book.author}")
+            placeholder_url = await generate_placeholder_image(text=f"Title: {book.title}\nAuthor: {book.author}")
             
             # Use the image service to store the image from the URL
             placeholder_image = await store_image_from_url(
                 db=db,
                 url=placeholder_url,
-                name=f"placeholder_book_cover_{book_id}"
+                name=f"placeholder_book_cover_{book_id}",
+                user_id=user_id
             )
             
             # Create the internal image URL using the /images/:id format
@@ -401,6 +417,8 @@ async def generate_book_cover(db: Session, book_id: int):
             # Update book with placeholder URL and image ID
             book.cover_url = internal_image_url
             book.cover_image_id = placeholder_image.id
+            book.updated_at = int(time.time())
+            book.updated_by = user_id
             db.commit()
             
             return book

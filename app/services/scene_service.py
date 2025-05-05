@@ -3,36 +3,46 @@ from ..models.models import Scene, Chapter
 from ..schemas.schemas import (
     SceneCreate, SceneUpdate
 )
+import time
 
-def create_scene(db: Session, scene: SceneCreate):
+def create_scene(db: Session, scene: SceneCreate, user_id: str):
     # Check if chapter exists
     chapter = db.query(Chapter).filter(Chapter.id == scene.chapter_id).first()
     if not chapter:
         return None
     
+    current_time = int(time.time())
     # Create the scene
     db_scene = Scene(
         scene_number=scene.scene_number,
         title=scene.title,
         chapter_id=scene.chapter_id,
-        content=scene.content
+        content=scene.content,
+        created_at=current_time,
+        updated_at=current_time,
+        created_by=user_id,
+        updated_by=user_id
     )
     db.add(db_scene)
     db.commit()
     db.refresh(db_scene)
     return db_scene
 
-def update_scene(db: Session, scene_id: int, scene_update: SceneUpdate):
+def update_scene(db: Session, scene_id: int, scene_update: SceneUpdate, user_id: str):
     scene = db.query(Scene).filter(Scene.id == scene_id).first()
     if not scene:
         return None
     
+    current_time = int(time.time())
     if scene_update.scene_number is not None:
         scene.scene_number = scene_update.scene_number
     if scene_update.title is not None:
         scene.title = scene_update.title
     if scene_update.content is not None:
         scene.content = scene_update.content
+    
+    scene.updated_at = current_time
+    scene.updated_by = user_id
     
     db.commit()
     db.refresh(scene)
@@ -47,7 +57,7 @@ def get_scenes(db: Session, chapter_id: int = None):
         query = query.filter(Scene.chapter_id == chapter_id)
     return query.all()
 
-def delete_scene(db: Session, scene_id: int):
+def delete_scene(db: Session, scene_id: int, user_id: str):
     scene = db.query(Scene).filter(Scene.id == scene_id).first()
     if not scene:
         return False
@@ -65,9 +75,12 @@ def delete_scene(db: Session, scene_id: int):
         Scene.scene_number > deleted_scene_number
     ).order_by(Scene.scene_number).all()
     
-    # Decrement scene_number for each subsequent scene
+    current_time = int(time.time())
+    # Decrement scene_number for each subsequent scene and update audit fields
     for scene_to_update in scenes_to_update:
         scene_to_update.scene_number -= 1
+        scene_to_update.updated_at = current_time
+        scene_to_update.updated_by = user_id
     
     # Commit all changes
     db.commit()

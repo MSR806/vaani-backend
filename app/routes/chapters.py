@@ -36,7 +36,7 @@ def create_chapter_route(
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_write_permission)
 ):
-    chapter = create_chapter(db, book_id, chapter)
+    chapter = create_chapter(db, book_id, chapter, current_user["user_id"])
     if not chapter:
         raise HTTPException(status_code=404, detail="Book not found")
     return chapter
@@ -70,7 +70,7 @@ def update_chapter_route(
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_write_permission)
 ):
-    chapter = update_chapter(db, book_id, chapter_id, chapter_update)
+    chapter = update_chapter(db, book_id, chapter_id, chapter_update, current_user["user_id"])
     if not chapter:
         raise HTTPException(status_code=404, detail="Chapter not found")
     return chapter
@@ -125,8 +125,9 @@ def update_chapter_source_text(
     chapter_id: int,
     update: ChapterSourceTextUpdate,
     db: Session = Depends(get_db),
+    current_user: dict = Depends(require_write_permission)
 ):
-    chapter = patch_chapter_source_text(db, book_id, chapter_id, update.source_text)
+    chapter = patch_chapter_source_text(db, book_id, chapter_id, update.source_text, current_user["user_id"])
     if not chapter:
         raise HTTPException(status_code=404, detail="Chapter not found")
     return chapter
@@ -140,8 +141,9 @@ def update_chapter_state(
     chapter_id: int,
     update: ChapterStateUpdate,
     db: Session = Depends(get_db),
+    current_user: dict = Depends(require_write_permission)
 ):
-    chapter = patch_chapter_state(db, book_id, chapter_id, update.state)
+    chapter = patch_chapter_state(db, book_id, chapter_id, update.state, current_user["user_id"])
     if not chapter:
         raise HTTPException(status_code=404, detail="Chapter not found")
     return chapter

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, Table, LargeBinary
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, Table, LargeBinary, BigInteger
 from sqlalchemy.orm import relationship
 from ..database import Base
 
@@ -19,6 +19,10 @@ class Image(Base):
     mime_type = Column(String)
     data = Column(LargeBinary)
     external_url = Column(Text, nullable=True)  # Store the original external URL
+    created_at = Column(BigInteger, nullable=False)  # Unix timestamp
+    updated_at = Column(BigInteger, nullable=False)  # Unix timestamp
+    created_by = Column(String, nullable=False)  # User ID
+    updated_by = Column(String, nullable=False)  # User ID
 
 
 class Book(Base):
@@ -29,6 +33,10 @@ class Book(Base):
     author = Column(String)
     author_id = Column(String, nullable=False)  # Auth0 user ID of the book creator
     cover_url = Column(Text, nullable=True)  # URL to the generated book cover
+    created_at = Column(BigInteger, nullable=False)  # Unix timestamp
+    updated_at = Column(BigInteger, nullable=False)  # Unix timestamp
+    created_by = Column(String, nullable=False)  # User ID
+    updated_by = Column(String, nullable=False)  # User ID
     chapters = relationship("Chapter", back_populates="book")
 
 
@@ -42,6 +50,10 @@ class Chapter(Base):
     content = Column(Text, nullable=False)
     source_text = Column(Text, nullable=True)
     state = Column(String, nullable=True)
+    created_at = Column(BigInteger, nullable=False)  # Unix timestamp
+    updated_at = Column(BigInteger, nullable=False)  # Unix timestamp
+    created_by = Column(String, nullable=False)  # User ID
+    updated_by = Column(String, nullable=False)  # User ID
     book = relationship("Book", back_populates="chapters")
     scenes = relationship("Scene", back_populates="chapter")
 
@@ -53,6 +65,10 @@ class Character(Base):
     name = Column(String, index=True)
     description = Column(Text)
     book_id = Column(Integer, ForeignKey("books.id"))
+    created_at = Column(BigInteger, nullable=False)  # Unix timestamp
+    updated_at = Column(BigInteger, nullable=False)  # Unix timestamp
+    created_by = Column(String, nullable=False)  # User ID
+    updated_by = Column(String, nullable=False)  # User ID
 
 
 class Scene(Base):
@@ -63,6 +79,10 @@ class Scene(Base):
     title = Column(String, index=True)
     chapter_id = Column(Integer, ForeignKey("chapters.id"))
     content = Column(Text)
+    created_at = Column(BigInteger, nullable=False)  # Unix timestamp
+    updated_at = Column(BigInteger, nullable=False)  # Unix timestamp
+    created_by = Column(String, nullable=False)  # User ID
+    updated_by = Column(String, nullable=False)  # User ID
     chapter = relationship("Chapter", back_populates="scenes")
 
 
@@ -77,3 +97,7 @@ class Setting(Base):
     description = Column(Text, nullable=True)
     type = Column(String, nullable=False, default="string")  # string or list
     options = Column(Text, nullable=True)  # JSON string of options
+    created_at = Column(BigInteger, nullable=False)  # Unix timestamp
+    updated_at = Column(BigInteger, nullable=False)  # Unix timestamp
+    created_by = Column(String, nullable=False)  # User ID
+    updated_by = Column(String, nullable=False)  # User ID

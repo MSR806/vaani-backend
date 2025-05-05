@@ -24,7 +24,7 @@ def create_scene_route(
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_write_permission)
 ):
-    return create_scene(db, scene)
+    return create_scene(db, scene, current_user["user_id"])
 
 @router.put("/scenes/reorder")
 def reorder_scenes_route(
@@ -49,7 +49,7 @@ def update_scene_route(
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_write_permission)
 ):
-    scene = update_scene(db, scene_id, scene_update)
+    scene = update_scene(db, scene_id, scene_update, current_user["user_id"])
     if not scene:
         raise HTTPException(status_code=404, detail="Scene not found")
     return scene
@@ -64,7 +64,7 @@ def delete_scene_route(
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_delete_permission)
 ):
-    success = delete_scene(db, scene_id)
+    success = delete_scene(db, scene_id, current_user["user_id"])
     if not success:
         raise HTTPException(status_code=404, detail="Scene not found")
     return {"message": "Scene deleted successfully"}
