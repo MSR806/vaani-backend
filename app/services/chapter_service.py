@@ -1,20 +1,21 @@
+from app.prompts.scenes import SCENE_GENERATION_SYSTEM_PROMPT_V1
+from app.prompts.chapters import CHAPTER_GENERATION_FROM_SCENE_SYSTEM_PROMPT_V1
 from sqlalchemy.orm import Session
 from ..models.models import Chapter, Book, Scene
 from ..schemas.schemas import (
     ChapterCreate,
     ChapterUpdate,
-    ChapterResponse,
     ChapterOutlineResponse,
     ChapterGenerateRequest,
     SceneOutlineResponse,
 )
 from ..services.ai_service import get_openai_client
-from ..config import OPENAI_MODEL
 from fastapi import HTTPException
 import json
 from typing import List
 from fastapi.responses import StreamingResponse
 from ..services.setting_service import get_setting_by_key
+from app.prompts import format_prompt
 
 
 def create_chapter(db: Session, book_id: int, chapter: ChapterCreate):
@@ -153,44 +154,23 @@ async def generate_chapter_outline(
         )
 
         # Prepare the messages for GPT
+        system_prompt = format_prompt(
+            SCENE_GENERATION_SYSTEM_PROMPT_V1,
+            previous_chapters=previous_chapters_context,
+            source_text=chapter.source_text,
+        )
+
+        print(system_prompt)
+        print(user_prompt)
         messages = [
             {
                 "role": "system",
-                "content": """You are a creative writing assistant specialized in creating chapter outlines.
-                Based on the previous chapters and the current chapter basic edit,
-                create a structured outline for the chapter broken down into multiple scenes.
-                
-                Your response must be a valid JSON object with this structure:
-                {
-                    "scenes": [
-                        {
-                            "scene_number": 1,
-                            "title": "Scene title",
-                            "content": "Scene content"
-                        }
-                    ]
-                }
-                
-                Important:
-                1. Ensure all strings are properly escaped
-                2. Do not include any trailing commas
-                3. Make sure all quotes are properly closed
-                4. Keep the response within the token limit""",
+                "content": system_prompt,
             },
             {
                 "role": "user",
-                "content": f"""Previous Chapters:
-{previous_chapters_context}
-
-Current Chapter Information:
-- Chapter Number: {chapter.chapter_no}
-- Title: {chapter.title}
-- basic edit: {chapter.source_text}
-
-User's Request: {user_prompt}
-
-Please provide a structured outline for this chapter:""",
-            },
+                "content": f"{user_prompt}",
+            }
         ]
 
         try:
@@ -300,42 +280,21 @@ async def stream_chapter_content(
         )
 
     # Prepare the messages for GPT
+    system_prompt = format_prompt(
+        CHAPTER_GENERATION_FROM_SCENE_SYSTEM_PROMPT_V1,
+        previous_chapters=previous_chapters_context,
+        scenes=scenes_context,
+    )
+    print(system_prompt)
+    print(request.user_prompt)
     messages = [
         {
             "role": "system",
-            "content": """You are a creative writing assistant specialized in writing novel chapters.
-            Based on the previous chapters and the provided context (including scenes if available),
-            write a complete, engaging chapter that maintains consistency with the story's style and narrative.
-            
-            If scenes are provided:
-            1. Follow the scene structure exactly as provided
-            2. Each scene should be a distinct section in the chapter
-            3. Expand on the scene content while staying true to its core elements
-            4. Ensure smooth transitions between scenes
-            
-            If no scenes are provided:
-            1. Create a well-structured chapter with natural flow
-            2. Include vivid descriptions and engaging dialogue
-            3. Advance the plot while maintaining suspense
-            4. End in a way that hooks readers for the next chapter
-            
-            Important: Start your response directly with the chapter content. Do not include any prefixes like "TITLE:" or other subheadings.
-            The chapter title will be handled separately.""",
+            "content": system_prompt,
         },
         {
             "role": "user",
-            "content": f"""Previous Chapters:
-{previous_chapters_context}
-
-{"Scenes for Current Chapter:" + scenes_context if scenes_context else ""}
-
-Current Chapter Information:
-- Chapter Number: {chapter.chapter_no}
-- Title: {chapter.title}
-
-User's Request: {request.user_prompt}
-
-Please write the complete chapter:""",
+            "content": f"{request.user_prompt}",
         },
     ]
 

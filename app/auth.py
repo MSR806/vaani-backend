@@ -147,3 +147,15 @@ async def require_write_permission(
             detail="You don't have permission to perform this action"
         )
     return current_user
+
+async def require_delete_permission(
+    current_user: dict = Depends(get_current_user)
+):
+    """Dependency to check for delete:books permission"""
+    if "book:delete" not in current_user.get("permissions", []):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have permission to perform this action"
+        )
+    return current_user
+    

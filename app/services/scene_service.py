@@ -46,3 +46,29 @@ def get_scenes(db: Session, chapter_id: int = None):
     if chapter_id is not None:
         query = query.filter(Scene.chapter_id == chapter_id)
     return query.all()
+
+def delete_scene(db: Session, scene_id: int):
+    scene = db.query(Scene).filter(Scene.id == scene_id).first()
+    if not scene:
+        return False
+    
+    # Get the scene's chapter_id and scene_number before deleting
+    chapter_id = scene.chapter_id
+    deleted_scene_number = scene.scene_number
+    
+    # Delete the scene
+    db.delete(scene)
+    
+    # Update the scene numbers for all subsequent scenes in the same chapter
+    scenes_to_update = db.query(Scene).filter(
+        Scene.chapter_id == chapter_id,
+        Scene.scene_number > deleted_scene_number
+    ).order_by(Scene.scene_number).all()
+    
+    # Decrement scene_number for each subsequent scene
+    for scene_to_update in scenes_to_update:
+        scene_to_update.scene_number -= 1
+    
+    # Commit all changes
+    db.commit()
+    return True

@@ -9,8 +9,9 @@ from ..services.scene_service import (
     create_scene,
     update_scene,
     get_scenes,
+    delete_scene,
 )
-from ..auth import require_write_permission
+from ..auth import require_write_permission, require_delete_permission
 
 router = APIRouter(tags=["scenes"])
 
@@ -39,3 +40,14 @@ def update_scene_route(
 @router.get("/scenes")
 def get_scenes_route(chapter_id: int = None, db: Session = Depends(get_db)):
     return get_scenes(db, chapter_id)
+
+@router.delete("/scenes/{scene_id}")
+def delete_scene_route(
+    scene_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_delete_permission)
+):
+    success = delete_scene(db, scene_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Scene not found")
+    return {"message": "Scene deleted successfully"}
