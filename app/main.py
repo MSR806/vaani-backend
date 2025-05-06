@@ -34,7 +34,7 @@ app.add_middleware(
 )
 
 # Include routers
-app.include_router(router, prefix="/api/v1", dependencies=[Depends(get_current_user)])
+app.include_router(router, prefix="/vaani/api/v1", dependencies=[Depends(get_current_user)])
 
 @app.get("/", tags=["public"])
 async def root():
@@ -45,7 +45,7 @@ async def root():
         "redoc_url": "/redoc"
     }
 
-@app.get("/health", tags=["public"])
+@app.get("/vaani/health", tags=["public"])
 async def health_check():
     return {
         "status": "healthy",
