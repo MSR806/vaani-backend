@@ -44,3 +44,11 @@ async def root():
         "docs_url": "/docs",
         "redoc_url": "/redoc"
     }
+
+@app.get("/health", tags=["public"])
+async def health_check():
+    return {
+        "status": "healthy",
+        "api": "Writers LLM API",
+        "version": "1.0.0"
+    }
