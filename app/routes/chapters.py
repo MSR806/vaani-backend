@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from typing import List
 from ..database import get_db
 from ..schemas.schemas import (
     ChapterCreate,
@@ -8,6 +9,7 @@ from ..schemas.schemas import (
     ChapterGenerateRequest,
     ChapterSourceTextUpdate,
     ChapterStateUpdate,
+    ChaptersBulkUploadRequest,
 )
 from ..services.chapter_service import (
     create_chapter,
@@ -18,6 +20,7 @@ from ..services.chapter_service import (
     patch_chapter_source_text,
     delete_chapter,
     patch_chapter_state,
+    bulk_upload_chapters,
 )
 from ..services.book_service import (
     get_book,
@@ -147,3 +150,20 @@ def update_chapter_state(
     if not chapter:
         raise HTTPException(status_code=404, detail="Chapter not found")
     return chapter
+
+
+@router.post("/books/{book_id}/chapters/bulk-upload", response_model=List[ChapterResponse])
+def bulk_upload_chapters_route(
+    book_id: int,
+    upload_request: ChaptersBulkUploadRequest,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_write_permission)
+):
+    """
+    Upload multiple chapters from a single HTML file.
+    The HTML content will be processed to extract chapters which will be added to the specified book.
+    """
+    chapters = bulk_upload_chapters(db, book_id, upload_request.html_content, current_user["user_id"])
+    if chapters is None:
+        raise HTTPException(status_code=404, detail="Book not found")
+    return chapters

@@ -2,6 +2,8 @@ from app.prompts.scenes import SCENE_GENERATION_SYSTEM_PROMPT_V1
 from app.prompts.chapters import CHAPTER_GENERATION_FROM_SCENE_SYSTEM_PROMPT_V1
 from sqlalchemy.orm import Session
 from ..models.models import Chapter, Book, Scene
+from bs4 import BeautifulSoup
+import re
 from ..schemas.schemas import (
     ChapterCreate,
     ChapterUpdate,
@@ -149,13 +151,24 @@ async def generate_chapter_outline(
         if not chapter:
             raise HTTPException(status_code=404, detail="Chapter not found")
 
-        # Get all previous chapters in order
+        # Get context size setting for how many previous chapters to include for scene generation
+        try:
+            context_size = int(get_setting_by_key(db, "scenes_previous_chapters_context_size").value)
+        except (AttributeError, ValueError):
+            # Default to 3 if setting doesn't exist or is invalid
+            context_size = 3
+            
+        # Get the specified number of previous chapters in order
         previous_chapters = (
             db.query(Chapter)
             .filter(Chapter.book_id == book_id, Chapter.chapter_no < chapter.chapter_no)
-            .order_by(Chapter.chapter_no)
+            .order_by(Chapter.chapter_no.desc())
+            .limit(context_size)
             .all()
         )
+        
+        # Reverse to get chronological order
+        previous_chapters.reverse()
 
         # Prepare context from previous chapters
         previous_chapters_context = "\n\n".join(
@@ -269,13 +282,24 @@ async def stream_chapter_content(
     if not chapter:
         raise HTTPException(status_code=404, detail="Chapter not found")
 
-    # Get all previous chapters in order
+    # Get context size setting for how many previous chapters to include for chapter content generation
+    try:
+        context_size = int(get_setting_by_key(db, "chapter_content_previous_chapters_context_size").value)
+    except (AttributeError, ValueError):
+        # Default to 3 if setting doesn't exist or is invalid
+        context_size = 3
+        
+    # Get the specified number of previous chapters in order
     previous_chapters = (
         db.query(Chapter)
         .filter(Chapter.book_id == book_id, Chapter.chapter_no < chapter.chapter_no)
-        .order_by(Chapter.chapter_no)
+        .order_by(Chapter.chapter_no.desc())
+        .limit(context_size)
         .all()
     )
+    
+    # Reverse to get chronological order
+    previous_chapters.reverse()
 
     # Get all scenes for the current chapter
     scenes = (
@@ -391,3 +415,83 @@ def delete_chapter(db: Session, book_id: int, chapter_id: int):
     db.delete(chapter)
     db.commit()
     return {"message": "Chapter deleted successfully"}
+
+
+def bulk_upload_chapters(db: Session, book_id: int, html_content: str, user_id: str):
+    """
+    Process HTML content and create multiple chapters from it.
+    
+    Args:
+        db: Database session
+        book_id: ID of the book to add chapters to
+        html_content: HTML content to process
+        user_id: ID of the user performing the upload
+        
+    Returns:
+        List of created chapters
+    """
+    # Check if book exists
+    book = db.query(Book).filter(Book.id == book_id).first()
+    if not book:
+        return None
+    
+    # Parse the HTML
+    soup = BeautifulSoup(html_content, "html.parser")
+    
+    # Find all headings (h1, h2, h3, etc.)
+    headings = soup.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])
+    chapters_data = []
+    
+    for i, header in enumerate(headings):
+        title = header.get_text().strip()
+        
+        # Collect all content until the next heading
+        content_parts = []
+        for sibling in header.next_siblings:
+            if getattr(sibling, "name", None) in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
+                break
+            content_parts.append(str(sibling))  # Save raw HTML
+
+        # Simply join the content parts without additional processing
+        chapter_content = ''.join(content_parts)
+        
+        # Store the title and raw HTML content
+        chapters_data.append((title, chapter_content))
+    
+    # Get the highest chapter number for this book
+    max_chapter = (
+        db.query(Chapter)
+        .filter(Chapter.book_id == book_id)
+        .order_by(Chapter.chapter_no.desc())
+        .first()
+    )
+    
+    # Set the starting chapter number
+    next_chapter_no = 1 if not max_chapter else max_chapter.chapter_no + 1
+    
+    created_chapters = []
+    current_time = int(time.time())
+    
+    # Create chapters in the database
+    for i, (title, content) in enumerate(chapters_data):
+        chapter_no = next_chapter_no + i
+        
+        # Create the chapter
+        db_chapter = Chapter(
+            book_id=book_id,
+            title=title,
+            chapter_no=chapter_no,
+            content=content,
+            state="VERIFIED",
+            created_at=current_time,
+            updated_at=current_time,
+            created_by=user_id,
+            updated_by=user_id
+        )
+        
+        db.add(db_chapter)
+        db.commit()
+        db.refresh(db_chapter)
+        created_chapters.append(db_chapter)
+    
+    return created_chapters

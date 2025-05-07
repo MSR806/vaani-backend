@@ -255,3 +255,9 @@ class SettingResponse(BaseModel):
 
 class SettingBatchUpdate(BaseModel):
     settings: List[SettingUpdate]
+
+
+# Chapter bulk upload schema
+class ChaptersBulkUploadRequest(BaseModel):
+    book_id: int
+    html_content: str
