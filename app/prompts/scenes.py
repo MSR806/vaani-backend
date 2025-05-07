@@ -13,11 +13,7 @@ You will be given:
 
 ---
 
-**The next full chapter from the original story:**
-
-```
-{{source_text}}
-```
+**The next full chapter from the original story will be given by the user:**
 
 ---
 

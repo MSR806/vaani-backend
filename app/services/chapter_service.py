@@ -168,8 +168,7 @@ async def generate_chapter_outline(
         # Prepare the messages for GPT
         system_prompt = format_prompt(
             SCENE_GENERATION_SYSTEM_PROMPT_V1,
-            previous_chapters=previous_chapters_context,
-            source_text=chapter.source_text,
+            previous_chapters=previous_chapters_context
         )
 
         print(system_prompt)
@@ -181,7 +180,15 @@ async def generate_chapter_outline(
             },
             {
                 "role": "user",
-                "content": f"{user_prompt}",
+                "content": f"""
+                The next full chapter from the original story:
+                {chapter.source_text}
+
+                ---
+                Only generate scenes based on the original chapter. do not generate anything new ahead of the story or don't include scenes that had happed in previous chapters.
+
+                The user prompt:
+                {user_prompt}""",
             }
         ]
 
@@ -206,6 +213,7 @@ async def generate_chapter_outline(
             db.flush()
 
             current_time = int(time.time())
+            print(outline_response)
             # Process scenes
             for scene in outline_response.scenes:
                 # Create scene
