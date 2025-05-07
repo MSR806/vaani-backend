@@ -9,21 +9,29 @@ from sqlalchemy.exc import OperationalError
 # Load environment variables
 load_dotenv()
 
-# Get database credentials from environment variables
-POSTGRES_USER = os.getenv("POSTGRES_USER", "postgres")
-POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "postgres")
-POSTGRES_DB = os.getenv("POSTGRES_DB", "writers_llm")
-POSTGRES_HOST = os.getenv("POSTGRES_HOST", "db")
-POSTGRES_PORT = os.getenv("POSTGRES_PORT", "5432")
+# Supabase connection pooler settings
+# Format: postgresql://postgres.[PROJECT_REF]:[PASSWORD]@aws-0-ap-south-1.pooler.supabase.com:6543/postgres
+SUPABASE_DB_USER = os.getenv("SUPABASE_DB_USER", "postgres.wctnszbithsykyauvgyu")
+SUPABASE_PASSWORD = os.getenv("SUPABASE_PASSWORD")
+SUPABASE_DB_HOST = os.getenv("SUPABASE_DB_HOST", "aws-0-ap-south-1.pooler.supabase.com")
+SUPABASE_DB_PORT = os.getenv("SUPABASE_DB_PORT", "6543")
+SUPABASE_DB_NAME = os.getenv("SUPABASE_DB_NAME", "postgres")
 
-# Create database URL
-SQLALCHEMY_DATABASE_URL = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
+# Create database URL for Supabase PostgreSQL connection with connection pooler
+SQLALCHEMY_DATABASE_URL = f"postgresql://{SUPABASE_DB_USER}:{SUPABASE_PASSWORD}@{SUPABASE_DB_HOST}:{SUPABASE_DB_PORT}/{SUPABASE_DB_NAME}"
 
 # Create SQLAlchemy engine with retry mechanism
 def create_engine_with_retry(max_retries=5, retry_interval=5):
     for attempt in range(max_retries):
         try:
-            engine = create_engine(SQLALCHEMY_DATABASE_URL)
+            # Create engine with SSL parameters required for Supabase
+            engine = create_engine(
+                SQLALCHEMY_DATABASE_URL,
+                connect_args={
+                    "sslmode": "require",
+                }
+            )
+            
             # Test the connection
             with engine.connect() as conn:
                 conn.execute(text("SELECT 1"))

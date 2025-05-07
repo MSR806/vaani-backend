@@ -25,6 +25,8 @@ venv/
 env/
 ENV/
 .env
+.env.prod
+.env.dev
 .venv
 env.bak/
 venv.bak/
