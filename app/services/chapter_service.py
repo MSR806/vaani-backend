@@ -185,7 +185,15 @@ async def generate_chapter_outline(
         )
 
         print(system_prompt)
-        print(user_prompt)
+        user_message = f"""
+        The next full chapter from the original story:
+        {chapter.source_text}
+
+        ---
+        The user prompt:
+        {user_prompt}
+        """
+        print(user_message)
         messages = [
             {
                 "role": "system",
@@ -193,15 +201,7 @@ async def generate_chapter_outline(
             },
             {
                 "role": "user",
-                "content": f"""
-                The next full chapter from the original story:
-                {chapter.source_text}
-
-                ---
-                Only generate scenes based on the original chapter. do not generate anything new ahead of the story or don't include scenes that had happed in previous chapters.
-
-                The user prompt:
-                {user_prompt}""",
+                "content": user_message,
             }
         ]
 
