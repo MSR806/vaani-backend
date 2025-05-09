@@ -603,6 +603,111 @@ class StoryAbstractor:
                 "error": str(e)
             }
     
+    async def extract_world_variables(self) -> Dict[str, Any]:
+        """Extract world-specific variables from the abstract templates"""
+        logger.info("Extracting world-specific variables from templates")
+        
+        # Collect all template content for analysis
+        template_content = ""
+        
+        # Add character arc content
+        character_arc_files = list(self.character_arcs_dir.glob("*_abstract.md"))
+        for file_path in character_arc_files[:3]:  # Limit to first 3 to avoid token limits
+            try:
+                with open(file_path, 'r') as f:
+                    template_content += f"\n\nCHARACTER ARC: {file_path.stem}\n{f.read()}"
+            except Exception as e:
+                logger.warning(f"Error reading {file_path}: {str(e)}")
+        
+        # Add narrative skeleton content (first file only to avoid token limits)
+        skeleton_files = list(self.narrative_skeleton_dir.glob("*_abstract.md"))
+        if skeleton_files:
+            try:
+                with open(skeleton_files[0], 'r') as f:
+                    template_content += f"\n\nNARRATIVE SKELETON:\n{f.read()}"
+            except Exception as e:
+                logger.warning(f"Error reading {skeleton_files[0]}: {str(e)}")
+        
+        # Add meta structure content
+        meta_structure_file = self.meta_structure_dir / "meta_structure.md"
+        if meta_structure_file.exists():
+            try:
+                with open(meta_structure_file, 'r') as f:
+                    template_content += f"\n\nMETA-STRUCTURE:\n{f.read()}"
+            except Exception as e:
+                logger.warning(f"Error reading {meta_structure_file}: {str(e)}")
+        
+        # Add relationship patterns content
+        relationships_file = self.relationship_patterns_dir / "relationship_patterns.md"
+        if relationships_file.exists():
+            try:
+                with open(relationships_file, 'r') as f:
+                    template_content += f"\n\nRELATIONSHIP PATTERNS:\n{f.read()}"
+            except Exception as e:
+                logger.warning(f"Error reading {relationships_file}: {str(e)}")
+        
+        # Use the model to extract world variables
+        model, temperature = await self._get_model_settings("meta_structure")
+        
+        system_prompt = (
+            "You are a world-building expert who can identify required story elements from abstract templates. "
+            "Your task is to extract all implied or required world-specific variables that would need to be filled "
+            "to generate a concrete story from abstract templates."
+        )
+        
+        user_prompt = (
+            f"From these abstract story templates, identify all implied or required world-specific variables "  
+            f"that must be filled in to generate a complete story:\n\n{template_content}\n\n"
+            "Group the variables into these categories:\n"
+            "1. Characters: Required traits, motivations, backstories\n"
+            "2. Setting: Physical locations, time periods, geographical features\n"
+            "3. Society & Culture: Social structures, belief systems, traditions, laws\n"
+            "4. Magic/Tech Systems: Rules, capabilities, limitations of supernatural or technological elements\n"
+            "5. Events & Catalysts: Required narrative turning points or world events\n\n"
+            "For each variable, provide:\n"
+            "- A clear description\n"
+            "- Examples of potential values\n"
+            "- Any constraints or requirements\n\n"
+            "Format the output as structured YAML with meaningful keys and detailed descriptions."
+        )
+        
+        logger.info("Using AI to extract world variables")
+        logger.info(f"Using model: {model}, temperature: {temperature}")
+        
+        try:
+            response = self.client.chat.completions.create(
+                model=model,
+                temperature=temperature,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ]
+            )
+            
+            # Extract the generated content
+            yaml_content = response.choices[0].message.content.strip()
+            
+            # Remove any markdown code block wrappers if present
+            if yaml_content.startswith('```yaml'):
+                yaml_content = yaml_content.replace('```yaml', '', 1)
+            if yaml_content.endswith('```'):
+                yaml_content = yaml_content.rsplit('```', 1)[0]
+            
+            yaml_content = yaml_content.strip()
+            
+            # Save to file
+            world_variables_file = self.output_dir / "world_variables.yaml"
+            with open(world_variables_file, 'w') as f:
+                f.write(yaml_content)
+                
+            logger.info(f"World variables saved to {world_variables_file}")
+            
+            return {"world_variables": yaml_content, "file": str(world_variables_file)}
+            
+        except Exception as e:
+            logger.error(f"Error extracting world variables: {str(e)}")
+            return {"error": str(e)}
+    
     async def create_template_index(self, meta_data: Dict[str, Any]) -> Dict[str, Any]:
         """Create an index file for the complete template"""
         template_index = {
@@ -614,7 +719,8 @@ class StoryAbstractor:
                 "character_arcs": len(list(self.character_arcs_dir.glob("*_abstract.md"))),
                 "narrative_skeleton": len(list(self.narrative_skeleton_dir.glob("*_abstract.md"))),
                 "meta_structure": (self.meta_structure_dir / "meta_structure.md").exists(),
-                "relationship_patterns": (self.relationship_patterns_dir / "relationship_patterns.md").exists()
+                "relationship_patterns": (self.relationship_patterns_dir / "relationship_patterns.md").exists(),
+                "world_variables": (self.output_dir / "world_variables.yaml").exists()
             }
         }
         
@@ -626,6 +732,21 @@ class StoryAbstractor:
     
     async def generate_template_readme(self, template_index: Dict[str, Any]) -> None:
         """Generate a README file for the template with usage instructions"""
+        # Add world variables section if available
+        world_vars_text = ""
+        if template_index['components'].get('world_variables', False):
+            world_vars_text = """
+## World Variables
+The `world_variables.yaml` file contains all the specific world elements that need to be defined to create a concrete story from this template, including:
+- Character-specific traits and backgrounds
+- Setting details and requirements
+- Cultural and societal elements
+- Any magic or technology systems
+- Key events and catalysts
+
+Use this file as a "fill-in-the-blanks" guide for worldbuilding.
+"""
+        
         readme_content = f"""# Story Template: {template_index['book_title']}
 
 ## Overview
@@ -637,13 +758,15 @@ It provides abstract patterns that can be used to create new stories with simila
 - **Narrative Skeleton**: {template_index['components']['narrative_skeleton']} plot beat patterns
 - **Meta-Structure**: Overall story architecture and act structure
 - **Relationship Patterns**: Archetypal relationship dynamics
+- **World Variables**: Specific elements needed to instantiate this template{world_vars_text}
 
 ## How to Use This Template
 1. Review the meta-structure to understand the overall story architecture
 2. Select character archetypes that fit your story concept
 3. Follow the narrative skeleton as a guide for plot progression
 4. Implement relationship patterns between your characters
-5. Adapt and modify as needed for your unique story
+5. Fill in the world variables with your specific setting and character details
+6. Adapt and modify as needed for your unique story
 
 ## Usage Notes
 - This template provides structure, not specific content
@@ -664,6 +787,9 @@ Created: {template_index['template_creation_date']}
         
         # Initialize and validate
         await self.initialize()
+        
+        # Create output directory if it doesn't exist
+        self.output_dir.mkdir(parents=True, exist_ok=True)
         
         # Gather source data
         character_files = await self.read_character_growth_files()
@@ -687,39 +813,159 @@ Created: {template_index['template_creation_date']}
         # Run abstractions
         meta_data = {}
         
-        # Abstract character arcs
+        # Step 1: Character Arcs
         if character_files:
-            logger.info(f"Abstracting {len(character_files)} character arcs")
-            abstract_arcs = await self.abstract_all_character_arcs()
-            meta_data["character_arcs"] = {
-                "count": len(abstract_arcs),
-                "archetypes": [arc_data["archetype"] for character, arc_data in abstract_arcs.items()]
-            }
+            # Check for existing character arcs
+            existing_arcs = list(self.character_arcs_dir.glob("*_abstract.md"))
+            if existing_arcs:
+                logger.info(f"Found {len(existing_arcs)} existing character arc abstractions")
+                should_continue = input("Continue with existing character arcs? (y/n): ").strip().lower() == 'y'
+                if not should_continue:
+                    logger.info(f"Re-abstracting {len(character_files)} character arcs")
+                    abstract_arcs = await self.abstract_all_character_arcs()
+                    meta_data["character_arcs"] = {
+                        "count": len(abstract_arcs),
+                        "archetypes": [arc_data["archetype"] for character, arc_data in abstract_arcs.items()]
+                    }
+                else:
+                    logger.info("Using existing character arc abstractions")
+                    # Still capture metadata from existing files
+                    character_index_path = self.character_arcs_dir / "index.json"
+                    if character_index_path.exists():
+                        with open(character_index_path, 'r') as f:
+                            char_index = json.load(f)
+                            meta_data["character_arcs"] = {
+                                "count": len(char_index.get("character_arcs", [])),
+                                "archetypes": [arc.get("archetype") for arc in char_index.get("character_arcs", [])]
+                            }
+            else:
+                logger.info(f"Abstracting {len(character_files)} character arcs")
+                abstract_arcs = await self.abstract_all_character_arcs()
+                meta_data["character_arcs"] = {
+                    "count": len(abstract_arcs),
+                    "archetypes": [arc_data["archetype"] for character, arc_data in abstract_arcs.items()]
+                }
         
-        # Abstract plot beats
+        # Step 2: Plot Beats
         if plot_beats:
-            logger.info(f"Abstracting {len(plot_beats)} plot beat sections")
-            abstract_beats = await self.abstract_plot_beats(plot_beats)
-            meta_data["narrative_skeleton"] = {
-                "sections": len(abstract_beats),
-                "ranges": [beat["range"] for beat in abstract_beats]
-            }
+            # Check for existing narrative skeleton
+            existing_beats = list(self.narrative_skeleton_dir.glob("*_abstract.md"))
+            if existing_beats:
+                logger.info(f"Found {len(existing_beats)} existing narrative skeleton abstractions")
+                should_continue = input("Continue with existing narrative skeleton? (y/n): ").strip().lower() == 'y'
+                if not should_continue:
+                    logger.info(f"Re-abstracting {len(plot_beats)} plot beat sections")
+                    abstract_beats = await self.abstract_plot_beats(plot_beats)
+                    meta_data["narrative_skeleton"] = {
+                        "sections": len(abstract_beats),
+                        "ranges": [beat["range"] for beat in abstract_beats]
+                    }
+                else:
+                    logger.info("Using existing narrative skeleton abstractions")
+                    # Capture metadata from existing files
+                    meta_data["narrative_skeleton"] = {
+                        "sections": len(existing_beats),
+                        "ranges": [path.stem.replace("_abstract", "") for path in existing_beats]
+                    }
+            else:
+                logger.info(f"Abstracting {len(plot_beats)} plot beat sections")
+                abstract_beats = await self.abstract_plot_beats(plot_beats)
+                meta_data["narrative_skeleton"] = {
+                    "sections": len(abstract_beats),
+                    "ranges": [beat["range"] for beat in abstract_beats]
+                }
         
-        # Abstract meta-structure
+        # Step 3: Meta-Structure
         if plot_structure:
-            logger.info("Abstracting overall meta-structure")
-            meta_structure_data = await self.abstract_meta_structure(plot_structure)
-            meta_data["meta_structure"] = {
-                "structure_type": meta_structure_data["structure_type"]
-            }
+            # Check for existing meta-structure
+            meta_structure_file = self.meta_structure_dir / "meta_structure.md"
+            if meta_structure_file.exists():
+                logger.info("Found existing meta-structure abstraction")
+                should_continue = input("Continue with existing meta-structure? (y/n): ").strip().lower() == 'y'
+                if not should_continue:
+                    logger.info("Re-abstracting overall meta-structure")
+                    meta_structure_data = await self.abstract_meta_structure(plot_structure)
+                    meta_data["meta_structure"] = {
+                        "structure_type": meta_structure_data["structure_type"]
+                    }
+                else:
+                    logger.info("Using existing meta-structure abstraction")
+                    # Just note that it exists in metadata
+                    meta_data["meta_structure"] = {
+                        "structure_type": "Existing Structure"
+                    }
+            else:
+                logger.info("Abstracting overall meta-structure")
+                meta_structure_data = await self.abstract_meta_structure(plot_structure)
+                meta_data["meta_structure"] = {
+                    "structure_type": meta_structure_data["structure_type"]
+                }
         
-        # Abstract relationship dynamics
+        # Step 4: Relationship Dynamics
         if relationships:
-            logger.info("Abstracting relationship dynamics")
-            relationship_data = await self.abstract_relationship_dynamics(relationships)
-            meta_data["relationship_patterns"] = {
-                "included": True
-            }
+            # Check for existing relationship patterns
+            relationship_file = self.relationship_patterns_dir / "relationship_patterns.md"
+            if relationship_file.exists():
+                logger.info("Found existing relationship patterns abstraction")
+                should_continue = input("Continue with existing relationship patterns? (y/n): ").strip().lower() == 'y'
+                if not should_continue:
+                    logger.info("Re-abstracting relationship dynamics")
+                    relationship_data = await self.abstract_relationship_dynamics(relationships)
+                    meta_data["relationship_patterns"] = {"included": True}
+                else:
+                    logger.info("Using existing relationship patterns abstraction")
+                    meta_data["relationship_patterns"] = {"included": True}
+            else:
+                logger.info("Abstracting relationship dynamics")
+                relationship_data = await self.abstract_relationship_dynamics(relationships)
+                meta_data["relationship_patterns"] = {"included": True}
+        
+        # Step 5: World Variables (after all other abstractions are complete)
+        has_abstractions = bool(list(self.character_arcs_dir.glob("*_abstract.md"))) or \
+                         bool(list(self.narrative_skeleton_dir.glob("*_abstract.md"))) or \
+                         (self.meta_structure_dir / "meta_structure.md").exists() or \
+                         (self.relationship_patterns_dir / "relationship_patterns.md").exists()
+        
+        if has_abstractions:
+            # Check for existing world variables
+            world_variables_file = self.output_dir / "world_variables.yaml"
+            if world_variables_file.exists():
+                logger.info("Found existing world variables extraction")
+                should_continue = input("Continue with existing world variables? (y/n): ").strip().lower() == 'y'
+                if not should_continue:
+                    logger.info("Re-extracting world-specific variables from templates")
+                    world_variables_data = await self.extract_world_variables()
+                    if "error" not in world_variables_data:
+                        meta_data["world_variables"] = {
+                            "included": True,
+                            "file": world_variables_data.get("file")
+                        }
+                    else:
+                        logger.warning("World variables extraction had errors")
+                        meta_data["world_variables"] = {
+                            "included": False,
+                            "error": world_variables_data.get("error")
+                        }
+                else:
+                    logger.info("Using existing world variables")
+                    meta_data["world_variables"] = {
+                        "included": True,
+                        "file": str(world_variables_file)
+                    }
+            else:
+                logger.info("Extracting world-specific variables from templates")
+                world_variables_data = await self.extract_world_variables()
+                if "error" not in world_variables_data:
+                    meta_data["world_variables"] = {
+                        "included": True,
+                        "file": world_variables_data.get("file")
+                    }
+                else:
+                    logger.warning("World variables extraction had errors")
+                    meta_data["world_variables"] = {
+                        "included": False,
+                        "error": world_variables_data.get("error")
+                    }
         
         # Create template index and README
         template_index = await self.create_template_index(meta_data)
