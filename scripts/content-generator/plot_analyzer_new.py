@@ -47,7 +47,7 @@ class StoryAnalyzer:
         self.characters = []
         
         # Set up directories
-        self.output_dir = OUTPUT_DIR / f"book_{book_id}"
+        self.output_dir = OUTPUT_DIR / f"book_{book_id}/analysis"
         self.summaries_dir = self.output_dir / "summaries"
         self.characters_dir = self.output_dir / "characters"
         self.plot_beats_dir = self.output_dir / "plot_beats"
