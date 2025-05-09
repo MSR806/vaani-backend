@@ -57,4 +57,4 @@ htmlcov/
 coverage.xml
 *.cover 
 
-scripts/content-generator/output
+scripts/content-generator/output/
