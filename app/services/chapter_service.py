@@ -152,11 +152,7 @@ async def generate_chapter_outline(
             raise HTTPException(status_code=404, detail="Chapter not found")
 
         # Get context size setting for how many previous chapters to include for scene generation
-        try:
-            context_size = int(get_setting_by_key(db, "scenes_previous_chapters_context_size").value)
-        except (AttributeError, ValueError):
-            # Default to 3 if setting doesn't exist or is invalid
-            context_size = 3
+        context_size = int(get_setting_by_key(db, "scenes_previous_chapters_context_size").value)
             
         # Get the specified number of previous chapters in order
         previous_chapters = (
@@ -169,6 +165,10 @@ async def generate_chapter_outline(
         
         # Reverse to get chronological order
         previous_chapters.reverse()
+
+        # print chapters no.
+        print("Previous chapters:")
+        print([ch.chapter_no for ch in previous_chapters])
 
         # Prepare context from previous chapters
         previous_chapters_context = "\n\n".join(
@@ -185,14 +185,12 @@ async def generate_chapter_outline(
         )
 
         print(system_prompt)
-        user_message = f"""
-        The next full chapter from the original story:
-        {chapter.source_text}
-
-        ---
-        The user prompt:
-        {user_prompt}
-        """
+        user_message = (
+            "### Original Chapter:\n\n"
+            f"{chapter.source_text}\n\n"
+            "---\n\n"
+            f"{user_prompt}"
+        )
         print(user_message)
         messages = [
             {
@@ -283,11 +281,7 @@ async def stream_chapter_content(
         raise HTTPException(status_code=404, detail="Chapter not found")
 
     # Get context size setting for how many previous chapters to include for chapter content generation
-    try:
-        context_size = int(get_setting_by_key(db, "chapter_content_previous_chapters_context_size").value)
-    except (AttributeError, ValueError):
-        # Default to 3 if setting doesn't exist or is invalid
-        context_size = 3
+    context_size = int(get_setting_by_key(db, "chapter_content_previous_chapters_context_size").value)
         
     # Get the specified number of previous chapters in order
     previous_chapters = (
@@ -300,6 +294,10 @@ async def stream_chapter_content(
     
     # Reverse to get chronological order
     previous_chapters.reverse()
+
+    # print chapters no.
+    print("Previous chapters:")
+    print([ch.chapter_no for ch in previous_chapters])
 
     # Get all scenes for the current chapter
     scenes = (
@@ -332,10 +330,16 @@ async def stream_chapter_content(
     system_prompt = format_prompt(
         CHAPTER_GENERATION_FROM_SCENE_SYSTEM_PROMPT_V1,
         previous_chapters=previous_chapters_context,
-        scenes=scenes_context,
     )
+    user_message = (
+        "### Scene Breakdown:\n\n"
+        f"{scenes_context}\n\n"
+        "---\n\n"
+        f"{request.user_prompt}"
+    )
+    
     print(system_prompt)
-    print(request.user_prompt)
+    print(user_message)
     messages = [
         {
             "role": "system",
@@ -343,7 +347,7 @@ async def stream_chapter_content(
         },
         {
             "role": "user",
-            "content": f"{request.user_prompt}",
+            "content": user_message,
         },
     ]
 
@@ -404,6 +408,10 @@ async def stream_chapter_content(
 
 
 def delete_chapter(db: Session, book_id: int, chapter_id: int):
+    # Delete scenes first
+    # db.query(Scene).filter(Scene.chapter_id == chapter_id).delete()
+    # db.flush()
+    
     chapter = (
         db.query(Chapter)
         .filter(Chapter.id == chapter_id, Chapter.book_id == book_id)

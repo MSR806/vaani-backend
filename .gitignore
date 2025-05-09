@@ -56,3 +56,5 @@ htmlcov/
 .cache
 coverage.xml
 *.cover 
+
+scripts/content-generator/output
