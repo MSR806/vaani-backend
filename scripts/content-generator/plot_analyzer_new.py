@@ -54,8 +54,7 @@ class StoryAnalyzer:
         self.plot_structure_dir = self.output_dir / "plot_structure"
         self.character_growth_dir = self.output_dir / "character_growth"
         
-        # Initialize with CHARACTER_MODEL as default, as it requires the highest capabilities
-        self.client = get_openai_client(CHARACTER_MODEL)
+        self.client = get_openai_client()
         
         # Create output directories if they don't exist
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -85,10 +84,6 @@ class StoryAnalyzer:
         
         logger.info(f"Loaded book: {self.book.title}")
         logger.info(f"Found {len(self.chapters)} chapters")
-        
-        # Log chapter titles
-        for chapter in self.chapters:
-            logger.info(f"Chapter {chapter.chapter_no}: {chapter.title}")
             
         return self.book, self.chapters
     
@@ -276,7 +271,7 @@ Only include actual characters from the narrative, not mentioned historical figu
         summaries = []
         for chapter in self.chapters:
             try:
-                file_path = self.output_dir / f"chapter_{chapter.chapter_no}.md"
+                file_path = self.summaries_dir / f"chapter_{chapter.chapter_no}.md"
                 if file_path.exists():
                     with open(file_path, 'r', encoding='utf-8') as f:
                         summary_text = f.read()
@@ -677,7 +672,7 @@ Only include actual characters from the narrative, not mentioned historical figu
         """
         
         try:
-            logger.info(f"Making API call to analyze character growth using {CHARACTER_MODEL}")
+            logger.info(f"Making API call to analyze character growth for {character_name} using {CHARACTER_MODEL}")
             response = self.client.chat.completions.create(
                 model=CHARACTER_MODEL,
                 messages=[
@@ -716,7 +711,7 @@ Only include actual characters from the narrative, not mentioned historical figu
         """Extract the main characters from the previously extracted character data"""
         try:
             # Try to load existing character data
-            character_file = self.output_dir / "characters.json"
+            character_file = self.characters_dir / "characters.json"
             if not character_file.exists():
                 logger.error("No character data found. Run extract_all_characters first.")
                 return []
@@ -787,7 +782,6 @@ Only include actual characters from the narrative, not mentioned historical figu
         # Step 2: Analyze growth for each character
         all_results = []
         for name in character_names:
-            logger.info(f"Analyzing character growth for: {name}")
             result = await self.analyze_character_growth(name)
             all_results.append(result)
             
@@ -1124,7 +1118,7 @@ Only include actual characters from the narrative, not mentioned historical figu
             await self.summarize_all_chapters()
         
         # Step 2: Check for existing character data
-        characters_file = self.output_dir / "characters.json"
+        characters_file = self.characters_dir / "characters.json"
         if characters_file.exists():
             logger.info("Found existing character data")
             should_continue = input("Continue with existing character data? (y/n): ").strip().lower() == 'y'
@@ -1182,7 +1176,7 @@ Only include actual characters from the narrative, not mentioned historical figu
                 await self.analyze_all_characters()
         else:
             # Check for character data before offering character growth analysis
-            characters_file = self.output_dir / "characters.json"
+            characters_file = self.characters_dir / "characters.json"
             if characters_file.exists():
                 logger.info("Character data found for growth analysis")
                 should_analyze_growth = input("Proceed with character growth analysis? (y/n): ").strip().lower() == 'y'
