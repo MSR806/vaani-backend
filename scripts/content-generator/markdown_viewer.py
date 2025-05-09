@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Simple Markdown viewer that doesn't require additional packages.
-Uses basic HTML/CSS to render Markdown files with reasonable formatting.
+Simple Markdown and YAML viewer that doesn't require additional packages.
+Uses basic HTML/CSS to render Markdown and YAML files with reasonable formatting.
 """
 import os
 import re
@@ -10,6 +10,14 @@ import http.server
 import socketserver
 from pathlib import Path
 from urllib.parse import unquote, urlparse
+
+# Try to import yaml, use a simple fallback if not available
+try:
+    import yaml
+    YAML_AVAILABLE = True
+except ImportError:
+    YAML_AVAILABLE = False
+    print("Warning: PyYAML not installed. Basic YAML support will be used.")
 
 # Base directory for serving files
 BASE_DIR = Path(__file__).parent / "output"
@@ -135,6 +143,9 @@ CSS = """
     }
     .file-icon::before {
         content: "📄 ";
+    }
+    .yaml-file::before {
+        content: "🔧 ";
     }
 </style>
 """
@@ -277,6 +288,73 @@ def simple_markdown_to_html(markdown_text):
     
     return html
 
+def yaml_to_html(yaml_text):
+    """
+    Convert YAML to HTML representation.
+    Uses PyYAML if available, otherwise falls back to basic formatting.
+    """
+    try:
+        if YAML_AVAILABLE:
+            # Parse YAML with PyYAML
+            data = yaml.safe_load(yaml_text)
+        else:
+            # Basic fallback - just split lines and detect indentation
+            data = yaml_text
+            
+        # Convert to HTML - simple representation
+        html = '<pre class="yaml-content">'
+        
+        if not YAML_AVAILABLE:
+            # Simple formatting for the raw text
+            for line in yaml_text.split('\n'):
+                # Escape HTML characters
+                line = line.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+                
+                # Add basic syntax highlighting
+                if ':' in line:
+                    key, value = line.split(':', 1)
+                    line = f'<span class="yaml-key">{key}</span>:<span class="yaml-value">{value}</span>'
+                
+                html += line + '\n'
+        else:
+            # More structured representation when PyYAML is available
+            import json
+            # Convert to JSON and then use <pre> for formatting
+            json_str = json.dumps(data, indent=2, ensure_ascii=False)
+            # Escape HTML characters
+            json_str = json_str.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+            html += json_str
+            
+        html += '</pre>'
+        
+        # Add some extra styling specific to YAML
+        yaml_css = """
+        <style>
+            .yaml-content {
+                background-color: #f8f8f8;
+                padding: 15px;
+                border-radius: 5px;
+                font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+                font-size: 14px;
+                line-height: 1.4;
+                tab-size: 2;
+            }
+            .yaml-key {
+                color: #0366d6;
+                font-weight: bold;
+            }
+            .yaml-value {
+                color: #24292e;
+            }
+        </style>
+        """
+        
+        return yaml_css + html
+        
+    except Exception as e:
+        # Return error message if parsing fails
+        return f'<div class="error"><h2>Error parsing YAML</h2><p>{str(e)}</p><pre>{yaml_text}</pre></div>'
+
 class MarkdownHandler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(BASE_DIR), **kwargs)
@@ -361,7 +439,21 @@ class MarkdownHandler(http.server.SimpleHTTPRequestHandler):
                 except:
                     pass  # Continue with default display name if error
             
+            # Set appropriate icon class based on file type
             icon_class = "file-icon"
+            if name.endswith(('.yml', '.yaml')):
+                icon_class = "file-icon yaml-file"
+                # For YAML files, try to show a descriptive first key if possible
+                try:
+                    if YAML_AVAILABLE:
+                        with open(fullname, 'r', encoding='utf-8') as f:
+                            yaml_data = yaml.safe_load(f)
+                            if isinstance(yaml_data, dict) and yaml_data:
+                                first_key = next(iter(yaml_data.keys()))
+                                displayname = f"{first_key} ({name})"
+                except:
+                    pass  # Continue with default display name if error
+            
             r.append(f'<li><a class="{icon_class}" href="{linkname}">{displayname}</a></li>')
         
         r.append('</ul>')
@@ -423,6 +515,46 @@ class MarkdownHandler(http.server.SimpleHTTPRequestHandler):
                 return
             except Exception as e:
                 self.send_error(500, f"Error rendering Markdown: {str(e)}")
+                return
+        
+        # Handle YAML files
+        if path.endswith(('.yml', '.yaml')) and os.path.exists(fs_path):
+            try:
+                with open(fs_path, 'r', encoding='utf-8') as f:
+                    yaml_content = f.read()
+                
+                # Get filename for title
+                filename = os.path.basename(fs_path)
+                
+                # Convert YAML to HTML
+                html_content = yaml_to_html(yaml_content)
+                
+                # Build the full HTML page with CSS
+                full_html = f"""<!DOCTYPE html>
+<html>
+<head>
+    <title>{filename}</title>
+    {CSS}
+</head>
+<body>
+    <div class="breadcrumb">
+        <a href="/">Home</a> / 
+        <a href="{os.path.dirname(path) or '/'}">{os.path.dirname(path[1:]) or 'parent'}</a>
+    </div>
+    <h1>YAML File: {filename}</h1>
+    {html_content}
+</body>
+</html>"""
+                
+                # Serve the HTML
+                self.send_response(200)
+                self.send_header("Content-type", "text/html; charset=utf-8")
+                self.send_header("Content-Length", str(len(full_html.encode('utf-8'))))
+                self.end_headers()
+                self.wfile.write(full_html.encode('utf-8'))
+                return
+            except Exception as e:
+                self.send_error(500, f"Error rendering YAML: {str(e)}")
                 return
         
         # For other types of files, use the default handler
