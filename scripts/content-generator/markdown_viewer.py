@@ -162,6 +162,7 @@ def simple_markdown_to_html(markdown_text):
     lines = html.split('\n')
     processed_lines = []
     list_stack = []  # Stack to track nested lists
+    current_list_item_numbers = {}  # Track the current number for each list level
     
     for line in lines:
         # Check for list items with different indentation
@@ -169,17 +170,53 @@ def simple_markdown_to_html(markdown_text):
         
         if list_match:
             indent = len(list_match.group(1))
-            list_type = 'ul' if list_match.group(2) in ['-', '*'] else 'ol'
+            marker = list_match.group(2)
+            is_ordered = marker not in ['-', '*']
+            list_type = 'ol' if is_ordered else 'ul'
             content = list_match.group(3)
+            
+            # Extract the starting number for ordered lists
+            if is_ordered:
+                try:
+                    start_num = int(marker[:-1])  # Remove the period
+                except ValueError:
+                    start_num = 1
             
             # Manage list nesting based on indentation
             while list_stack and list_stack[-1][0] >= indent:
-                _, tag = list_stack.pop()
+                level_indent, tag = list_stack.pop()
                 processed_lines.append(' ' * (list_stack[-1][0] if list_stack else 0) + f'</{tag}>')
+                # Remove the counter for this level when closing the list
+                if level_indent in current_list_item_numbers:
+                    del current_list_item_numbers[level_indent]
             
             if not list_stack or indent > list_stack[-1][0]:
+                # Starting a new list at this indentation level
                 list_stack.append((indent, list_type))
-                processed_lines.append(' ' * (list_stack[-2][0] if len(list_stack) > 1 else 0) + f'<{list_type}>')
+                
+                if is_ordered and start_num > 1:
+                    # Use the 'start' attribute for ordered lists not starting at 1
+                    processed_lines.append(' ' * (list_stack[-2][0] if len(list_stack) > 1 else 0) + 
+                                          f'<{list_type} start="{start_num}">')
+                    # Initialize counter for this level
+                    current_list_item_numbers[indent] = start_num
+                else:
+                    processed_lines.append(' ' * (list_stack[-2][0] if len(list_stack) > 1 else 0) + 
+                                          f'<{list_type}>')
+                    if is_ordered:
+                        current_list_item_numbers[indent] = 1
+            elif is_ordered:
+                # Continue an existing ordered list
+                if indent in current_list_item_numbers:
+                    # If this item explicitly sets a number, use that
+                    if start_num != current_list_item_numbers[indent]:
+                        current_list_item_numbers[indent] = start_num
+                    else:
+                        # Otherwise increment the counter
+                        current_list_item_numbers[indent] += 1
+                else:
+                    # Initialize counter if it doesn't exist (shouldn't normally happen)
+                    current_list_item_numbers[indent] = start_num
             
             processed_lines.append(' ' * indent + f'<li>{content}</li>')
         else:
