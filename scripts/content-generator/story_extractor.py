@@ -27,7 +27,7 @@ OUTPUT_DIR = Path(__file__).parent / "output"
 # Hardcoded AI model settings
 SUMMARY_MODEL = "gpt-4o-mini"  # For chapter summaries (faster, cheaper)
 CHARACTER_MODEL = "gpt-4o"     # For character extraction (better quality)
-PLOT_BEATS_MODEL = "gpt-4o-mini"  # For individual plot beat analysis (faster, cheaper)
+PLOT_BEATS_MODEL = "gpt-4o"  # For individual plot beat analysis (faster, cheaper)
 
 CHAPTER_SUMMARY_TEMPERATURE = 0.3
 PLOT_BEATS_TEMPERATURE = 0.3
@@ -293,7 +293,7 @@ class StoryExtractor:
         summaries = []
         for chapter in self.chapters:
             try:
-                file_path = self.output_dir / f"chapter_{chapter.chapter_no}.md"
+                file_path = self.summaries_dir / f"chapter_{chapter.chapter_no}.md"
                 if file_path.exists():
                     with open(file_path, 'r', encoding='utf-8') as f:
                         summary_text = f.read()

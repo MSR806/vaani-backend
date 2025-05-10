@@ -1,0 +1,34 @@
+{
+  "book_id": 5,
+  "book_title": "Destined Bride",
+  "template_creation_date": "2025-05-10",
+  "meta_data": {
+    "character_arcs": {
+      "count": 4,
+      "archetypes": [
+        "# The Resilient Protagonist - Character Arc Template",
+        "# The Supportive Partner - Character Arc Template",
+        "# The Manipulator - Character Arc Template",
+        "# The Rival - Character Arc Template"
+      ]
+    },
+    "narrative_skeleton": {
+      "sections": 9,
+      "ranges": [
+        "chapters_1_to_10",
+        "chapters_11_to_20",
+        "chapters_21_to_30",
+        "chapters_31_to_40",
+        "chapters_41_to_50",
+        "chapters_51_to_60",
+        "chapters_61_to_70",
+        "chapters_71_to_80",
+        "chapters_81_to_86"
+      ]
+    }
+  },
+  "components": {
+    "character_arcs": 4,
+    "narrative_skeleton": 9
+  }
+}

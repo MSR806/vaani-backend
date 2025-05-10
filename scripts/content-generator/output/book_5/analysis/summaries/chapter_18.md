@@ -1,0 +1,7 @@
+In Chapter 18, Eva arrives at a lounge for a signing event, greeted by reporters questioning her about a recent video clip that led to her gaining a contract previously held by Fiona. Eva, unfazed, meets with the brand manager, agrees to the terms, and signs the contract. Angela questions Alan's absence, suspecting Fiona's influence, which Eva confirms. Alan watches the event remotely, unable to attend due to Fiona's manipulative behavior.
+
+Daniel, watching the event, congratulates Eva via text, suggesting a celebratory party. Eva plans to meet him after her flight. Post-event, Eva and Angela head to the airport, where Angela expresses concern over potential sabotage by Fiona's fans. Eva reassures her, confident in handling the situation.
+
+At the airport, Eva is approached by fans and bodyguards sent by Daniel, who anticipated trouble. Anti-fans, posing as supporters, confront Eva with insults, accusing her of stealing Fiona's contract. The situation escalates until police arrive, dispersing the crowd. Angela records the incident, planning to use the footage strategically.
+
+Eva instructs Angela to post the video online, framing it to highlight the harassment by Fiona's fans, turning the situation to their advantage. This chapter showcases Eva's resilience and strategic thinking, setting the stage for potential conflicts with Fiona and her supporters.

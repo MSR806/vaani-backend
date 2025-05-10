@@ -1,0 +1,39 @@
+{
+  "character_arcs": [
+    {
+      "original_character": "rose",
+      "archetype": "# The Loyal Supporter",
+      "file": "rose_abstract.md"
+    },
+    {
+      "original_character": "alan",
+      "archetype": "# The Self-Serving Opportunist",
+      "file": "alan_abstract.md"
+    },
+    {
+      "original_character": "eva_rogers",
+      "archetype": "# The Resilient Survivor Character Arc",
+      "file": "eva_rogers_abstract.md"
+    },
+    {
+      "original_character": "daniel_walton",
+      "archetype": "# The Pragmatic Partner's Emotional Growth Arc",
+      "file": "daniel_walton_abstract.md"
+    },
+    {
+      "original_character": "fiona",
+      "archetype": "# The Manipulator's Downfall",
+      "file": "fiona_abstract.md"
+    },
+    {
+      "original_character": "megan",
+      "archetype": "# The Loyal Strategist",
+      "file": "megan_abstract.md"
+    },
+    {
+      "original_character": "angela",
+      "archetype": "# The Loyal Strategist",
+      "file": "angela_abstract.md"
+    }
+  ]
+}
