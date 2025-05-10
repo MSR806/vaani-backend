@@ -1,0 +1,50 @@
+{
+  "book_id": 5,
+  "book_title": "Destined Bride",
+  "template_creation_date": "2025-05-09",
+  "meta_data": {
+    "character_arcs": {
+      "count": 7,
+      "archetypes": [
+        "# The Loyal Supporter",
+        "# The Self-Serving Opportunist",
+        "# The Resilient Survivor Character Arc",
+        "# The Pragmatic Partner's Emotional Growth Arc",
+        "# The Manipulator's Downfall",
+        "# The Loyal Strategist",
+        "# The Loyal Strategist"
+      ]
+    },
+    "narrative_skeleton": {
+      "sections": 9,
+      "ranges": [
+        "chapters_41_to_50",
+        "chapters_51_to_60",
+        "chapters_61_to_70",
+        "chapters_11_to_20",
+        "chapters_71_to_80",
+        "chapters_21_to_30",
+        "chapters_31_to_40",
+        "chapters_1_to_10",
+        "chapters_81_to_86"
+      ]
+    },
+    "meta_structure": {
+      "structure_type": "Existing Structure"
+    },
+    "relationship_patterns": {
+      "included": true
+    },
+    "world_variables": {
+      "included": true,
+      "file": "/Users/msr/Documents/personal/GitHub/writers-llm-backend/scripts/content-generator/output/book_5/template/world_variables.yaml"
+    }
+  },
+  "components": {
+    "character_arcs": 7,
+    "narrative_skeleton": 9,
+    "meta_structure": true,
+    "relationship_patterns": true,
+    "world_variables": true
+  }
+}

@@ -1,0 +1,126 @@
+#!/usr/bin/env python3
+"""
+Prompts for story generation in the writer's tool AI backend.
+This file contains system and user prompt templates for character arc and plot beat generation.
+"""
+
+# Character Arc Generation Prompts
+CHARACTER_ARC_SYSTEM_PROMPT = (
+    "You are a literary analysis expert specializing in character development arcs. "
+    "Your task is to create an ensemble of characters for a story based on multiple character templates. "
+    "For each character, create a detailed character arc following the exact format provided. "
+    "Make sure the characters form a cohesive ensemble and have meaningful interactions with each other."
+)
+
+CHARACTER_ARC_USER_PROMPT_TEMPLATE = """
+# Character Arc Generation Task
+
+## Story Prompt:
+{prompt}
+
+## Available Character Templates:
+{template_descriptions}
+
+## Task:
+Create unique and interesting characters for this story, ensuring they form a cohesive ensemble.
+Each character should follow one of the provided character arc templates.
+
+For each character, create a separate, well-formatted markdown file following this EXACT structure:
+```markdown
+# [Character Name] - Character Arc Analysis
+
+## Description
+[Include the character's personality, appearance, setting, backstory, and other relevant details]
+
+## Role
+[Specify the character's role in the story (protagonist, antagonist, supporting character, etc.)]
+
+## Key Relationships
+[Describe the character's significant relationships with other characters in the story]
+
+## Motivation
+[Explain the character's core drives and desires throughout the story]
+
+## Starting State
+[Describe the character's initial condition, mindset, and relationships at the beginning]
+
+## Transformation
+[Identify the key moments and catalysts that change the character throughout the story]
+
+## Ending State
+[Describe the character's final state and how they've changed from their starting point]
+```
+
+Format your output as follows to allow me to easily extract each character's analysis:
+
+CHARACTER: [Character Name 1]
+FILE_START
+[Complete markdown document for Character 1 following the structure above]
+FILE_END
+
+CHARACTER: [Character Name 2]
+FILE_START
+[Complete markdown document for Character 2 following the structure above]
+FILE_END
+
+And so on for each character...
+"""
+
+# Plot Beat Generation Prompts
+PLOT_BEAT_SYSTEM_PROMPT = (
+    "You are a master storyteller and narrative structure expert specializing in plot development. "
+    "Your task is to create detailed plot beats for a story based on a template, character arcs, and a simple prompt. "
+    "You may be creating either the beginning of a story or continuing an existing narrative. "
+    "Design a cohesive narrative structure that allows all character arcs to develop naturally throughout the story, "
+    "while maintaining the dramatic progression and emotional impact from the plot template. "
+    "When continuing a story, ensure smooth continuity with the existing narrative."
+)
+
+PLOT_BEAT_USER_PROMPT_TEMPLATE = """
+# Plot Beat Generation Task
+
+## Story Prompt
+{prompt}
+
+## Character Arcs to Integrate
+{character_content}
+
+## Story Progress So Far
+```
+{plot_till_now}
+```
+
+## Plot Template to Apply
+```
+{template_content}
+```
+
+## Instructions
+
+You are generating plot beats for a PROGRESSING STORY. This means:
+
+1. If the "Story Progress So Far" section is empty, this is the BEGINNING of the story. Create the initial plot beats.
+2. If the "Story Progress So Far" section contains content, you are CONTINUING the story. Your plot beats should follow naturally from what has already happened.
+
+Create detailed plot beats for the story based on the template, the story prompt, and the character arcs:
+
+1. Transform the abstract plot template into a specific storyline that fits the prompt
+2. Design key plot points that allow all characters to develop according to their arcs
+3. Create natural connections and compelling interactions between the characters
+4. Maintain the narrative structure from the template while adapting it to this specific story
+5. Ensure continuity with any existing plot beats provided in "Story Progress So Far"
+
+Each plot beat must follow this exact format:
+- [Title] - a descriptive title
+- Description: A paragraph describing what happens in this beat
+- Significance: How this beat advances the plot and relates to the story's themes
+- Character Development: How this beat affects the key characters and their arcs
+- Narrative Role: The structural function in the overall story (e.g., inciting incident, rising action, etc.)
+
+Your plot outline should:
+- Include EXACTLY the same number of plot beats as in the template, no more and no less
+- Format each beat following the structure in the example above
+- Ensure each character's arc is incorporated meaningfully
+- Create a coherent narrative flow from beginning to end
+- Maintain continuity with previous plot beats when continuing the story
+"""

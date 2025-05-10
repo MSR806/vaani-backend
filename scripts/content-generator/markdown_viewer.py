@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Simple Markdown and YAML viewer that doesn't require additional packages.
-Uses basic HTML/CSS to render Markdown and YAML files with reasonable formatting.
+Simple Markdown viewer that uses the Python-Markdown library.
+Uses proper HTML/CSS to render Markdown files with correct formatting.
 """
 import os
 import re
@@ -11,13 +11,13 @@ import socketserver
 from pathlib import Path
 from urllib.parse import unquote, urlparse
 
-# Try to import yaml, use a simple fallback if not available
+# Try to import required libraries, use fallbacks if not available
 try:
-    import yaml
-    YAML_AVAILABLE = True
+    import markdown
+    MARKDOWN_AVAILABLE = True
 except ImportError:
-    YAML_AVAILABLE = False
-    print("Warning: PyYAML not installed. Basic YAML support will be used.")
+    MARKDOWN_AVAILABLE = False
+    print("Warning: Python-Markdown not installed. Install with 'pip install markdown' for better rendering.")
 
 # Base directory for serving files
 BASE_DIR = Path(__file__).parent / "output"
@@ -144,216 +144,56 @@ CSS = """
     .file-icon::before {
         content: "📄 ";
     }
-    .yaml-file::before {
-        content: "🔧 ";
-    }
+
 </style>
 """
 
 def simple_markdown_to_html(markdown_text):
     """
-    Convert markdown to HTML using simple regex-based translation.
-    This is a very basic implementation and doesn't cover all markdown features.
+    Convert markdown to HTML using the Python-Markdown library if available,
+    or fallback to a simple regex-based method.
     """
-    html = markdown_text
-    
-    # Headers
-    html = re.sub(r'^# (.*?)$', r'<h1>\1</h1>', html, flags=re.MULTILINE)
-    html = re.sub(r'^## (.*?)$', r'<h2>\1</h2>', html, flags=re.MULTILINE)
-    html = re.sub(r'^### (.*?)$', r'<h3>\1</h3>', html, flags=re.MULTILINE)
-    html = re.sub(r'^#### (.*?)$', r'<h4>\1</h4>', html, flags=re.MULTILINE)
-    html = re.sub(r'^##### (.*?)$', r'<h5>\1</h5>', html, flags=re.MULTILINE)
-    html = re.sub(r'^###### (.*?)$', r'<h6>\1</h6>', html, flags=re.MULTILINE)
-    
-    # Bold and Italic
-    html = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', html)
-    html = re.sub(r'\*(.*?)\*', r'<em>\1</em>', html)
-    
-    # Lists with indentation levels
-    lines = html.split('\n')
-    processed_lines = []
-    list_stack = []  # Stack to track nested lists
-    current_list_item_numbers = {}  # Track the current number for each list level
-    
-    for line in lines:
-        # Check for list items with different indentation
-        list_match = re.match(r'^(\s*)([-*]|\d+\.) (.*?)$', line)
+    if MARKDOWN_AVAILABLE:
+        # Use the Python-Markdown library which properly handles all markdown features
+        # Enable the 'extra' extension for tables, footnotes, etc.
+        return markdown.markdown(markdown_text, extensions=['extra', 'nl2br'])
+    else:
+        # Fallback to basic parsing if Python-Markdown is not available
+        html = markdown_text
         
-        if list_match:
-            indent = len(list_match.group(1))
-            marker = list_match.group(2)
-            is_ordered = marker not in ['-', '*']
-            list_type = 'ol' if is_ordered else 'ul'
-            content = list_match.group(3)
-            
-            # Extract the starting number for ordered lists
-            if is_ordered:
-                try:
-                    start_num = int(marker[:-1])  # Remove the period
-                except ValueError:
-                    start_num = 1
-            
-            # Manage list nesting based on indentation
-            while list_stack and list_stack[-1][0] >= indent:
-                level_indent, tag = list_stack.pop()
-                processed_lines.append(' ' * (list_stack[-1][0] if list_stack else 0) + f'</{tag}>')
-                # Remove the counter for this level when closing the list
-                if level_indent in current_list_item_numbers:
-                    del current_list_item_numbers[level_indent]
-            
-            if not list_stack or indent > list_stack[-1][0]:
-                # Starting a new list at this indentation level
-                list_stack.append((indent, list_type))
-                
-                if is_ordered and start_num > 1:
-                    # Use the 'start' attribute for ordered lists not starting at 1
-                    processed_lines.append(' ' * (list_stack[-2][0] if len(list_stack) > 1 else 0) + 
-                                          f'<{list_type} start="{start_num}">')
-                    # Initialize counter for this level
-                    current_list_item_numbers[indent] = start_num
-                else:
-                    processed_lines.append(' ' * (list_stack[-2][0] if len(list_stack) > 1 else 0) + 
-                                          f'<{list_type}>')
-                    if is_ordered:
-                        current_list_item_numbers[indent] = 1
-            elif is_ordered:
-                # Continue an existing ordered list
-                if indent in current_list_item_numbers:
-                    # If this item explicitly sets a number, use that
-                    if start_num != current_list_item_numbers[indent]:
-                        current_list_item_numbers[indent] = start_num
-                    else:
-                        # Otherwise increment the counter
-                        current_list_item_numbers[indent] += 1
-                else:
-                    # Initialize counter if it doesn't exist (shouldn't normally happen)
-                    current_list_item_numbers[indent] = start_num
-            
-            processed_lines.append(' ' * indent + f'<li>{content}</li>')
-        else:
-            # Close all open lists when we hit a non-list line
-            while list_stack:
-                _, tag = list_stack.pop()
-                processed_lines.append(' ' * (list_stack[-1][0] if list_stack else 0) + f'</{tag}>')
-            processed_lines.append(line)
-    
-    # Close any remaining open lists
-    while list_stack:
-        _, tag = list_stack.pop()
-        processed_lines.append(' ' * (list_stack[-1][0] if list_stack else 0) + f'</{tag}>')
-    
-    html = '\n'.join(processed_lines)
-    
-    # Links
-    html = re.sub(r'\[(.*?)\]\((.*?)\)', r'<a href="\2">\1</a>', html)
-    
-    # Blockquotes
-    blockquote_pattern = re.compile(r'^> (.*?)$', re.MULTILINE)
-    lines = html.split('\n')
-    in_blockquote = False
-    result = []
-    
-    for line in lines:
-        match = blockquote_pattern.match(line)
-        if match:
-            if not in_blockquote:
-                result.append('<blockquote>')
-                in_blockquote = True
-            result.append('<p>' + match.group(1) + '</p>')
-        else:
-            if in_blockquote:
-                result.append('</blockquote>')
-                in_blockquote = False
-            result.append(line)
-    
-    if in_blockquote:
-        result.append('</blockquote>')
-    
-    html = '\n'.join(result)
-    
-    # Code blocks
-    html = re.sub(r'```(?:\w+)?\n(.*?)\n```', r'<pre><code>\1</code></pre>', html, flags=re.DOTALL)
-    
-    # Inline code
-    html = re.sub(r'`(.*?)`', r'<code>\1</code>', html)
-    
-    # Paragraphs (convert line breaks to <p> tags)
-    paragraphs = []
-    for para in html.split('\n\n'):
-        if not (para.startswith('<h') or para.startswith('<ul') or para.startswith('<blockquote') or para.startswith('<pre')):
-            para = f'<p>{para}</p>'
-        paragraphs.append(para)
-    
-    html = '\n\n'.join(paragraphs)
-    
-    return html
-
-def yaml_to_html(yaml_text):
-    """
-    Convert YAML to HTML representation.
-    Uses PyYAML if available, otherwise falls back to basic formatting.
-    """
-    try:
-        if YAML_AVAILABLE:
-            # Parse YAML with PyYAML
-            data = yaml.safe_load(yaml_text)
-        else:
-            # Basic fallback - just split lines and detect indentation
-            data = yaml_text
-            
-        # Convert to HTML - simple representation
-        html = '<pre class="yaml-content">'
+        # Headers
+        html = re.sub(r'^# (.*?)$', r'<h1>\1</h1>', html, flags=re.MULTILINE)
+        html = re.sub(r'^## (.*?)$', r'<h2>\1</h2>', html, flags=re.MULTILINE)
+        html = re.sub(r'^### (.*?)$', r'<h3>\1</h3>', html, flags=re.MULTILINE)
+        html = re.sub(r'^#### (.*?)$', r'<h4>\1</h4>', html, flags=re.MULTILINE)
+        html = re.sub(r'^##### (.*?)$', r'<h5>\1</h5>', html, flags=re.MULTILINE)
+        html = re.sub(r'^###### (.*?)$', r'<h6>\1</h6>', html, flags=re.MULTILINE)
         
-        if not YAML_AVAILABLE:
-            # Simple formatting for the raw text
-            for line in yaml_text.split('\n'):
-                # Escape HTML characters
-                line = line.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
-                
-                # Add basic syntax highlighting
-                if ':' in line:
-                    key, value = line.split(':', 1)
-                    line = f'<span class="yaml-key">{key}</span>:<span class="yaml-value">{value}</span>'
-                
-                html += line + '\n'
-        else:
-            # More structured representation when PyYAML is available
-            import json
-            # Convert to JSON and then use <pre> for formatting
-            json_str = json.dumps(data, indent=2, ensure_ascii=False)
-            # Escape HTML characters
-            json_str = json_str.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
-            html += json_str
-            
-        html += '</pre>'
+        # Bold and Italic
+        html = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', html)
+        html = re.sub(r'\*(.*?)\*', r'<em>\1</em>', html)
         
-        # Add some extra styling specific to YAML
-        yaml_css = """
-        <style>
-            .yaml-content {
-                background-color: #f8f8f8;
-                padding: 15px;
-                border-radius: 5px;
-                font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
-                font-size: 14px;
-                line-height: 1.4;
-                tab-size: 2;
-            }
-            .yaml-key {
-                color: #0366d6;
-                font-weight: bold;
-            }
-            .yaml-value {
-                color: #24292e;
-            }
-        </style>
-        """
+        # Links
+        html = re.sub(r'\[(.*?)\]\((.*?)\)', r'<a href="\2">\1</a>', html)
         
-        return yaml_css + html
+        # Code blocks
+        html = re.sub(r'```(?:\w+)?\n(.*?)\n```', lambda m: '<pre><code>' + m.group(1).replace('\n', '<br>') + '</code></pre>', html, flags=re.DOTALL)
         
-    except Exception as e:
-        # Return error message if parsing fails
-        return f'<div class="error"><h2>Error parsing YAML</h2><p>{str(e)}</p><pre>{yaml_text}</pre></div>'
+        # Inline code
+        html = re.sub(r'`(.*?)`', r'<code>\1</code>', html)
+        
+        # Paragraphs with proper line break handling
+        paragraphs = []
+        for para in html.split('\n\n'):
+            if not (para.startswith('<h') or para.startswith('<pre')):
+                # Replace single newlines with <br> tags to preserve line breaks
+                para = para.replace('\n', '<br>\n')
+                para = f'<p>{para}</p>'
+            paragraphs.append(para)
+        
+        html = '\n\n'.join(paragraphs)
+        
+        return html
 
 class MarkdownHandler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
@@ -515,46 +355,6 @@ class MarkdownHandler(http.server.SimpleHTTPRequestHandler):
                 return
             except Exception as e:
                 self.send_error(500, f"Error rendering Markdown: {str(e)}")
-                return
-        
-        # Handle YAML files
-        if path.endswith(('.yml', '.yaml')) and os.path.exists(fs_path):
-            try:
-                with open(fs_path, 'r', encoding='utf-8') as f:
-                    yaml_content = f.read()
-                
-                # Get filename for title
-                filename = os.path.basename(fs_path)
-                
-                # Convert YAML to HTML
-                html_content = yaml_to_html(yaml_content)
-                
-                # Build the full HTML page with CSS
-                full_html = f"""<!DOCTYPE html>
-<html>
-<head>
-    <title>{filename}</title>
-    {CSS}
-</head>
-<body>
-    <div class="breadcrumb">
-        <a href="/">Home</a> / 
-        <a href="{os.path.dirname(path) or '/'}">{os.path.dirname(path[1:]) or 'parent'}</a>
-    </div>
-    <h1>YAML File: {filename}</h1>
-    {html_content}
-</body>
-</html>"""
-                
-                # Serve the HTML
-                self.send_response(200)
-                self.send_header("Content-type", "text/html; charset=utf-8")
-                self.send_header("Content-Length", str(len(full_html.encode('utf-8'))))
-                self.end_headers()
-                self.wfile.write(full_html.encode('utf-8'))
-                return
-            except Exception as e:
-                self.send_error(500, f"Error rendering YAML: {str(e)}")
                 return
         
         # For other types of files, use the default handler

@@ -1,0 +1,5 @@
+In Chapter 61, Eva chooses not to retaliate against Fiona, Alan's pregnant mistress, allowing her to enjoy temporary popularity. Eva plans to remain silent, knowing Fiona's overconfidence will lead to her downfall. As a photo shoot for a magazine cover approaches, Alan works to boost Fiona's exposure, releasing statements that improve her public image. Despite Alan's efforts, Eva's fans remain supportive, though concerned about her silence.
+
+The day of the shoot arrives, and Eva and Fiona's teams prepare at Lush headquarters. Angela, Eva's friend, is frustrated by Fiona's behavior but respects Eva's decision to remain calm. Eva's husband advises her to let Fiona's confidence lead to her own failure. Before the shoot, Fiona confronts Eva, claiming she will always be a substitute, but Eva remains unfazed, signaling Angela to stay quiet.
+
+As they prepare for a live-streamed interview, Alan instructs both models to behave professionally. The chapter highlights the tension between Eva and Fiona, foreshadowing a potential turning point after the shoot.
