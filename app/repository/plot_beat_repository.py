@@ -1,9 +1,12 @@
 from .base_repository import BaseRepository
 from sqlalchemy.orm import Session
 from app.models.models import PlotBeat
-from typing import List
+from typing import List, Optional
 
 class PlotBeatRepository(BaseRepository[PlotBeat]):
+    def __init__(self, db: Optional[Session] = None):
+        super().__init__(db)
+
     def create(self, content: str, type: str, source_id: int) -> PlotBeat:
         plot_beat = PlotBeat(
             content=content,

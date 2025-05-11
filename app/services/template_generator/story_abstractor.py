@@ -53,7 +53,7 @@ class StoryAbstractor:
         self.db = db
         self.book = None
         self.template_id = template_id
-        self.template_repo = TemplateRepository()
+        self.template_repo = TemplateRepository(self.db)
         
         # Initialize AI client
         self.client = get_openai_client()
@@ -100,7 +100,7 @@ class StoryAbstractor:
     async def read_character_arcs(self) -> Dict[str, str]:
         """Read all character arcs from the database and return their contents"""
         character_arcs = {}
-        repo = CharacterArcsRepository()
+        repo = CharacterArcsRepository(self.db)
         arcs = repo.get_by_type_and_source_id('GENERATED', self.book_id)
         for arc in arcs:
             if arc.name and arc.content:
@@ -111,7 +111,7 @@ class StoryAbstractor:
     async def read_plot_beats(self) -> List[Dict[str, Any]]:
         """Read all plot beats from the database and return their contents"""
         plot_beats = []
-        repo = PlotBeatRepository()
+        repo = PlotBeatRepository(self.db)
         beats = repo.get_by_source_id_and_type(self.book_id, 'GENERATED')
         for beat in beats:
             if beat.content:
@@ -121,7 +121,7 @@ class StoryAbstractor:
     
     async def abstract_character_arc(self, character_name: str, character_growth: str) -> Dict[str, Any]:
         """Transform a specific character's growth into a generalized arc structure and store it as TEMPLATE in DB"""
-        repo = CharacterArcsRepository()
+        repo = CharacterArcsRepository(self.db)
         # Check if already abstracted
         existing_arc = repo.get_by_name_type_and_source_id(character_name, 'TEMPLATE', self.template_id)
         if existing_arc:
@@ -191,7 +191,7 @@ class StoryAbstractor:
         # Get character mappings from the already abstracted character arcs
         character_mappings = {}
         if self.template_id is not None:
-            repo = CharacterArcsRepository()
+            repo = CharacterArcsRepository(self.db)
             character_arc_templates = repo.get_by_type_and_source_id('TEMPLATE', self.template_id)
             for arc in character_arc_templates:
                 if arc.name and arc.archetype:
@@ -227,7 +227,7 @@ class StoryAbstractor:
                 abstract_content = response.choices[0].message.content.strip()
                 
                 if self.template_id is not None:
-                    repo = PlotBeatRepository()
+                    repo = PlotBeatRepository(self.db)
                     repo.create(
                         content=abstract_content,
                         type="TEMPLATE",
@@ -275,33 +275,3 @@ class StoryAbstractor:
             abstract_beats = await self.abstract_plot_beats(plot_beats)
         
         logger.info("Abstraction process completed")
-
-
-async def main():
-    """Main entry point"""
-    if len(sys.argv) < 2:
-        print("Usage: python plot_abstractor.py <book_id>")
-        sys.exit(1)
-        
-    book_id = int(sys.argv[1])
-    logger.info(f"Starting abstraction for book ID: {book_id}")
-    
-    # Get database session
-    db = next(get_db())
-    from app.repository.base_repository import BaseRepository
-    BaseRepository.set_session(db)
-    
-    try:
-        abstractor = StoryAbstractor(book_id, db)
-        template_index = await abstractor.run_abstraction()
-        logger.info(f"Template created successfully at: {abstractor.output_dir}")
-        print(json.dumps(template_index, indent=2))
-    except Exception as e:
-        logger.error(f"Error during abstraction: {str(e)}")
-        traceback.print_exc()
-    finally:
-        db.close()
-
-
-if __name__ == "__main__":
-    asyncio.run(main())

@@ -6,6 +6,7 @@ from app.repository.template_repository import TemplateRepository
 from app.repository.character_arcs_repository import CharacterArcsRepository
 from app.repository.plot_beat_repository import PlotBeatRepository
 from app.models.models import Template
+from app.services.background_jobs.tasks import add_template_creation_task_to_bg_jobs
 from app.services.template_generator.template_manager import TemplateManager
 
 class TemplateService:
@@ -15,10 +16,13 @@ class TemplateService:
         self.plot_beat_repo = PlotBeatRepository()
 
     def create_template(self, book_id: int) -> dict:
-        # Step 1: Create the template entry in DB (synchronously)
+        # Check if a template already exists for this book_id
+        existing = self.template_repo.get_by_book_id(book_id)
+        if existing:
+            return {"error": f"A template already exists for book_id {book_id}", "template_id": existing.id}
         template = self.template_repo.create(
             name=f"Template for Book {book_id}",
-            book_id=book_id,
+                    book_id=book_id,
             summary_status=TemplateStatusEnum.NOT_STARTED,
             character_arc_status=TemplateStatusEnum.NOT_STARTED,
             plot_beats_status=TemplateStatusEnum.NOT_STARTED,
@@ -27,16 +31,7 @@ class TemplateService:
         )
         template_id = template.id
 
-        # Step 2: Start the async process in the background
-        async def run_manager():
-            manager = TemplateManager(book_id, self.template_repo.db)
-            await manager.run(template_id)
-        try:
-            loop = asyncio.get_running_loop()
-            loop.create_task(run_manager())
-        except RuntimeError:
-            # If no running loop, create a new one (for sync context, e.g. tests)
-            asyncio.run(run_manager())
+        add_template_creation_task_to_bg_jobs(book_id, template_id)
 
         return {"template_id": template_id, "status": template.summary_status}
 
