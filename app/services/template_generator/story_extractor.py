@@ -247,12 +247,12 @@ class StoryExtractor:
     async def analyze_all_plot_beats(self) -> List[Dict[str, Any]]:
         """Analyze all chapter summaries for plot beats using multi-chapter batches, using the database only."""
         logger.info("Analyzing plot beats from all chapter summaries")
-        self.template_repo.update_plot_beat_status(self.template_id, TemplateStatusEnum.IN_PROGRESS)
+        self.template_repo.update_plot_beats_status(self.template_id, TemplateStatusEnum.IN_PROGRESS)
 
         # Check for existing plot beats in the database
         from app.repository.plot_beat_repository import PlotBeatRepository
         plot_beat_repo = PlotBeatRepository(self.db)
-        existing_plot_beats = plot_beat_repo.get_by_source_id(self.book_id, "GENERATED")
+        existing_plot_beats = plot_beat_repo.get_by_source_id_and_type(self.book_id, "GENERATED")
         if existing_plot_beats:
             logger.info(f"Found {len(existing_plot_beats)} plot beats in the database for book_id {self.book_id}")
             return [
@@ -304,13 +304,12 @@ class StoryExtractor:
             # Brief pause between batches to avoid rate limits
             if i + BATCH_SIZE < len(summaries):
                 await asyncio.sleep(2)
-        self.template_repo.update_plot_beat_status(self.template_id, TemplateStatusEnum.COMPLETED)
+        self.template_repo.update_plot_beats_status(self.template_id, TemplateStatusEnum.COMPLETED)
         return all_results
     
     async def extract_character_arcs(self) -> Dict[str, Any]:
         """Extract character identities and their growth arcs in a single analysis pipeline"""
         logger.info("Extracting character arcs from chapter summaries")
-        self.template_repo.update_character_arc_status(self.template_id, TemplateStatusEnum.IN_PROGRESS)
         # Step 1: Try to load character arcs from the database first
         character_arcs_repo = CharacterArcsRepository(self.db)
         db_character_arcs = character_arcs_repo.get_by_type_and_source_id('GENERATED', self.book_id)
@@ -318,6 +317,7 @@ class StoryExtractor:
             logger.info(f"Found {len(db_character_arcs)} character arcs in the database for book_id {self.book_id}")
             return db_character_arcs
         
+        self.template_repo.update_character_arc_status(self.template_id, TemplateStatusEnum.IN_PROGRESS)
         # Fallback: Load all chapter summaries from the chapters table (source_text column)
         summaries = []
         chapter_repo = chapter_repository.ChapterRepository(self.db)

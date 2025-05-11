@@ -51,4 +51,10 @@ class TemplateRepository(BaseRepository[Template]):
         self.db.commit()
         self.db.refresh(template)
         return template
+    
+    def get_all_templates(self):
+        return self.db.query(Template).all()
+
+    def get_by_id(self, template_id):
+        return self.db.query(Template).filter(Template.id == template_id).first()
         

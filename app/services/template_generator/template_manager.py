@@ -4,6 +4,8 @@ import logging
 from pathlib import Path
 
 from app.schemas.schemas import TemplateStatusEnum
+from app.services.template_generator.story_abstractor import StoryAbstractor
+from app.services.template_generator.story_extractor import StoryExtractor
 
 
 # Add the project root to the Python path so we can import app modules
@@ -12,8 +14,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.repository.template_repository import TemplateRepository
-from story_extractor import StoryExtractor
-from story_abstractor import StoryAbstractor
 from app.repository.base_repository import BaseRepository
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -29,53 +29,34 @@ class TemplateManager:
     def __init__(self, book_id: int, db: Session = None):
         self.book_id = book_id
         self.db = db
-        self.owns_db = False
         self.template = None
         self.template_id = None
 
-    async def run(self):
-        # Step 1: Get or create DB session
-        if self.db is None:
-            self.db = next(get_db())
-            self.owns_db = True
-
-        # Set the global session for all repositories
-        BaseRepository.set_session(self.db)
+    async def run(self, template_id: int):
 
         try:
-            # Step 2: Create template in DB
-            template_repo = TemplateRepository(self.db)
-            self.template = template_repo.create(
-                name=f"Template for Book {self.book_id}",
-                book_id=self.book_id,
-                summary_status=TemplateStatusEnum.NOT_STARTED,
-                character_arc_status=TemplateStatusEnum.NOT_STARTED,
-                plot_beats_status=TemplateStatusEnum.NOT_STARTED,
-                character_arc_template_status=TemplateStatusEnum.NOT_STARTED,
-                plot_beat_template_status=TemplateStatusEnum.NOT_STARTED
-            )
-            self.template_id = self.template.id
+            self.template_id = template_id
             logger.info(f"Created template with ID {self.template_id} for book {self.book_id}")
 
             # Step 3: Run story extraction
-            extractor = StoryExtractor(self.book_id, self.db)
+            extractor = StoryExtractor(self.book_id, self.db, self.template_id)
             await extractor.initialize()
             await extractor.run_analysis()
             logger.info("Story extraction complete.")
 
             # Step 4: Run story abstraction, passing template_id
-            abstractor = StoryAbstractor(self.book_id, self.db)
+            abstractor = StoryAbstractor(self.book_id, self.db, self.template_id)
             await abstractor.initialize()
-            await abstractor.abstract_all_character_arcs(self.template_id)
+            await abstractor.abstract_all_character_arcs()
             plot_beats = await abstractor.read_plot_beats()
-            await abstractor.abstract_plot_beats(plot_beats, self.template_id)
+            await abstractor.abstract_plot_beats(plot_beats)
             logger.info("Story abstraction complete.")
 
             logger.info(f"Template creation and abstraction complete for book {self.book_id} (template_id={self.template_id})")
             return self.template_id
-        finally:
-            if self.owns_db and self.db is not None:
-                self.db.close()
+        except Exception as e:
+            logger.error(f"Error in template manager: {e}")
+            raise e
 
 async def main():
     if len(sys.argv) < 2:
