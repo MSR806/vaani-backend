@@ -19,7 +19,7 @@ CHARACTER_ARC_USER_PROMPT_TEMPLATE = """
 {prompt}
 
 ## Available Character Templates:
-{template_descriptions}
+{character_templates}
 
 ## Task:
 Create unique and interesting characters for this story, ensuring they form a cohesive ensemble.
@@ -123,4 +123,52 @@ Your plot outline should:
 - Ensure each character's arc is incorporated meaningfully
 - Create a coherent narrative flow from beginning to end
 - Maintain continuity with previous plot beats when continuing the story
+"""
+
+# Plot Summary Generation Prompt
+
+PLOT_SUMMARY_SYSTEM_PROMPT = """
+You are a literary expert specializing in narrative structure and plot analysis. 
+Your task is to create a concise, coherent summary of plot beats that have been generated so far. 
+The summary should capture the key developments, character arcs, and narrative progression 
+in a way that provides clear context for generating the next plot beats.
+End of the story focus on the final plot beats.
+"""
+
+PLOT_SUMMARY_USER_PROMPT_TEMPLATE = """
+# Plot Summary Task
+
+## Plot Beats Generated So Far:
+```
+{plot_beats_till_now}
+```
+
+## Instructions:
+Provide a concise summary (300-500 words) of the plot so far, focusing on:
+1. The main narrative threads and how they've developed
+2. Key character developments and transformations
+3. Important plot points and their significance
+4. The current state of the story (where things stand now)
+
+Your summary should maintain narrative continuity and highlight elements that will be important
+for generating subsequent plot beats. Avoid unnecessary details while preserving the essential
+structure and progression of the story.
+"""
+
+# Chapter Summary Generation Prompts
+
+CHAPTER_SUMMARY_SYSTEM_PROMPT = """
+You are an expert storyteller assistant that generates cohesive chapter summaries based on plot beats and character arcs.
+Follow the JSON schema provided for your response.
+"""
+
+CHAPTER_SUMMARY_USER_PROMPT_TEMPLATE = """
+
+CHARACTER ARCS:
+{character_arcs}
+
+PLOT BEATS:
+{plot_beats}
+
+Based on the provided plot beats and character arcs, generate exactly {count} chapter summaries that tell a cohesive story.
 """

@@ -1,8 +1,11 @@
 from .base_repository import BaseRepository
 from sqlalchemy.orm import Session
 from app.models.models import Chapter
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 import time
+import logging
+
+logger = logging.getLogger(__name__)
 
 class ChapterRepository(BaseRepository[Chapter]):
     
@@ -46,4 +49,44 @@ class ChapterRepository(BaseRepository[Chapter]):
             return False
         self.db.delete(chapter)
         self.db.commit()
-        return True 
+        return True
+        
+    def batch_create(self, chapters_data: List[Dict[str, Any]], user_id: Optional[str] = None) -> List[Chapter]:
+        try:
+            if not chapters_data:
+                logger.warning("No chapter data provided for batch creation")
+                return []
+                
+            # Create all chapter objects but don't commit yet
+            current_time = int(time.time())
+            chapters = []
+            
+            for data in chapters_data:
+                chapter = Chapter(
+                    book_id=data.get("book_id"),
+                    title=data.get("title"),
+                    chapter_no=data.get("chapter_no"),
+                    content=data.get("content", ""),
+                    source_text=data.get("source_text"),
+                    state=data.get("state", "DRAFT"),
+                    created_at=current_time,
+                    updated_at=current_time,
+                    created_by=user_id,
+                    updated_by=user_id
+                )
+                chapters.append(chapter)
+            
+            # Add all chapters in a single batch and commit once
+            self.db.add_all(chapters)
+            self.db.commit()
+            
+            # Refresh all objects to get their database-generated IDs
+            for chapter in chapters:
+                self.db.refresh(chapter)
+                
+            return chapters
+            
+        except Exception as e:
+            self.db.rollback()
+            logger.error(f"Error in batch chapter creation: {str(e)}")
+            return []

@@ -9,6 +9,8 @@ import os
 import time
 import json
 
+from app.utils.constants import SettingKeys
+
 # Add the parent directory to sys.path to import app modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -21,6 +23,7 @@ def create_default_settings():
     db = SessionLocal()
     
     # Define default settings
+    model_options = json.dumps(["gpt-4o-mini", "grok-3-latest", "gpt-4o"])
     settings = [
         # AI Model settings for chapter outline generation
         {
@@ -30,7 +33,7 @@ def create_default_settings():
             "value": "gpt-4o-mini",
             "description": "AI model used for generating chapter outlines with scenes",
             "type": "list",
-            "options": json.dumps(["gpt-4o-mini", "grok-3-latest"])
+            "options": model_options
         },
         {
             "key": "create_scenes_temperature",
@@ -50,7 +53,7 @@ def create_default_settings():
             "value": "gpt-4o-mini",
             "description": "AI model used for generating chapter content",
             "type": "list",
-            "options": json.dumps(["gpt-4o-mini", "grok-3-latest"])
+            "options": model_options
         },
         {
             "key": "create_chapter_content_temperature",
@@ -70,7 +73,7 @@ def create_default_settings():
             "value": "gpt-4o-mini",
             "description": "AI model used for chapter editing",
             "type": "list",
-            "options": json.dumps(["gpt-4o-mini", "grok-3-latest"])
+            "options": model_options
         },
         {
             "key": "chapter_select_and_replace_temperature",
@@ -80,8 +83,63 @@ def create_default_settings():
             "description": "Temperature parameter for chapter editing",
             "type": "string",
             "options": None
+        },
+        {
+            "key": SettingKeys.CHARACTER_ARC_GENERATION_MODEL.value,
+            "title": "Character Arc Generation AI Model",
+            "section": "Character Arc",
+            "value": "gpt-4o",
+            "description": "AI model used for generating character arcs",
+            "type": "list",
+            "options": model_options
+        },
+        {
+            "key": SettingKeys.CHARACTER_ARC_GENERATION_TEMPERATURE.value,
+            "title": "Character Arc Generation Temperature",
+            "section": "Character Arc",
+            "value": "0.7",
+            "description": "Temperature parameter for character arc generation",
+            "type": "string",
+            "options": None
+        },
+        {
+            "key": SettingKeys.PLOT_BEAT_GENERATION_MODEL.value,
+            "title": "Plot Beat Generation AI Model",
+            "section": "Plot",
+            "value": "gpt-4o",
+            "description": "AI model used for generating plot beats",
+            "type": "list",
+            "options": model_options
+        },
+        {
+            "key": SettingKeys.PLOT_BEAT_GENERATION_TEMPERATURE.value,
+            "title": "Plot Beat Generation Temperature",
+            "section": "Plot",
+            "value": "0.7",
+            "description": "Temperature parameter for plot beat generation",
+            "type": "string",
+            "options": None
+        },
+        {
+            "key": SettingKeys.PLOT_SUMMARY_GENERATION_MODEL.value,
+            "title": "Plot Summary Generation AI Model",
+            "section": "Plot",
+            "value": "gpt-4o-mini",
+            "description": "AI model used for generating plot summaries",
+            "type": "list",
+            "options": model_options
+        },
+        {
+            "key": SettingKeys.PLOT_SUMMARY_GENERATION_TEMPERATURE.value,
+            "title": "Plot Summary Generation Temperature",
+            "section": "Plot",
+            "value": "0.4",
+            "description": "Temperature parameter for plot summary generation",
+            "type": "string",
+            "options": None
         }
     ]
+
     
     # Current timestamp
     current_time = int(time.time())
