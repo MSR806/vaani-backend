@@ -13,13 +13,14 @@ scene_characters = Table(
 
 
 class CharacterArc(Base):
-    __tablename__ = "story_character_arcs"
+    __tablename__ = "character_arcs"
     id = Column(Integer, primary_key=True, autoincrement=True)
     content = Column(Text, nullable=False)
     type = Column(Text, nullable=False)
     source_id = Column(Integer, nullable=True)
     name = Column(Text, nullable=True)
     role = Column(Text, nullable=True)
+    archetype = Column(Text, nullable=True)
 
 
 class Image(Base):
@@ -116,3 +117,15 @@ class PlotBeat(Base):
     content = Column(Text, nullable=False)
     type = Column(Text, nullable=False)
     source_id = Column(Integer, nullable=True)
+
+
+class Template(Base):
+    __tablename__ = "templates"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(Text, nullable=False)
+    book_id = Column(Integer, nullable=False)
+    summary_status = Column(Text, nullable=True)
+    character_arc_status = Column(Text, nullable=True)
+    plot_beats_status = Column(Text, nullable=True)
+    character_arc_template_status = Column(Text, nullable=True)
+    plot_beat_template_status = Column(Text, nullable=True)

@@ -268,6 +268,7 @@ class CharacterArcBase(BaseModel):
     content: str
     type: str
     source_id: Optional[int] = None
+    archetype: Optional[str] = None
 
 class CharacterArcCreate(CharacterArcBase):
     pass
@@ -290,6 +291,34 @@ class PlotBeatCreate(PlotBeatBase):
     pass
 
 class PlotBeatRead(PlotBeatBase):
+    id: int
+    class Config:
+        orm_mode = True
+
+
+# Template schemas
+class TemplateBase(BaseModel):
+    name: str
+    book_id: int
+    summary_status: str | None = None
+    character_arc_status: str | None = None
+    plot_beats_status: str | None = None
+    character_arc_template_status: str | None = None
+    plot_beat_template_status: str | None = None
+
+class TemplateCreate(TemplateBase):
+    pass
+
+class TemplateUpdate(BaseModel):
+    name: str | None = None
+    book_id: int | None = None
+    summary_status: str | None = None
+    character_arc_status: str | None = None
+    plot_beats_status: str | None = None
+    character_arc_template_status: str | None = None
+    plot_beat_template_status: str | None = None
+
+class TemplateRead(TemplateBase):
     id: int
     class Config:
         orm_mode = True

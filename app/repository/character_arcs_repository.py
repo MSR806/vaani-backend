@@ -21,4 +21,14 @@ class CharacterArcsRepository(BaseRepository[CharacterArc]):
         return self.db.query(CharacterArc).filter(CharacterArc.source_id == source_id).all()
 
     def get_by_type_and_source_id(self, arc_type: str, source_id: int) -> List[CharacterArc]:
-        return self.db.query(CharacterArc).filter(CharacterArc.type == arc_type, CharacterArc.source_id == source_id).all() 
+        return self.db.query(CharacterArc).filter(CharacterArc.type == arc_type, CharacterArc.source_id == source_id).all()
+
+    def get_by_name_type_and_source_id(self, name: str, arc_type: str, source_id: int) -> Optional[CharacterArc]:
+        return self.db.query(CharacterArc).filter(
+            CharacterArc.name == name,
+            CharacterArc.type == arc_type,
+            CharacterArc.source_id == source_id
+        ).first()
+
+    def get_character_arc_templates_by_source_id(self, source_id: int) -> List[CharacterArc]:
+        return self.db.query(CharacterArc).filter(CharacterArc.type == 'TEMPLATE', CharacterArc.source_id == source_id).all() 
