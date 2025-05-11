@@ -1,5 +1,4 @@
-CHARACTER: Emma Thornton
-FILE_START
+
 # Emma Thornton - Character Arc Analysis
 
 ## Description
@@ -30,10 +29,7 @@ Emma's transformation is marked by several pivotal moments:
 
 ## Ending State
 By the end of the story, Emma is a successful and self-assured individual, having overcome betrayal and manipulation. She reestablishes her career, garners public support, and enjoys a loving relationship with Alexander. Her journey embodies personal growth and empowerment, transitioning from a victim of betrayal to a formidable force in her industry.
-FILE_END
 
-CHARACTER: Lucas Grant
-FILE_START
 # Lucas Grant - Character Arc Analysis
 
 ## Description
@@ -61,10 +57,7 @@ Lucas's transformation is characterized by increasing desperation:
 
 ## Ending State
 By the story's conclusion, Lucas is disgraced and vulnerable, having lost control over Emma and facing the fallout of his actions. His professional domain is in chaos, and his personal relationships are fractured, marking his descent from power to vulnerability.
-FILE_END
 
-CHARACTER: Alexander Hayes
-FILE_START
 # Alexander Hayes - Character Arc Analysis
 
 ## Description
@@ -93,10 +86,7 @@ Alexander's transformation is subtle yet profound:
 
 ## Ending State
 By the end of the story, Alexander is deeply in love with Emma, having transitioned from a strategic partner to a devoted spouse. His efforts have helped Emma reclaim her career and independence, resulting in a relationship defined by mutual respect and support.
-FILE_END
 
-CHARACTER: Olivia Brooks
-FILE_START
 # Olivia Brooks - Character Arc Analysis
 
 ## Description
@@ -124,4 +114,3 @@ Olivia's transformation is marked by her increasing desperation:
 
 ## Ending State
 By the end of the story, Olivia is left disgraced, having lost her professional standing and facing public humiliation. Her attempts to undermine Emma have failed, and she must confront the consequences of her actions, marking her fall from perceived power to vulnerability.
-FILE_END
