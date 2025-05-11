@@ -159,12 +159,6 @@ class StoryExtractor:
             error_message = f"Error summarizing chapter {chapter.id}: {str(e)}"
             logger.error(error_message)
             logger.error(traceback.format_exc())
-            # Save error message to file for tracking
-            file_path = self.summaries_dir / f"chapter_{chapter.chapter_no}.error.md"
-            file_path.parent.mkdir(parents=True, exist_ok=True)
-            with open(file_path, 'w', encoding='utf-8') as f:
-                f.write(error_message)
-            # Return error info for internal processing
             return {
                 "chapter_id": chapter.id,
                 "chapter_title": chapter.title,
@@ -383,7 +377,7 @@ class StoryExtractor:
             pattern = r"CHARACTER:\s*([^\n]+)\s*\nFILE_START\n([\s\S]*?)## Role\n(.+?)(?:\n|$)[\s\S]*?\nFILE_END"
             matches = re.findall(pattern, character_markdown_content)
 
-            # Save individual character arc files
+            # Save individual character arc in database
             character_arcs_repo = CharacterArcsRepository(self.db)
             character_arcs = []
             for name, content, role in matches:
