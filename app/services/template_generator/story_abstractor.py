@@ -112,7 +112,7 @@ class StoryAbstractor:
         """Read all plot beats from the database and return their contents"""
         plot_beats = []
         repo = PlotBeatRepository()
-        beats = repo.get_by_source_id(self.book_id, 'GENERATED')
+        beats = repo.get_by_source_id_and_type(self.book_id, 'GENERATED')
         for beat in beats:
             if beat.content:
                 plot_beats.append({"content": beat.content})
@@ -179,7 +179,7 @@ class StoryAbstractor:
         character_arcs = await self.read_character_arcs()
         abstract_arcs = {}
         for character_name, arc_content in character_arcs.items():
-            abstract_arc = await self.abstract_character_arc(character_name, arc_content, self.template_id)
+            abstract_arc = await self.abstract_character_arc(character_name, arc_content)
             abstract_arcs[character_name] = abstract_arc
         self.template_repo.update_character_arc_template_status(self.template_id, TemplateStatusEnum.COMPLETED)
         return abstract_arcs

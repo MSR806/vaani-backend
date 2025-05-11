@@ -15,5 +15,5 @@ class PlotBeatRepository(BaseRepository[PlotBeat]):
         self.db.refresh(plot_beat)
         return plot_beat
 
-    def get_by_source_id(self, source_id: int, type: str) -> List[PlotBeat]:
+    def get_by_source_id_and_type(self, source_id: int, type: str) -> List[PlotBeat]:
         return self.db.query(PlotBeat).filter(PlotBeat.source_id == source_id, PlotBeat.type == type).all() 
