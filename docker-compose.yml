@@ -10,7 +10,7 @@ services:
     environment:
       # Supabase connection pooler settings
       - SUPABASE_DB_USER=${SUPABASE_DB_USER}
-      - SUPABASE_PASSWORD=${SUPABASE_PASSWORD}
+      - SUPABASE_DB_PASSWORD=${SUPABASE_DB_PASSWORD}
       - SUPABASE_DB_HOST=${SUPABASE_DB_HOST}
       - SUPABASE_DB_PORT=${SUPABASE_DB_PORT}
       - SUPABASE_DB_NAME=${SUPABASE_DB_NAME}
@@ -23,8 +23,54 @@ services:
       # Application settings
       - APP_ENV=${APP_ENV}
       - DEBUG=${DEBUG}
+      # Redis connection
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - redis
     networks:
       - writers-llm-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    networks:
+      - writers-llm-network
+
+  rq-worker:
+    build: .
+    command: ["python", "-m", "rq.cli", "worker", "--url", "redis://redis:6379/0", "default", "high", "low"]
+    volumes:
+      - .:/app
+    environment:
+      # Supabase connection pooler settings
+      - SUPABASE_DB_USER=${SUPABASE_DB_USER}
+      - SUPABASE_DB_PASSWORD=${SUPABASE_DB_PASSWORD}
+      - SUPABASE_DB_HOST=${SUPABASE_DB_HOST}
+      - SUPABASE_DB_PORT=${SUPABASE_DB_PORT}
+      - SUPABASE_DB_NAME=${SUPABASE_DB_NAME}
+      # API keys and auth
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - XAI_API_KEY=${XAI_API_KEY}
+      - AUTH0_DOMAIN=${AUTH0_DOMAIN}
+      - AUTH0_API_AUDIENCE=${AUTH0_API_AUDIENCE}
+      - AUTH0_ALGORITHMS=${AUTH0_ALGORITHMS}
+      # Application settings
+      - APP_ENV=${APP_ENV}
+      - DEBUG=${DEBUG}
+      # Redis connection
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - redis
+    restart: unless-stopped
+    networks:
+      - writers-llm-network
+
+volumes:
+  redis-data:
 
 networks:
   writers-llm-network:
