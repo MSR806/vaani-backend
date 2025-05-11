@@ -60,7 +60,7 @@ class StoryExtractor:
         self.characters = []
         self.client = get_openai_client()
         self.template_id = template_id
-        self.template_repo = TemplateRepository()
+        self.template_repo = TemplateRepository(self.db)
 
     async def initialize(self):
         """Load book and chapters from database"""
@@ -142,7 +142,7 @@ class StoryExtractor:
 
             # Save the summary to the database
             chapter.source_text = summary_text
-            chapter_repo = chapter_repository.ChapterRepository()
+            chapter_repo = chapter_repository.ChapterRepository(self.db)
             chapter_repo.update(chapter)
             logger.info(f"Summary saved to database")
             
@@ -398,31 +398,3 @@ class StoryExtractor:
         await self.analyze_all_plot_beats()
         
         logger.info("Analysis completed")
-    
-
-async def main():
-    """Main entry point"""
-    import sys
-    if len(sys.argv) < 2:
-        print("Usage: python plot_analyzer_new.py <book_id>")
-        sys.exit(1)
-    book_id = int(sys.argv[1])
-    logger.info(f"Starting analysis for book ID: {book_id}")
-    # Get database session
-    db = next(get_db())
-    from app.repository.base_repository import BaseRepository
-    BaseRepository.set_session(db)
-    try:
-        analyzer = StoryExtractor(book_id, db)
-        await analyzer.initialize()
-        await analyzer.run_analysis()
-        logger.info("Analysis completed successfully")
-    except Exception as e:
-        logger.error(f"Error during analysis: {str(e)}")
-        logger.error(traceback.format_exc())
-    finally:
-        db.close()
-
-
-if __name__ == "__main__":
-    asyncio.run(main())

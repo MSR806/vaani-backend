@@ -57,14 +57,3 @@ class TemplateManager:
         except Exception as e:
             logger.error(f"Error in template manager: {e}")
             raise e
-
-async def main():
-    if len(sys.argv) < 2:
-        print("Usage: python template_manager.py <book_id>")
-        sys.exit(1)
-    book_id = int(sys.argv[1])
-    manager = TemplateManager(book_id)
-    await manager.run()
-
-if __name__ == "__main__":
-    asyncio.run(main())

@@ -1,7 +1,12 @@
 from .base_repository import BaseRepository
 from app.models.models import Template
+from sqlalchemy.orm import Session
+from typing import Optional
 
 class TemplateRepository(BaseRepository[Template]):
+    def __init__(self, db: Optional[Session] = None):
+        super().__init__(db)
+
     def create(self, name, book_id, summary_status, character_arc_status, plot_beats_status, character_arc_template_status, plot_beat_template_status):
         template = Template(
             name=name,
@@ -57,4 +62,7 @@ class TemplateRepository(BaseRepository[Template]):
 
     def get_by_id(self, template_id):
         return self.db.query(Template).filter(Template.id == template_id).first()
+
+    def get_by_book_id(self, book_id: int):
+        return self.db.query(Template).filter(Template.book_id == book_id).first()
         

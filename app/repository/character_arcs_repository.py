@@ -4,6 +4,9 @@ from app.models.models import CharacterArc
 from typing import List, Optional
 
 class CharacterArcsRepository(BaseRepository[CharacterArc]):
+    def __init__(self, db: Optional[Session] = None):
+        super().__init__(db)
+
     def create(self, content: str, type: str, source_id: int, name: str = None, role: str = None, archetype: str = None) -> CharacterArc:
         arc = CharacterArc(
             content=content,
