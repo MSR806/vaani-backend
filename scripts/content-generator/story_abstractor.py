@@ -18,7 +18,7 @@ from app.database import get_db
 from app.models.models import Book
 from app.services.ai_service import get_openai_client
 from app.services.setting_service import get_setting_by_key
-from .prompts.story_abstractor_prompts import (
+from prompts.story_abstractor_prompts import (
     CHARACTER_ARC_SYSTEM_PROMPT,
     CHARACTER_ARC_USER_PROMPT_TEMPLATE,
     PLOT_BEATS_SYSTEM_PROMPT,
@@ -51,42 +51,11 @@ class StoryAbstractor:
         self.db = db
         self.book = None
         
-        # Set up input/output directories
-        self.input_dir = INPUT_DIR / f"book_{book_id}"
-        self.output_dir = self.input_dir / "template"
-        
-        # Input subdirectories for analysis results
-        self.summaries_dir = self.input_dir / "analysis/summaries"
-        self.plot_beats_dir = self.input_dir / "analysis/plot_beats"
-        self.character_arcs_input_dir = self.input_dir / "analysis/character_arcs"
-        
-        # Output subdirectories for templates
-        self.character_arcs_dir = self.output_dir / "character_arcs"
-        self.narrative_skeleton_dir = self.output_dir / "narrative_skeleton"
-        
         # Initialize AI client
         self.client = get_openai_client()
-        
-        # Create output directories
-        self.output_dir.mkdir(parents=True, exist_ok=True)
-        self.character_arcs_dir.mkdir(parents=True, exist_ok=True)
-        self.narrative_skeleton_dir.mkdir(parents=True, exist_ok=True)
     
     async def initialize(self):
         """Validate input directories and load book info if database session provided"""
-        # Verify input directory exists
-        if not self.input_dir.exists():
-            raise ValueError(f"Input directory not found: {self.input_dir}")
-        
-        # Verify required subdirectories exist
-        required_dirs = [
-            self.character_arcs_input_dir,
-            self.plot_beats_dir
-        ]
-        
-        for directory in required_dirs:
-            if not directory.exists():
-                raise ValueError(f"Required directory not found: {directory}")
         
         # If database session provided, load book info
         if self.db:
@@ -179,6 +148,7 @@ class StoryAbstractor:
             archetype = lines[0] if lines else "Unknown Archetype"
 
             # Store in DB as TEMPLATE
+            # todo : update the prompt to get the role and extract the role and update in the DB tables
             repo.create(
                 content=abstract_content,
                 type="TEMPLATE",
@@ -216,7 +186,7 @@ class StoryAbstractor:
         character_mappings = {}
         if template_id is not None:
             repo = CharacterArcsRepository()
-            character_arc_templates = repo.get_character_arc_templates_by_source_id(template_id)
+            character_arc_templates = repo.get_by_type_and_source_id('TEMPLATE', template_id)
             for arc in character_arc_templates:
                 if arc.name and arc.archetype:
                     character_mappings[arc.name] = arc.archetype
@@ -298,9 +268,6 @@ class StoryAbstractor:
         if not plot_beats:
             logger.warning("No plot beats found")
         
-        # Run abstractions
-        meta_data = {}
-        
         # Step 1: Character Arcs
         if character_arcs:
             abstract_arcs = await self.abstract_all_character_arcs(template_id)
@@ -323,6 +290,8 @@ async def main():
     
     # Get database session
     db = next(get_db())
+    from app.repository.base_repository import BaseRepository
+    BaseRepository.set_session(db)
     
     try:
         abstractor = StoryAbstractor(book_id, db)

@@ -4,13 +4,14 @@ from app.models.models import CharacterArc
 from typing import List, Optional
 
 class CharacterArcsRepository(BaseRepository[CharacterArc]):
-    def create(self, content: str, type: str, source_id: int, name: str = None, role: str = None) -> CharacterArc:
+    def create(self, content: str, type: str, source_id: int, name: str = None, role: str = None, archetype: str = None) -> CharacterArc:
         arc = CharacterArc(
             content=content,
             type=type,
             source_id=source_id,
             name=name,
-            role=role
+            role=role,
+            archetype=archetype
         )
         self.db.add(arc)
         self.db.commit()
@@ -29,6 +30,3 @@ class CharacterArcsRepository(BaseRepository[CharacterArc]):
             CharacterArc.type == arc_type,
             CharacterArc.source_id == source_id
         ).first()
-
-    def get_character_arc_templates_by_source_id(self, source_id: int) -> List[CharacterArc]:
-        return self.db.query(CharacterArc).filter(CharacterArc.type == 'TEMPLATE', CharacterArc.source_id == source_id).all() 

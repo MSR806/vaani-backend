@@ -35,7 +35,7 @@ Create individual markdown files for each IMPORTANT character in the story:
 [Include the character's personality, appearance, setting, backstory, and other relevant details]
 
 ## Role
-[Specify the character's role in the story (Female & Male Protagonist, Antagonist, etc.)]
+[Specify the character's role in the story (Female & Male Protagonist, Antagonist, etc.), IMPORTANT: DONOT generate a description of the character, just generate a two word phrase about the character]
 
 ## Key Relationships
 [Describe the character's significant relationships with other characters in the story]

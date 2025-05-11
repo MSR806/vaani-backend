@@ -55,20 +55,7 @@ class StoryExtractor:
         self.chapters = []
         self.chapter_summaries = []
         self.characters = []
-        
-        # Set up directories
-        self.output_dir = OUTPUT_DIR / f"book_{book_id}/analysis"
-        self.summaries_dir = self.output_dir / "summaries"
-        self.character_arcs_dir = self.output_dir / "character_arcs"  # Combined directory for character identity and growth
-        self.plot_beats_dir = self.output_dir / "plot_beats"
-        
         self.client = get_openai_client()
-        
-        # Create output directories if they don't exist
-        self.output_dir.mkdir(parents=True, exist_ok=True)
-        self.summaries_dir.mkdir(parents=True, exist_ok=True)
-        self.character_arcs_dir.mkdir(parents=True, exist_ok=True)
-        self.plot_beats_dir.mkdir(parents=True, exist_ok=True)
         
     async def initialize(self):
         """Load book and chapters from database"""
@@ -370,7 +357,9 @@ class StoryExtractor:
             )
             
             character_markdown_content = response.choices[0].message.content
-                        
+            print("--------------------------------")
+            print(character_markdown_content)
+            print("--------------------------------")
             # Extract individual character files using regex pattern
             import re
             # Updated pattern to also capture the role section
@@ -394,10 +383,6 @@ class StoryExtractor:
     async def run_analysis(self) -> Dict[str, Any]:
         """Run the full analysis pipeline"""
         logger.info(f"Starting analysis for book ID: {self.book_id}")
-        
-        # Create output directory if it doesn't exist
-        self.output_dir.mkdir(parents=True, exist_ok=True)
-        
 
         await self.summarize_all_chapters()
         
