@@ -9,6 +9,9 @@ from pathlib import Path
 from typing import List, Dict, Any, Optional
 import logging
 
+from app.repository.template_repository import TemplateRepository
+from app.schemas.schemas import TemplateStatusEnum
+
 # Add the project root to the Python path so we can import app modules
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
@@ -47,7 +50,7 @@ CHARACTER_GROWTH_TEMPERATURE = 0.3
 
 
 class StoryExtractor:
-    def __init__(self, book_id: int, db: Session):
+    def __init__(self, book_id: int, db: Session, template_id: int):
         """Initialize the analyzer with a book ID and database session"""
         self.book_id = book_id
         self.db = db
@@ -56,7 +59,9 @@ class StoryExtractor:
         self.chapter_summaries = []
         self.characters = []
         self.client = get_openai_client()
-        
+        self.template_id = template_id
+        self.template_repo = TemplateRepository()
+
     async def initialize(self):
         """Load book and chapters from database"""
         # Load book data
@@ -155,6 +160,8 @@ class StoryExtractor:
     
     async def summarize_all_chapters(self) -> List[Dict[str, Any]]:
         """Summarize all chapters in the book"""
+        self.template_repo.update_summary_status(self.template_id, TemplateStatusEnum.IN_PROGRESS)
+
         # Process all chapters
         chapters_to_process = self.chapters
         logger.info(f"Summarizing all {len(chapters_to_process)} chapters")
@@ -166,7 +173,7 @@ class StoryExtractor:
             results.append(result)
             
         logger.info(f"All chapter summaries complete")
-        
+        self.template_repo.update_summary_status(self.template_id, TemplateStatusEnum.COMPLETED)
         return results
     
     # The extract_characters_from_summaries method has been removed as it's now part of extract_character_arcs
@@ -240,6 +247,7 @@ class StoryExtractor:
     async def analyze_all_plot_beats(self) -> List[Dict[str, Any]]:
         """Analyze all chapter summaries for plot beats using multi-chapter batches, using the database only."""
         logger.info("Analyzing plot beats from all chapter summaries")
+        self.template_repo.update_plot_beat_status(self.template_id, TemplateStatusEnum.IN_PROGRESS)
 
         # Check for existing plot beats in the database
         from app.repository.plot_beat_repository import PlotBeatRepository
@@ -296,13 +304,13 @@ class StoryExtractor:
             # Brief pause between batches to avoid rate limits
             if i + BATCH_SIZE < len(summaries):
                 await asyncio.sleep(2)
-
+        self.template_repo.update_plot_beat_status(self.template_id, TemplateStatusEnum.COMPLETED)
         return all_results
     
     async def extract_character_arcs(self) -> Dict[str, Any]:
         """Extract character identities and their growth arcs in a single analysis pipeline"""
         logger.info("Extracting character arcs from chapter summaries")
-        
+        self.template_repo.update_character_arc_status(self.template_id, TemplateStatusEnum.IN_PROGRESS)
         # Step 1: Try to load character arcs from the database first
         character_arcs_repo = CharacterArcsRepository(self.db)
         db_character_arcs = character_arcs_repo.get_by_type_and_source_id('GENERATED', self.book_id)
@@ -357,9 +365,6 @@ class StoryExtractor:
             )
             
             character_markdown_content = response.choices[0].message.content
-            print("--------------------------------")
-            print(character_markdown_content)
-            print("--------------------------------")
             # Extract individual character files using regex pattern
             import re
             # Updated pattern to also capture the role section
@@ -372,12 +377,14 @@ class StoryExtractor:
             for name, content, role in matches:
                 character_arc = character_arcs_repo.create(content=content.strip(), type='GENERATED', source_id=self.book_id, name=name.strip(), role=role.strip())
                 character_arcs.append(character_arc)
+            self.template_repo.update_character_arc_status(self.template_id, TemplateStatusEnum.COMPLETED)
             return character_arcs
 
         except Exception as e:
             error_message = f"Error extracting character arcs: {str(e)}\n{traceback.format_exc()}"
             logger.error(error_message)
             logger.error(traceback.format_exc())
+            self.template_repo.update_character_arc_status(self.template_id, TemplateStatusEnum.FAILED)
             return {"error": error_message}
 
     async def run_analysis(self) -> Dict[str, Any]:

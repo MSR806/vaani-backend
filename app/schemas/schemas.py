@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional, List, Dict
+from enum import Enum
 
 
 # Book schemas
@@ -297,14 +298,20 @@ class PlotBeatRead(PlotBeatBase):
 
 
 # Template schemas
+class TemplateStatusEnum(str, Enum):
+    NOT_STARTED = "NOT_STARTED"
+    IN_PROGRESS = "IN_PROGRESS"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+
 class TemplateBase(BaseModel):
     name: str
     book_id: int
-    summary_status: str | None = None
-    character_arc_status: str | None = None
-    plot_beats_status: str | None = None
-    character_arc_template_status: str | None = None
-    plot_beat_template_status: str | None = None
+    summary_status: Optional[TemplateStatusEnum] = None
+    character_arc_status: Optional[TemplateStatusEnum] = None
+    plot_beats_status: Optional[TemplateStatusEnum] = None
+    character_arc_template_status: Optional[TemplateStatusEnum] = None
+    plot_beat_template_status: Optional[TemplateStatusEnum] = None
 
 class TemplateCreate(TemplateBase):
     pass
@@ -312,11 +319,11 @@ class TemplateCreate(TemplateBase):
 class TemplateUpdate(BaseModel):
     name: str | None = None
     book_id: int | None = None
-    summary_status: str | None = None
-    character_arc_status: str | None = None
-    plot_beats_status: str | None = None
-    character_arc_template_status: str | None = None
-    plot_beat_template_status: str | None = None
+    summary_status: Optional[TemplateStatusEnum] = None
+    character_arc_status: Optional[TemplateStatusEnum] = None
+    plot_beats_status: Optional[TemplateStatusEnum] = None
+    character_arc_template_status: Optional[TemplateStatusEnum] = None
+    plot_beat_template_status: Optional[TemplateStatusEnum] = None
 
 class TemplateRead(TemplateBase):
     id: int

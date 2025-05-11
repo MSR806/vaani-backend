@@ -3,6 +3,9 @@ import asyncio
 import logging
 from pathlib import Path
 
+from app.schemas.schemas import TemplateStatusEnum
+
+
 # Add the project root to the Python path so we can import app modules
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
@@ -45,11 +48,11 @@ class TemplateManager:
             self.template = template_repo.create(
                 name=f"Template for Book {self.book_id}",
                 book_id=self.book_id,
-                summary_status="NOT_STARTED",
-                character_arc_status="NOT_STARTED",
-                plot_beats_status="NOT_STARTED",
-                character_arc_template_status="NOT_STARTED",
-                plot_beat_template_status="NOT_STARTED"
+                summary_status=TemplateStatusEnum.NOT_STARTED,
+                character_arc_status=TemplateStatusEnum.NOT_STARTED,
+                plot_beats_status=TemplateStatusEnum.NOT_STARTED,
+                character_arc_template_status=TemplateStatusEnum.NOT_STARTED,
+                plot_beat_template_status=TemplateStatusEnum.NOT_STARTED
             )
             self.template_id = self.template.id
             logger.info(f"Created template with ID {self.template_id} for book {self.book_id}")

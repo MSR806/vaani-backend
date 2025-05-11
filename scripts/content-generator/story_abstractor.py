@@ -10,6 +10,8 @@ from pathlib import Path
 from typing import List, Dict, Any, Optional
 import logging
 
+from app.schemas.schemas import TemplateStatusEnum
+
 # Add the project root to the Python path so we can import app modules
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
@@ -45,11 +47,13 @@ PLOT_TEMPERATURE = 0.4
 
 
 class StoryAbstractor:
-    def __init__(self, book_id: int, db: Session = None):
+    def __init__(self, book_id: int, db: Session = None, template_id: int = None):
         """Initialize the abstractor with a book ID and optional database session"""
         self.book_id = book_id
         self.db = db
         self.book = None
+        self.template_id = template_id
+        self.template_repo = TemplateRepository()
         
         # Initialize AI client
         self.client = get_openai_client()
@@ -115,11 +119,11 @@ class StoryAbstractor:
         return plot_beats
     
     
-    async def abstract_character_arc(self, character_name: str, character_growth: str, template_id: int = None) -> Dict[str, Any]:
+    async def abstract_character_arc(self, character_name: str, character_growth: str) -> Dict[str, Any]:
         """Transform a specific character's growth into a generalized arc structure and store it as TEMPLATE in DB"""
         repo = CharacterArcsRepository()
         # Check if already abstracted
-        existing_arc = repo.get_by_name_type_and_source_id(character_name, 'TEMPLATE', template_id)
+        existing_arc = repo.get_by_name_type_and_source_id(character_name, 'TEMPLATE', self.template_id)
         if existing_arc:
             return {
                 "original_character": character_name,
@@ -152,7 +156,7 @@ class StoryAbstractor:
             repo.create(
                 content=abstract_content,
                 type="TEMPLATE",
-                source_id=template_id,
+                source_id=self.template_id,  
                 name=character_name,
                 archetype=archetype
             )
@@ -168,31 +172,35 @@ class StoryAbstractor:
                 "abstract_arc": f"# Character Arc Template\n\nCould not generate abstraction due to an error: {str(e)}",
             }
     
-    async def abstract_all_character_arcs(self, template_id: int = None) -> Dict[str, Any]:
+    async def abstract_all_character_arcs(self) -> Dict[str, Any]:
         """Abstract all character arcs into generalized templates"""
         logger.info("Abstracting all character arcs")
+        self.template_repo.update_character_arc_template_status(self.template_id, TemplateStatusEnum.IN_PROGRESS)
         character_arcs = await self.read_character_arcs()
         abstract_arcs = {}
         for character_name, arc_content in character_arcs.items():
-            abstract_arc = await self.abstract_character_arc(character_name, arc_content, template_id)
+            abstract_arc = await self.abstract_character_arc(character_name, arc_content, self.template_id)
             abstract_arcs[character_name] = abstract_arc
+        self.template_repo.update_character_arc_template_status(self.template_id, TemplateStatusEnum.COMPLETED)
         return abstract_arcs
     
-    async def abstract_plot_beats(self, plot_beats: List[Dict[str, Any]], template_id: int = None) -> List[Dict[str, Any]]:
+    async def abstract_plot_beats(self, plot_beats: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Transform specific plot beats into a generalized narrative skeleton"""
         model, temperature = await self._get_model_settings("narrative_skeleton")
         
         # Get character mappings from the already abstracted character arcs
         character_mappings = {}
-        if template_id is not None:
+        if self.template_id is not None:
             repo = CharacterArcsRepository()
-            character_arc_templates = repo.get_by_type_and_source_id('TEMPLATE', template_id)
+            character_arc_templates = repo.get_by_type_and_source_id('TEMPLATE', self.template_id)
             for arc in character_arc_templates:
                 if arc.name and arc.archetype:
                     character_mappings[arc.name] = arc.archetype
             if character_mappings:
                 logger.info(f"Found {len(character_mappings)} character mappings from DB")
-        
+
+
+        self.template_repo.update_plot_beat_template_status(self.template_id, TemplateStatusEnum.IN_PROGRESS)
         abstract_beats = []
         
         for beat_data in plot_beats:
@@ -218,12 +226,12 @@ class StoryAbstractor:
                 )
                 abstract_content = response.choices[0].message.content.strip()
                 
-                if template_id is not None:
+                if self.template_id is not None:
                     repo = PlotBeatRepository()
                     repo.create(
                         content=abstract_content,
                         type="TEMPLATE",
-                        source_id=template_id
+                        source_id=self.template_id
                     )
                 abstract_beats.append({
                     "abstract_content": abstract_content
@@ -238,24 +246,14 @@ class StoryAbstractor:
                     "abstract_content": error_content,
                     "error": str(e)
                 })
+                self.template_repo.update_plot_beat_template_status(self.template_id, TemplateStatusEnum.FAILED)
+        self.template_repo.update_plot_beat_template_status(self.template_id, TemplateStatusEnum.COMPLETED)
         return abstract_beats
     
     async def run_abstraction(self) -> Dict[str, Any]:
         """Run the full abstraction pipeline"""
         logger.info(f"Starting abstraction process for book {self.book_id}")
         await self.initialize()
-        # Create a new template in the DB with all statuses as NOT_STARTED
-        template_repo = TemplateRepository()
-        template = template_repo.create(
-            name=f"Template for Book {self.book_id}",
-            book_id=self.book_id,
-            summary_status="NOT_STARTED",
-            character_arc_status="NOT_STARTED",
-            plot_beats_status="NOT_STARTED",
-            character_arc_template_status="NOT_STARTED",
-            plot_beat_template_status="NOT_STARTED"
-        )
-        template_id = template.id
         
         # Gather source data
         character_arcs = await self.read_character_arcs()
@@ -270,11 +268,11 @@ class StoryAbstractor:
         
         # Step 1: Character Arcs
         if character_arcs:
-            abstract_arcs = await self.abstract_all_character_arcs(template_id)
+            abstract_arcs = await self.abstract_all_character_arcs()
         
         # Step 2: Plot Beats
         if plot_beats:
-            abstract_beats = await self.abstract_plot_beats(plot_beats, template_id)
+            abstract_beats = await self.abstract_plot_beats(plot_beats)
         
         logger.info("Abstraction process completed")
 
