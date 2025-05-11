@@ -1,7 +1,0 @@
-In Chapter 73, Alan returns to his office from Paris, overwhelmed by a crisis at his agency. The problem, initially perceived as minor, has escalated into a major disaster. He receives a call from Fiona, who is anxious about her standing with the agency and Alan's feelings towards her. Despite her concerns, Alan reassures her to rest and stay away from the news, though he is internally conflicted and regretful about past decisions, particularly regarding Eva.
-
-Alan reflects on the agency's current predicament: Eva's rising popularity is benefiting the agency, while Fiona's negative public image is causing deals to be withdrawn, affecting other models. Frustrated, Alan attempts to find solutions by reaching out for help.
-
-The next day, Alan meets with Eva, who is now a poised and formidable figure, unlike the girl who once prioritized him. Their conversation reveals tension; Alan accuses Eva of seeking his and Fiona's downfall, while Eva asserts her independence and success, mocking Alan's attempts to undermine her. She confidently declares that she is beyond his reach and control, despite his veiled threats about her future management.
-
-This chapter highlights Alan's internal struggle, the agency's turmoil, and Eva's transformation into a powerful adversary, setting the stage for further conflict.

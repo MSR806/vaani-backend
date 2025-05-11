@@ -1,7 +1,0 @@
-In Chapter 39, Eva and Alan discuss their recent breakup over the phone. Alan insists Eva return to modeling to protect the agency's image, despite Eva's reluctance due to her health. Eva cleverly argues against accepting a contract, highlighting the potential damage to the agency's reputation. Alan, surprised by Eva's newfound assertiveness, agrees to send her a script to practice for an upcoming event. Eva plans to give a memorable performance, hinting at a deeper motive.
-
-The agency announces Eva's event, sparking negative reactions online. Fiona, Alan's mistress, relishes the backlash against Eva, believing it will ruin her career and leave Alan to herself. Fiona's assistant, Lydia, supports her belief that Eva's downfall is imminent.
-
-Meanwhile, Eva receives the script from Alan and discusses it with her friend Angela, who is outraged by Alan's audacity. Eva reassures Angela, revealing her plan to use the event to announce her modeling comeback and seek revenge on Alan and Fiona. Angela supports Eva's decision to act decisively.
-
-In a domestic scene, Eva prepares lunch as her husband Daniel admires her from afar. Their playful interaction is interrupted by a call informing Daniel about progress on a fraudulent company, hinting at broader conflicts. This chapter highlights Eva's strategic shift and determination to reclaim her career while setting the stage for upcoming confrontations.
