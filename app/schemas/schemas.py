@@ -261,3 +261,35 @@ class SettingBatchUpdate(BaseModel):
 class ChaptersBulkUploadRequest(BaseModel):
     book_id: int
     html_content: str
+
+
+# Character Arc schemas
+class CharacterArcBase(BaseModel):
+    content: str
+    type: str
+    source_id: Optional[int] = None
+
+class CharacterArcCreate(CharacterArcBase):
+    pass
+
+class CharacterArcRead(CharacterArcBase):
+    id: int
+
+    class Config:
+        orm_mode = True
+
+
+# PlotBeat schemas
+class PlotBeatBase(BaseModel):
+    content: str
+    type: str
+    source_id: Optional[int] = None
+    plot_beat_number: Optional[int] = None
+
+class PlotBeatCreate(PlotBeatBase):
+    pass
+
+class PlotBeatRead(PlotBeatBase):
+    id: int
+    class Config:
+        orm_mode = True

@@ -1,5 +1,6 @@
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, Table, LargeBinary, BigInteger
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, Table, LargeBinary, BigInteger, Enum
 from sqlalchemy.orm import relationship
+from sqlalchemy.ext.declarative import declarative_base
 from ..database import Base
 
 # Association table for scene-characters many-to-many relationship
@@ -9,6 +10,16 @@ scene_characters = Table(
     Column("scene_id", Integer, ForeignKey("scenes.id")),
     Column("character_id", Integer, ForeignKey("characters.id")),
 )
+
+
+class CharacterArc(Base):
+    __tablename__ = "story_character_arcs"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    content = Column(Text, nullable=False)
+    type = Column(Text, nullable=False)
+    source_id = Column(Integer, nullable=True)
+    name = Column(Text, nullable=True)
+    role = Column(Text, nullable=True)
 
 
 class Image(Base):
@@ -97,3 +108,11 @@ class Setting(Base):
     description = Column(Text, nullable=True)
     type = Column(String, nullable=False, default="string")  # string or list
     options = Column(Text, nullable=True)  # JSON string of options
+
+
+class PlotBeat(Base):
+    __tablename__ = "plot_beats"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    content = Column(Text, nullable=False)
+    type = Column(Text, nullable=False)
+    source_id = Column(Integer, nullable=True)
