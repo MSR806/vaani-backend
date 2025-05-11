@@ -1,7 +1,0 @@
-In Chapter 7, Eva is taken to a romantic lunch by Alan, her fiancé, at a fancy restaurant before a conference. The lunch is awkward as Alan mistakenly believes Eva's favorite steak is Ribeye, revealing his lack of attention to her preferences over their five-year relationship. During the meal, Eva receives a message from Daniel, who reveals he arranged the steak as a congratulatory gesture for their upcoming wedding, showcasing his thoughtfulness.
-
-Eva feels disdain for Alan and sarcastically discusses their marriage plans, realizing the lunch is a bribe to manipulate her actions against her manager, Angela. Despite Alan's intentions, Eva is determined to protect Angela. They return to the agency for a press conference regarding a scandal involving Eva. Dressed in a black gown symbolizing the downfall of Alan and his lover, Eva faces the media.
-
-During the conference, Eva takes full responsibility for the scandal, absolving her manager and others involved. Her confession causes a media uproar. A spokesperson from her agency criticizes her, suggesting it wasn't her first mistake, implying Alan's influence. This revelation turns public opinion against Eva.
-
-Meanwhile, Daniel watches the conference from afar, deciding to trust Eva to handle the situation herself, indicating his support and belief in her resilience. The chapter highlights Eva's emotional shift from reliance on Alan to self-reliance and foreshadows her determination to navigate the fallout independently.

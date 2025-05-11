@@ -1,7 +1,0 @@
-Three days after the launch of Lush's Summer Trend, the company celebrated unexpectedly high sales, fulfilling their monthly projection in a single day. Invitations were sent to partners and models, including Fiona, who was excited to attend despite being overshadowed by Eva. Fiona shared her excitement with her brother Alan, who was busy planning their engagement party and was pleased with her success.
-
-At the launch dinner party, Fiona dressed extravagantly, believing Eva had returned to the U.S. and that she had triumphed over her. However, Eva arrived in a stunning purple gown with a diamond necklace, a gift from Daniel. Fiona and Alan were shocked by Eva's presence and the attention she received from the media.
-
-Rose, aware of the situation, watched as Fiona confronted Eva, who dismissed Fiona's taunts by referencing recent news. Reporters flocked to Eva, praising her appearance and seeking interviews, leaving Fiona feeling overshadowed and frustrated. Alan advised Fiona to remain composed to avoid negative publicity.
-
-Mr. Folley, a prominent figure, complimented Eva and informed her that her professionalism had impressed major companies, opening international opportunities for her. Fiona, envious and suspicious, accused Eva of conspiring with Mr. Folley. Despite Alan's attempts to calm her, Fiona's jealousy led her to publicly confront Eva, questioning her integrity. The chapter ends with a reporter questioning Fiona's identity, highlighting her diminishing recognition.
