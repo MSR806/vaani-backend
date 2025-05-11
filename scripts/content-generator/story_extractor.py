@@ -233,7 +233,6 @@ class StoryExtractor:
            - A descriptive title for the plot development
            - A concise description of what happens
            - An analysis of its significance to the overall narrative
-           - How it relates to character development or motivations
            - Whether it represents exposition, rising action, conflict, climax, falling action, or resolution
         
         3. Identify any major turning points in the story
@@ -428,7 +427,7 @@ class StoryExtractor:
         [Include the character's personality, appearance, setting, backstory, and other relevant details]
         
         ## Role
-        [Specify the character's role in the story (protagonist, antagonist, supporting character, etc.)]
+        [Specify the character's role in the story (Female & Male Protagonist, Antagonist, etc.)]
         
         ## Key Relationships
         [Describe the character's significant relationships with other characters in the story]
