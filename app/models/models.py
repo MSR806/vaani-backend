@@ -2,14 +2,7 @@ from sqlalchemy import Column, Integer, String, Text, ForeignKey, Table, LargeBi
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from ..database import Base
-
-# Association table for scene-characters many-to-many relationship
-scene_characters = Table(
-    "scene_characters",
-    Base.metadata,
-    Column("scene_id", Integer, ForeignKey("scenes.id")),
-    Column("character_id", Integer, ForeignKey("characters.id")),
-)
+from .enums import StoryBoardStatus
 
 
 class CharacterArc(Base):
@@ -61,7 +54,7 @@ class Chapter(Base):
     chapter_no = Column(Integer, nullable=False)
     content = Column(Text, nullable=False)
     source_text = Column(Text, nullable=True)
-    state = Column(String, nullable=True)
+    state = Column(String, default="DRAFT", nullable=False)
     created_at = Column(BigInteger, nullable=False)  # Unix timestamp
     updated_at = Column(BigInteger, nullable=False)  # Unix timestamp
     created_by = Column(String, nullable=False)  # User ID
@@ -129,3 +122,15 @@ class Template(Base):
     plot_beats_status = Column(Text, nullable=True)
     character_arc_template_status = Column(Text, nullable=True)
     plot_beat_template_status = Column(Text, nullable=True)
+
+class StoryBoard(Base):
+    __tablename__ = "story_boards"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    book_id = Column(Integer, ForeignKey("books.id"), nullable=False)
+    template_id = Column(Integer, ForeignKey("templates.id"), nullable=True)
+    prompt = Column(Text, nullable=True)
+    status = Column(Enum(StoryBoardStatus), default=StoryBoardStatus.NOT_STARTED)
+    created_at = Column(BigInteger, nullable=False)  # Unix timestamp
+    updated_at = Column(BigInteger, nullable=False)  # Unix timestamp
+    created_by = Column(String, nullable=False)  # User ID
+    updated_by = Column(String, nullable=False)  # User ID
