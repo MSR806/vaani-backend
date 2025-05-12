@@ -12,13 +12,13 @@ load_dotenv()
 # Supabase connection pooler settings
 # Format: postgresql://postgres.[PROJECT_REF]:[PASSWORD]@aws-0-ap-south-1.pooler.supabase.com:6543/postgres
 SUPABASE_DB_USER = os.getenv("SUPABASE_DB_USER", "postgres.wctnszbithsykyauvgyu")
-SUPABASE_PASSWORD = os.getenv("SUPABASE_PASSWORD")
+SUPABASE_DB_PASSWORD = os.getenv("SUPABASE_DB_PASSWORD")
 SUPABASE_DB_HOST = os.getenv("SUPABASE_DB_HOST", "aws-0-ap-south-1.pooler.supabase.com")
 SUPABASE_DB_PORT = os.getenv("SUPABASE_DB_PORT", "6543")
 SUPABASE_DB_NAME = os.getenv("SUPABASE_DB_NAME", "postgres")
 
 # Create database URL for Supabase PostgreSQL connection with connection pooler
-SQLALCHEMY_DATABASE_URL = f"postgresql://{SUPABASE_DB_USER}:{SUPABASE_PASSWORD}@{SUPABASE_DB_HOST}:{SUPABASE_DB_PORT}/{SUPABASE_DB_NAME}"
+SQLALCHEMY_DATABASE_URL = f"postgresql://{SUPABASE_DB_USER}:{SUPABASE_DB_PASSWORD}@{SUPABASE_DB_HOST}:{SUPABASE_DB_PORT}/{SUPABASE_DB_NAME}"
 
 # Create SQLAlchemy engine with retry mechanism
 def create_engine_with_retry(max_retries=5, retry_interval=5):

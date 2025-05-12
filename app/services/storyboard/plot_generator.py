@@ -5,8 +5,8 @@ from sqlalchemy.orm import Session
 # Import from app services
 from app.services.ai_service import get_openai_client
 from app.models.models import PlotBeat
-from app.models.enums import StoryBoardStatus
-from app.repository.story_board_repository import StoryBoardRepository
+from app.models.enums import StoryboardStatus
+from app.repository.storyboard_repository import StoryboardRepository
 from app.repository.character_arcs_repository import CharacterArcsRepository
 from app.repository.plot_beat_repository import PlotBeatRepository
 from app.services.setting_service import get_setting_by_key
@@ -22,19 +22,11 @@ from prompts.story_generator_prompts import (
 
 logger = logging.getLogger(__name__)
 
-# Hardcoded AI model settings for story generation
-PLOT_MODEL = get_setting_by_key(SettingKeys.PLOT_BEAT_GENERATION_MODEL.value).value
-SUMMARY_MODEL = get_setting_by_key(SettingKeys.PLOT_SUMMARY_GENERATION_MODEL.value).value
-
-# Temperature settings
-PLOT_TEMPERATURE = float(get_setting_by_key(SettingKeys.PLOT_BEAT_GENERATION_TEMPERATURE.value).value)
-SUMMARY_TEMPERATURE = float(get_setting_by_key(SettingKeys.PLOT_SUMMARY_GENERATION_TEMPERATURE.value).value)
-
 class PlotBeatGenerator:
-    def __init__(self, db: Session, story_board_id: int):
+    def __init__(self, db: Session, storyboard_id: int):
         self.db = db
-        self.story_board_id = story_board_id
-        self.story_board_repo = StoryBoardRepository(self.db)
+        self.storyboard_id = storyboard_id
+        self.storyboard_repo = StoryboardRepository(self.db)
         self.character_arcs_repo = CharacterArcsRepository(self.db)
         self.plot_beats_repo = PlotBeatRepository(self.db)
         
@@ -48,12 +40,14 @@ class PlotBeatGenerator:
     async def initialize(self):
         """Initialize templates and directories"""
         # Verify book template directory exists
-        if self.story_board_id:
-            self.story_board = self.story_board_repo.get_by_id(self.story_board_id)
+        if self.storyboard_id:
+            self.storyboard = self.storyboard_repo.get_by_id(self.storyboard_id)
         
-        if self.story_board:
-            self.character_arcs = self.character_arcs_repo.get_by_type_and_source_id("STORY_BOARD", self.story_board_id)
-            self.plot_beats_templates = self.plot_beats_repo.get_by_type_and_source_id("TEMPLATE", self.story_board.template_id)
+        if self.storyboard:
+            self.character_arcs = self.character_arcs_repo.get_by_type_and_source_id("STORYBOARD", self.storyboard_id)
+            logger.info(f"Got {len(self.character_arcs)} character arcs")
+            self.plot_beats_templates = self.plot_beats_repo.get_by_source_id_and_type(self.storyboard.template_id, "TEMPLATE")
+            logger.info(f"Got {len(self.plot_beats_templates)} plot beat templates")
     
 
     async def generate_plot_beats(self, plot_beat_template: PlotBeat, previous_plot_beat=None, summary_till_now=None):
@@ -76,40 +70,32 @@ class PlotBeatGenerator:
         try:
             system_prompt = PLOT_BEAT_SYSTEM_PROMPT
             user_prompt = PLOT_BEAT_USER_PROMPT_TEMPLATE.format(
-                prompt=self.story_board.prompt,
+                prompt=self.storyboard.prompt,
                 character_content=character_content_str,
                 plot_template=plot_beat_template.content,
                 plot_till_now=plot_till_now
             )
 
             response = self.client.chat.completions.create(
-                model=get_setting_by_key(SettingKeys.PLOT_BEAT_GENERATION_MODEL.value).value,
+                model=get_setting_by_key(self.db, SettingKeys.PLOT_BEAT_GENERATION_MODEL.value).value,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
                 ],
-                temperature=float(get_setting_by_key(SettingKeys.PLOT_BEAT_GENERATION_TEMPERATURE.value).value),
+                temperature=float(get_setting_by_key(self.db, SettingKeys.PLOT_BEAT_GENERATION_TEMPERATURE.value).value),
             )
 
-            # Save plot beat to the database
-            plot_beat = PlotBeat(
-                content=response.choices[0].message.content,
-                type="STORY_BOARD",
-                source_id=self.story_board_id,
-                template_id=plot_beat_template.id
-            )
-            self.plot_beats_repo.create(plot_beat)
+            return self.plot_beats_repo.create(response.choices[0].message.content, "STORYBOARD", self.storyboard_id)
         
-            return plot_beat
         except Exception as e:
-            logger.error(f"Error generating plot beat: {str(e)}")
+            logger.error(f"Error generating plot beat: {e}")
             return None
     
     async def summarize_plot_till_now(self):
         try:
             response = self.client.chat.completions.create(
-                model=get_setting_by_key(SettingKeys.PLOT_SUMMARY_GENERATION_MODEL.value).value,
-                temperature=float(get_setting_by_key(SettingKeys.PLOT_SUMMARY_GENERATION_TEMPERATURE.value).value),
+                model=get_setting_by_key(self.db, SettingKeys.PLOT_SUMMARY_GENERATION_MODEL.value).value,
+                temperature=float(get_setting_by_key(self.db, SettingKeys.PLOT_SUMMARY_GENERATION_TEMPERATURE.value).value),
                 messages=[
                     {"role": "system", "content": PLOT_SUMMARY_SYSTEM_PROMPT},
                     {"role": "user", "content": PLOT_SUMMARY_USER_PROMPT_TEMPLATE.format(
@@ -133,8 +119,8 @@ class PlotBeatGenerator:
         previous_beat = None
         
         # Process plot beat templates one by one
-        for i, plot_beat_template in enumerate(self.plot_beat_templates):
-            logger.info(f"Generating plot beat {i+1}/{len(self.plot_beat_templates)}")
+        for i, plot_beat_template in enumerate(self.plot_beats_templates):
+            logger.info(f"Generating plot beat {i+1}/{len(self.plot_beats_templates)}")
             
             # For the first beat, there's nothing before it
             if i == 0:
@@ -179,10 +165,10 @@ class PlotBeatGenerator:
     async def execute(self):
         await self.initialize()
         
-        self.story_board_repo.update(self.story_board_id, status=StoryBoardStatus.PLOT_BEATS_GENERATION_IN_PROGRESS)
+        self.storyboard_repo.update(self.storyboard_id, status=StoryboardStatus.PLOT_BEATS_GENERATION_IN_PROGRESS)
         
         await self.generate_all_plot_beats()
         
-        self.story_board_repo.update(self.story_board_id, status=StoryBoardStatus.PLOT_BEATS_GENERATION_COMPLETED)
+        self.storyboard_repo.update(self.storyboard_id, status=StoryboardStatus.PLOT_BEATS_GENERATION_COMPLETED)
         
         logger.info(f"Plot beat generation completed. Generated {len(self.plot_beats)} plot beats.")

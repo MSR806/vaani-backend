@@ -92,7 +92,7 @@ PLOT_BEAT_USER_PROMPT_TEMPLATE = """
 
 ## Plot Template to Apply
 ```
-{template_content}
+{plot_template}
 ```
 
 ## Instructions

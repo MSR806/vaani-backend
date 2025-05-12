@@ -1,8 +1,9 @@
 from sqlalchemy.orm import Session
+from typing import List, Optional
 
 from .base_repository import BaseRepository
 from app.models.models import CharacterArc
-from typing import List, Optional
+from app.utils.exceptions import CharacterArcNotFoundException
 
 class CharacterArcsRepository(BaseRepository[CharacterArc]):
     def __init__(self, db: Optional[Session] = None):
@@ -30,7 +31,7 @@ class CharacterArcsRepository(BaseRepository[CharacterArc]):
             character_arcs: List of dictionaries with the following keys:
                 - content: str - The content of the character arc
                 - type: str - The type of the character arc
-                - source_id: int - The ID of the source (e.g., story_board.template_id)
+                - source_id: int - The ID of the source (e.g., storyboard.template_id)
                 - name: str - The name of the character
                 - role: str - The role of the character
                 

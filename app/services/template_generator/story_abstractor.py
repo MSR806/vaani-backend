@@ -101,7 +101,7 @@ class StoryAbstractor:
         """Read all character arcs from the database and return their contents"""
         character_arcs = {}
         repo = CharacterArcsRepository(self.db)
-        arcs = repo.get_by_type_and_source_id('GENERATED', self.book_id)
+        arcs = repo.get_by_type_and_source_id('EXTRACTED', self.book_id)
         for arc in arcs:
             if arc.name and arc.content:
                 character_arcs[arc.name] = arc.content
@@ -112,7 +112,7 @@ class StoryAbstractor:
         """Read all plot beats from the database and return their contents"""
         plot_beats = []
         repo = PlotBeatRepository(self.db)
-        beats = repo.get_by_source_id_and_type(self.book_id, 'GENERATED')
+        beats = repo.get_by_source_id_and_type(self.book_id, 'EXTRACTED')
         for beat in beats:
             if beat.content:
                 plot_beats.append({"content": beat.content})

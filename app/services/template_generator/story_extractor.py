@@ -219,7 +219,7 @@ class StoryExtractor:
             plot_beat_repo = PlotBeatRepository(self.db)
             plot_beat_repo.create(
                 content=plot_analysis,
-                type="GENERATED",
+                type="EXTRACTED",
                 source_id=self.book_id,
             )
             
@@ -252,7 +252,7 @@ class StoryExtractor:
         # Check for existing plot beats in the database
         from app.repository.plot_beat_repository import PlotBeatRepository
         plot_beat_repo = PlotBeatRepository(self.db)
-        existing_plot_beats = plot_beat_repo.get_by_source_id_and_type(self.book_id, "GENERATED")
+        existing_plot_beats = plot_beat_repo.get_by_source_id_and_type(self.book_id, "EXTRACTED")
         if existing_plot_beats:
             logger.info(f"Found {len(existing_plot_beats)} plot beats in the database for book_id {self.book_id}")
             return [
@@ -312,7 +312,7 @@ class StoryExtractor:
         logger.info("Extracting character arcs from chapter summaries")
         # Step 1: Try to load character arcs from the database first
         character_arcs_repo = CharacterArcsRepository(self.db)
-        db_character_arcs = character_arcs_repo.get_by_type_and_source_id('GENERATED', self.book_id)
+        db_character_arcs = character_arcs_repo.get_by_type_and_source_id('EXTRACTED', self.book_id)
         if db_character_arcs:
             logger.info(f"Found {len(db_character_arcs)} character arcs in the database for book_id {self.book_id}")
             return db_character_arcs
@@ -375,7 +375,7 @@ class StoryExtractor:
             character_arcs_repo = CharacterArcsRepository(self.db)
             character_arcs = []
             for name, content, role in matches:
-                character_arc = character_arcs_repo.create(content=content.strip(), type='GENERATED', source_id=self.book_id, name=name.strip(), role=role.strip())
+                character_arc = character_arcs_repo.create(content=content.strip(), type='EXTRACTED', source_id=self.book_id, name=name.strip(), role=role.strip())
                 character_arcs.append(character_arc)
             self.template_repo.update_character_arc_status(self.template_id, TemplateStatusEnum.COMPLETED)
             return character_arcs

@@ -327,5 +327,6 @@ class TemplateUpdate(BaseModel):
 
 class TemplateRead(TemplateBase):
     id: int
+    name: str
     class Config:
         orm_mode = True

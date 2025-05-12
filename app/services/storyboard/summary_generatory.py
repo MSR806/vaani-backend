@@ -4,7 +4,7 @@ from typing import List, Dict, Any
 
 from app.services.ai_service import get_openai_client
 from app.repository.plot_beat_repository import PlotBeatRepository
-from app.repository.story_board_repository import StoryBoardRepository
+from app.repository.storyboard_repository import StoryboardRepository
 from app.repository.character_arcs_repository import CharacterArcsRepository
 from app.repository.chapter_repository import ChapterRepository
 from app.models.models import Chapter
@@ -18,7 +18,7 @@ class SummarizerGenerator:
         self.plot_beat_id = plot_beat_id
         self.count = count
         self.plot_beat_repo = PlotBeatRepository(self.db)
-        self.story_board_repo = StoryBoardRepository(self.db)
+        self.storyboard_repo = StoryboardRepository(self.db)
         self.character_arcs_repo = CharacterArcsRepository(self.db)
         self.chapter_repo = ChapterRepository(self.db)
         
@@ -32,8 +32,8 @@ class SummarizerGenerator:
     async def initialize(self):
         if self.plot_beat_id:
             self.plot_beat = self.plot_beat_repo.get_by_id(self.plot_beat_id)
-            self.story_board = self.story_board_repo.get_by_id(self.plot_beat.source_id)
-            self.character_arcs = self.character_arcs_repo.get_by_type_and_source_id("STORY_BOARD", self.story_board.id)
+            self.storyboard = self.storyboard_repo.get_by_id(self.plot_beat.source_id)
+            self.character_arcs = self.character_arcs_repo.get_by_type_and_source_id("STORYBOARD", self.storyboard.id)
     
     async def generate_summaries(self):
         try:
@@ -88,7 +88,7 @@ class SummarizerGenerator:
         
         for summary in summaries:
             chapter_data = {
-                "book_id": self.story_board.book_id,
+                "book_id": self.storyboard.book_id,
                 "title": summary["title"],
                 "chapter_no": summary["chapter_number"],
                 "content": "",  # Initially empty content
@@ -108,7 +108,7 @@ class SummarizerGenerator:
             # Use the repository's batch creation method for better performance
             chapters = self.chapter_repo.batch_create(chapters_data, user_id=user_id)
                 
-            logger.info(f"Successfully created {len(chapters)} chapters for book {self.story_board.book_id}")
+            logger.info(f"Successfully created {len(chapters)} chapters for book {self.storyboard.book_id}")
             return chapters
             
         except Exception as e:
