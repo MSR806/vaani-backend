@@ -5,11 +5,11 @@ from sqlalchemy.orm import Session
 
 # Import from app services
 from app.services.ai_service import get_openai_client
-from app.repository.story_board_repository import StoryBoardRepository
+from app.repository.storyboard_repository import StoryboardRepository
 from app.repository.character_arcs_repository import CharacterArcsRepository
 from app.services.setting_service import get_setting_by_key
 from app.utils.constants import SettingKeys
-from app.models.enums import StoryBoardStatus
+from app.models.enums import StoryboardStatus
 
 # Import prompt templates
 from app.prompts.story_generator_prompts import (
@@ -20,12 +20,12 @@ from app.prompts.story_generator_prompts import (
 logger = logging.getLogger(__name__)
 
 class CharacterArcGenerator:
-    def __init__(self, db: Session, story_board_id: int):
+    def __init__(self, db: Session, storyboard_id: int):
         """Initialize the character arc generator with a book ID"""
         self.db = db
-        self.story_board_id = story_board_id
+        self.storyboard_id = storyboard_id
         self.character_arc_repo = CharacterArcsRepository(self.db)
-        self.story_board_repo = StoryBoardRepository(self.db)
+        self.storyboard_repo = StoryboardRepository(self.db)
         
         # Initialize AI client
         try:
@@ -37,11 +37,11 @@ class CharacterArcGenerator:
     async def initialize(self):
         """Initialize templates and directories"""
         # Verify book template directory exists
-        if self.story_board_id:
-            self.story_board = self.story_board_repo.get_by_id(self.story_board_id)
+        if self.storyboard_id:
+            self.storyboard = self.storyboard_repo.get_by_id(self.storyboard_id)
         
-        if self.story_board:
-            self.character_arc_templates = self.character_arc_repo.get_by_type_and_source_id("TEMPLATE", self.story_board.template_id)
+        if self.storyboard:
+            self.character_arc_templates = self.character_arc_repo.get_by_type_and_source_id("TEMPLATE", self.storyboard.template_id)
     
     def _extract_character_arcs_from_content(self, character_markdown_content: str) -> tuple:
         # Extract individual character files using regex pattern
@@ -71,8 +71,8 @@ class CharacterArcGenerator:
             # Add to batch data
             character_arcs_data.append({
                 'content': character_content,
-                'type': "STORY_BOARD",
-                'source_id': self.story_board_id,
+                'type': "STORYBOARD",
+                'source_id': self.storyboard_id,
                 'name': character_name,
                 'role': character_role
             })
@@ -91,7 +91,7 @@ class CharacterArcGenerator:
                 model=get_setting_by_key(self.db, SettingKeys.CHARACTER_ARC_GENERATION_MODEL.value).value,
                 messages=[
                     {"role": "system", "content": CHARACTER_ARC_SYSTEM_PROMPT},
-                    {"role": "user", "content": CHARACTER_ARC_USER_PROMPT_TEMPLATE.format(prompt=self.story_board.prompt, character_templates=character_templates_str)}
+                    {"role": "user", "content": CHARACTER_ARC_USER_PROMPT_TEMPLATE.format(prompt=self.storyboard.prompt, character_templates=character_templates_str)}
                 ],
                 temperature=float(get_setting_by_key(self.db, SettingKeys.CHARACTER_ARC_GENERATION_TEMPERATURE.value).value),
             )
@@ -115,11 +115,11 @@ class CharacterArcGenerator:
     async def execute(self):
         await self.initialize()
 
-        self.story_board_repo.update(self.story_board_id, status=StoryBoardStatus.CHARACTER_ARC_GENERATION_IN_PROGRESS)
+        self.storyboard_repo.update(self.storyboard_id, status=StoryboardStatus.CHARACTER_ARC_GENERATION_IN_PROGRESS)
         
         await self.generate_character_arcs()
         
-        self.story_board_repo.update(self.story_board_id, status=StoryBoardStatus.CHARACTER_ARC_GENERATION_COMPLETED)
+        self.storyboard_repo.update(self.storyboard_id, status=StoryboardStatus.CHARACTER_ARC_GENERATION_COMPLETED)
         
         logger.info(f"Character arc generation completed.")
 

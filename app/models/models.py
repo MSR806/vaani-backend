@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String, Text, ForeignKey, Table, LargeBi
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from ..database import Base
-from .enums import StoryBoardStatus
+from .enums import StoryboardStatus
 
 
 class CharacterArc(Base):
@@ -123,13 +123,13 @@ class Template(Base):
     character_arc_template_status = Column(Text, nullable=True)
     plot_beat_template_status = Column(Text, nullable=True)
 
-class StoryBoard(Base):
-    __tablename__ = "story_boards"
+class Storyboard(Base):
+    __tablename__ = "storyboards"
     id = Column(Integer, primary_key=True, autoincrement=True)
     book_id = Column(Integer, ForeignKey("books.id"), nullable=False)
     template_id = Column(Integer, ForeignKey("templates.id"), nullable=True)
     prompt = Column(Text, nullable=True)
-    status = Column(Enum(StoryBoardStatus), default=StoryBoardStatus.NOT_STARTED)
+    status = Column(Enum(StoryboardStatus), default=StoryboardStatus.NOT_STARTED)
     created_at = Column(BigInteger, nullable=False)  # Unix timestamp
     updated_at = Column(BigInteger, nullable=False)  # Unix timestamp
     created_by = Column(String, nullable=False)  # User ID

@@ -166,7 +166,23 @@ def create_default_settings():
                 created_count += 1
                 print(f"Created setting: {setting.key}")
             else:
-                print(f"Setting already exists: {setting_data['key']}")
+                # Check if any fields other than 'value' have changed
+                fields_to_check = ['title', 'section', 'description', 'type', 'options']
+                changes_made = False
+                
+                for field in fields_to_check:
+                    if field in setting_data and getattr(existing, field) != setting_data[field]:
+                        setattr(existing, field, setting_data[field])
+                        changes_made = True
+                
+                if changes_made:
+                    # Update metadata but preserve the existing value
+                    existing.updated_at = current_time
+                    existing.updated_by = "system"
+                    db.commit()
+                    print(f"Updated metadata for setting: {setting_data['key']}")
+                else:
+                    print(f"Setting already exists (no changes needed): {setting_data['key']}")
         
         except IntegrityError:
             db.rollback()

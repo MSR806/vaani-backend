@@ -158,4 +158,43 @@ async def require_delete_permission(
             detail="You don't have permission to perform this action"
         )
     return current_user
-    
+
+async def require_storyboard_write_permission(
+    current_user: dict = Depends(get_current_user)
+):
+    if "storyboard:write" not in current_user.get("permissions", []):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have permission to perform this action"
+        )
+    return current_user
+
+async def require_storyboard_read_permission(
+    current_user: dict = Depends(get_current_user)
+):
+    if "storyboard:read" not in current_user.get("permissions", []):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have permission to perform this action"
+        )
+    return current_user
+
+async def require_template_write_permission(
+    current_user: dict = Depends(get_current_user)
+):
+    if "template:write" not in current_user.get("permissions", []):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have permission to perform this action"
+        )
+    return current_user
+
+async def require_template_read_permission(
+    current_user: dict = Depends(get_current_user)
+):
+    if "template:read" not in current_user.get("permissions", []):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have permission to perform this action"
+        )
+    return current_user

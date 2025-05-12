@@ -3,6 +3,8 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from ..models.models import Book, Chapter
 from ..schemas.schemas import BookCreate, BookUpdate, BookCoverResponse, BookBase, BookResponse
+from ..schemas.storyboard import StoryboardResponse
+from ..services.storyboard.storyboard_service import StoryboardService
 from ..services.book_service import (
     create_book,
     get_book,
@@ -15,21 +17,6 @@ from ..auth import get_auth0_user_details, get_current_user, security, require_w
 from fastapi.security import HTTPAuthorizationCredentials
 
 router = APIRouter(tags=["books"])
-
-
-@router.get("/books/test")
-def test_db(db: Session = Depends(get_db)):
-    book = Book(title="Test Book", author="Test Author")
-    db.add(book)
-    db.commit()
-
-    chapter = Chapter(
-        book_id=book.id, title="Chapter 1", chapter_no=1, content="This is test content"
-    )
-    db.add(chapter)
-    db.commit()
-
-    return {"message": "Database test successful", "book_id": book.id}
 
 
 @router.get("/books", response_model=list[BookResponse])
@@ -95,3 +82,13 @@ async def generate_book_cover_route(
         raise HTTPException(
             status_code=500, detail=f"Error generating book cover: {str(e)}"
         )
+
+@router.get("/books/{book_id}/storyboard", response_model=StoryboardResponse)
+def get_storyboard_by_book_id_route(
+    book_id: int, 
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_write_permission)
+):
+    storyboard_service = StoryboardService()
+    storyboard = storyboard_service.get_storyboard_by_book_id(book_id)
+    return storyboard
