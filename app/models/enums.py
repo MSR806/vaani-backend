@@ -1,3 +1,4 @@
+from enum import Enum
 class StoryBoardStatus(Enum):
     NOT_STARTED = "NOT_STARTED"
     CHARACTER_ARC_GENERATION_IN_PROGRESS = "CHARACTER_ARC_GENERATION_IN_PROGRESS"

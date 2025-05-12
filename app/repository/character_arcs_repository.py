@@ -1,3 +1,5 @@
+from sqlalchemy.orm import Session
+
 from .base_repository import BaseRepository
 from app.models.models import CharacterArc
 from typing import List, Optional

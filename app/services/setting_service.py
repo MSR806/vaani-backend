@@ -10,3 +10,7 @@ def get_setting_by_key(db: Session, key: str):
     if not setting:
         raise HTTPException(status_code=404, detail=f"Setting with key '{key}' not found")
     return setting
+
+def get_settings(db: Session, skip: int = 0, limit: int = 100):
+    """Get all settings with pagination"""
+    return db.query(Setting).offset(skip).limit(limit).all()
