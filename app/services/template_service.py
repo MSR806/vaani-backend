@@ -15,14 +15,14 @@ class TemplateService:
         self.character_arc_repo = CharacterArcsRepository()
         self.plot_beat_repo = PlotBeatRepository()
 
-    def create_template(self, book_id: int) -> dict:
+    def create_template(self, book_id: int, name: str) -> dict:
         # Check if a template already exists for this book_id
         existing = self.template_repo.get_by_book_id(book_id)
         if existing:
             return {"error": f"A template already exists for book_id {book_id}", "template_id": existing.id}
         template = self.template_repo.create(
-            name=f"Template for Book {book_id}",
-                    book_id=book_id,
+            name=name,
+            book_id=book_id,
             summary_status=TemplateStatusEnum.NOT_STARTED,
             character_arc_status=TemplateStatusEnum.NOT_STARTED,
             plot_beats_status=TemplateStatusEnum.NOT_STARTED,
