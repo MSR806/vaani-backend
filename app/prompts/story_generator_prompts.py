@@ -74,6 +74,7 @@ PLOT_BEAT_SYSTEM_PROMPT = (
     "Design a cohesive narrative structure that allows all character arcs to develop naturally throughout the story, "
     "while maintaining the dramatic progression and emotional impact from the plot template. "
     "When continuing a story, ensure smooth continuity with the existing narrative."
+    "Ensure that numbering is maintained for a continuing story."
 )
 
 PLOT_BEAT_USER_PROMPT_TEMPLATE = """

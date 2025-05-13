@@ -13,3 +13,7 @@ class CharacterArcService:
         
     def update_character_arc(self, character_arc_id: int, update_data: Dict[str, Any]):
         return self.character_arcs_repo.update(character_arc_id, update_data)
+    
+    def get_character_arcs_by_book_id(self, book_id: int):
+        return self.character_arcs_repo.get_character_arcs_by_book_id(book_id)
+        

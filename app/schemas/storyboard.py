@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from .utils import BooleanResponse
 
 class StoryboardCreate(BaseModel):
     book_id: int
@@ -15,3 +16,6 @@ class StoryboardResponse(BaseModel):
     updated_at: int
     created_by: str
     updated_by: str
+
+class StoryboardGenerateChaptersSummaryRequest(BaseModel):
+    plot_beat_id: int

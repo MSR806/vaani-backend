@@ -11,6 +11,10 @@ class StoryboardNotFoundException(HTTPException):
 class StoryboardCannotBeContinuedException(HTTPException):
     def __init__(self, book_id: int, status: str):
         super().__init__(status_code=400, detail={"type": "STORYBOARD_CANNOT_BE_CONTINUED", "message": f"Story board cannot be continued for book_id {book_id} with status {status}"})
+
+class PlotBeatNotGeneratedException(HTTPException):
+    def __init__(self):
+        super().__init__(status_code=400, detail={"type": "PLOT_BEAT_NOT_GENERATED", "message": f"Plot beat not generated, first generate plot beats"})
     
 class CharacterArcNotFoundException(HTTPException):
     def __init__(self, character_arc_id: int):

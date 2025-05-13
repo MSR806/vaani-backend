@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String, Text, ForeignKey, Table, LargeBi
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from ..database import Base
-from .enums import StoryboardStatus
+from .enums import StoryboardStatus, PromptSource
 
 
 class CharacterArc(Base):
@@ -130,6 +130,17 @@ class Storyboard(Base):
     template_id = Column(Integer, ForeignKey("templates.id"), nullable=True)
     prompt = Column(Text, nullable=True)
     status = Column(Enum(StoryboardStatus), default=StoryboardStatus.NOT_STARTED)
+    created_at = Column(BigInteger, nullable=False)  # Unix timestamp
+    updated_at = Column(BigInteger, nullable=False)  # Unix timestamp
+    created_by = Column(String, nullable=False)  # User ID
+    updated_by = Column(String, nullable=False)  # User ID
+
+
+class Prompt(Base):
+    __tablename__ = "prompts"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    content = Column(Text, nullable=False)
+    source = Column(Enum(PromptSource), nullable=False)
     created_at = Column(BigInteger, nullable=False)  # Unix timestamp
     updated_at = Column(BigInteger, nullable=False)  # Unix timestamp
     created_by = Column(String, nullable=False)  # User ID

@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from ..models.models import Book, Chapter, Image
 from ..schemas.schemas import BookCreate, BookUpdate, ChapterGenerateRequest, BookBase
 from fastapi import HTTPException
@@ -67,7 +68,26 @@ def get_book(db: Session, book_id: int) -> Book:
     return db.query(Book).filter(Book.id == book_id).first()
 
 def get_books(db: Session) -> list[Book]:
-    return db.query(Book).all()
+    # Create a subquery to count chapters for each book
+    chapter_count_subquery = (
+        db.query(Chapter.book_id, func.count(Chapter.id).label("chapter_count"))
+        .group_by(Chapter.book_id)
+        .subquery()
+    )
+    
+    # Query books with the chapter count
+    books = (
+        db.query(Book, func.coalesce(chapter_count_subquery.c.chapter_count, 0).label("chapter_count"))
+        .outerjoin(chapter_count_subquery, Book.id == chapter_count_subquery.c.book_id)
+        .all()
+    )
+    
+    # Add the chapter_count attribute to each book object
+    for book, chapter_count in books:
+        book.chapter_count = chapter_count
+    
+    # Return just the book objects
+    return [book for book, _ in books]
 
 def update_book(db: Session, book_id: int, book_update: BookUpdate, user_id: str) -> Book:
     book = get_book(db, book_id)

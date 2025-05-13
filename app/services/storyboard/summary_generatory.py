@@ -10,6 +10,18 @@ from app.repository.chapter_repository import ChapterRepository
 from app.models.models import Chapter
 from app.prompts.story_generator_prompts import CHAPTER_SUMMARY_SYSTEM_PROMPT, CHAPTER_SUMMARY_USER_PROMPT_TEMPLATE
 
+# Define the response format schema
+from pydantic import BaseModel, Field
+from typing import List
+
+class ChapterSummary(BaseModel):
+    chapter_number: int = Field(..., description="The chapter number")
+    title: str = Field(..., description="A descriptive title for the chapter")
+    summary: str = Field(..., description="A 3-5 sentence summary of the chapter content")
+
+class ChapterSummariesResponse(BaseModel):
+    summaries: List[ChapterSummary] = Field(..., description=f"List of chapter summaries")
+
 logger = logging.getLogger(__name__)
 
 class SummarizerGenerator:
@@ -41,18 +53,6 @@ class SummarizerGenerator:
                 logger.error("OpenAI client not initialized")
                 return []
             
-            # Define the response format schema
-            from pydantic import BaseModel, Field
-            from typing import List
-            
-            class ChapterSummary(BaseModel):
-                chapter_number: int = Field(..., description="The chapter number")
-                title: str = Field(..., description="A descriptive title for the chapter")
-                summary: str = Field(..., description="A 3-5 sentence summary of the chapter content")
-            
-            class ChapterSummariesResponse(BaseModel):
-                summaries: List[ChapterSummary] = Field(..., description=f"List of exactly {self.count} chapter summaries")
-            
             # Use prompts from story_generator_prompts.py
             system_prompt = CHAPTER_SUMMARY_SYSTEM_PROMPT
             
@@ -65,7 +65,7 @@ class SummarizerGenerator:
             )
             
             # Call the OpenAI API to generate the summaries using structured JSON format
-            response = await self.client.beta.chat.completions.parse(
+            response = self.client.beta.chat.completions.parse(
                 model="gpt-4o",
                 messages=[
                     {"role": "system", "content": system_prompt},
@@ -83,16 +83,16 @@ class SummarizerGenerator:
             logger.error(f"Error generating summaries: {str(e)}")
             return []
             
-    def prepare_chapter_data(self, summaries: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def prepare_chapter_data(self, summaries: List[ChapterSummary]) -> List[Dict[str, Any]]:
         chapters_data = []
         
         for summary in summaries:
             chapter_data = {
                 "book_id": self.storyboard.book_id,
-                "title": summary["title"],
-                "chapter_no": summary["chapter_number"],
+                "title": summary.title,
+                "chapter_no": summary.chapter_number,
                 "content": "",  # Initially empty content
-                "source_text": summary["summary"],
+                "source_text": summary.summary,
                 "state": "DRAFT"
             }
             chapters_data.append(chapter_data)
@@ -115,9 +115,10 @@ class SummarizerGenerator:
             logger.error(f"Error creating chapters: {str(e)}")
             return []
             
-    async def execute(self, user_id: str = None):
+    async def execute(self, user_id: str):
 
         # Initialize the generator
         await self.initialize()
         self.summaries = await self.generate_summaries()
-        await self.create_chapters(user_id=user_id)
+        chapters = await self.create_chapters(user_id=user_id)
+        return chapters

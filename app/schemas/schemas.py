@@ -23,6 +23,8 @@ class BookResponse(BaseModel):
     title: str
     author: str | None = None
     cover_url: str | None = None
+    chapter_count: int = 0
+    created_at: int
 
     class Config:
         from_attributes = True
