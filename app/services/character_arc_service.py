@@ -1,3 +1,4 @@
+from typing import Dict, Any
 from app.repository.character_arcs_repository import CharacterArcsRepository
 
 class CharacterArcService:
@@ -9,3 +10,6 @@ class CharacterArcService:
     
     def get_character_arc_by_id(self, character_arc_id: int):
         return self.character_arcs_repo.get_by_id(character_arc_id)
+        
+    def update_character_arc(self, character_arc_id: int, update_data: Dict[str, Any]):
+        return self.character_arcs_repo.update(character_arc_id, update_data)

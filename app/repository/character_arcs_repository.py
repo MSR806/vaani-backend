@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 from .base_repository import BaseRepository
 from app.models.models import CharacterArc
@@ -53,7 +53,6 @@ class CharacterArcsRepository(BaseRepository[CharacterArc]):
         
         self.db.commit()
         
-        # Refresh all arcs to get their IDs
         for arc in created_arcs:
             self.db.refresh(arc)
             
@@ -68,3 +67,22 @@ class CharacterArcsRepository(BaseRepository[CharacterArc]):
             CharacterArc.type == type,
             CharacterArc.source_id == source_id
         ).first()
+    
+    def get_by_id(self, character_arc_id: int) -> CharacterArc:
+        arc = self.db.query(CharacterArc).filter(CharacterArc.id == character_arc_id).first()
+            
+        if not arc:
+            raise CharacterArcNotFoundException(f"Character arc with ID {character_arc_id} not found")
+            
+        return arc
+    
+    def update(self, character_arc_id: int, update_data: Dict[str, Any]) -> CharacterArc:
+        arc = self.get_by_id(character_arc_id)
+        for key, value in update_data.items():
+            if hasattr(arc, key):
+                setattr(arc, key, value)
+        
+        self.db.commit()
+        self.db.refresh(arc)
+        
+        return arc

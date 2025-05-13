@@ -1,7 +1,8 @@
 from .base_repository import BaseRepository
 from sqlalchemy.orm import Session
 from app.models.models import PlotBeat
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
+from app.utils.exceptions import PlotBeatNotFoundException
 
 class PlotBeatRepository(BaseRepository[PlotBeat]):
     def __init__(self, db: Optional[Session] = None):
@@ -22,4 +23,17 @@ class PlotBeatRepository(BaseRepository[PlotBeat]):
         return self.db.query(PlotBeat).filter(PlotBeat.source_id == source_id, PlotBeat.type == type).all() 
     
     def get_by_id(self, id: int) -> PlotBeat:
-        return self.db.query(PlotBeat).filter(PlotBeat.id == id).first()
+        plot_beat = self.db.query(PlotBeat).filter(PlotBeat.id == id).first()
+        if not plot_beat:
+            raise PlotBeatNotFoundException(f"Plot beat with ID {id} not found")
+        return plot_beat
+        
+    def update(self, plot_beat_id: int, update_data: Dict[str, Any]) -> PlotBeat:
+        plot_beat = self.get_by_id(plot_beat_id)
+        for key, value in update_data.items():
+            if hasattr(plot_beat, key):
+                setattr(plot_beat, key, value)
+        
+        self.db.commit()
+        self.db.refresh(plot_beat)
+        return plot_beat
