@@ -139,6 +139,7 @@ class Storyboard(Base):
 class Prompt(Base):
     __tablename__ = "prompts"
     id = Column(Integer, primary_key=True, autoincrement=True)
+    title = Column(String, nullable=False)
     content = Column(Text, nullable=False)
     source = Column(Enum(PromptSource), nullable=False)
     created_at = Column(BigInteger, nullable=False)  # Unix timestamp

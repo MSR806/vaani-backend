@@ -12,6 +12,7 @@ def create_prompt(db: Session, prompt_data: PromptCreate, user_id: str) -> Promp
     current_time = int(time.time())
     
     prompt = Prompt(
+        title=prompt_data.title,
         content=prompt_data.content,
         source=prompt_data.source,
         created_at=current_time,
@@ -34,9 +35,9 @@ def get_prompt(db: Session, prompt_id: int) -> Prompt:
     return prompt
 
 
-def get_all_prompts(db: Session) -> List[Prompt]:
+def get_all_prompts(db: Session, source: Optional[PromptSource] = None) -> List[Prompt]:
     repository = PromptRepository(db)
-    return repository.get_all()
+    return repository.get_all(source=source)
 
 
 def update_prompt(db: Session, prompt_id: int, prompt_data: PromptUpdate, user_id: str) -> Prompt:
@@ -50,6 +51,8 @@ def update_prompt(db: Session, prompt_id: int, prompt_data: PromptUpdate, user_i
     if not update_data:
         raise HTTPException(status_code=400, detail="No fields to update")
     
+    if "title" in update_data:
+        prompt.title = update_data["title"]
     if "content" in update_data:
         prompt.content = update_data["content"]
     if "source" in update_data:

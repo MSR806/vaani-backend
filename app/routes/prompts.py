@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from ..database import get_db
 from ..schemas.prompts import PromptCreate, PromptUpdate, PromptResponse
 from ..services.prompt_service import create_prompt, get_prompt, get_all_prompts, update_prompt
 from ..auth import require_write_permission
-from typing import List
+from ..models.enums import PromptSource
+from typing import List, Optional
 
 router = APIRouter(tags=["prompts"])
 
@@ -21,8 +22,9 @@ def create_prompt_route(
 @router.get("/prompts", response_model=List[PromptResponse])
 def get_all_prompts_route(
     db: Session = Depends(get_db),
+    source: Optional[PromptSource] = Query(None, description="Filter prompts by source (CHAPTER or SCENE)"),
 ):
-    return get_all_prompts(db)
+    return get_all_prompts(db, source=source)
 
 
 @router.get("/prompts/{prompt_id}", response_model=PromptResponse)

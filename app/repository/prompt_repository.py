@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 from ..models.models import Prompt
+from ..models.enums import PromptSource
 from typing import List, Optional
 
 
@@ -16,8 +17,11 @@ class PromptRepository:
     def get_by_id(self, prompt_id: int) -> Optional[Prompt]:
         return self.db.query(Prompt).filter(Prompt.id == prompt_id).first()
 
-    def get_all(self) -> List[Prompt]:
-        return self.db.query(Prompt).all()
+    def get_all(self, source: Optional[PromptSource] = None) -> List[Prompt]:
+        query = self.db.query(Prompt)
+        if source:
+            query = query.filter(Prompt.source == source)
+        return query.all()
 
     def update(self, prompt: Prompt) -> Prompt:
         self.db.commit()
