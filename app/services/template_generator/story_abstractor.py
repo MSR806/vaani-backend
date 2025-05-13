@@ -23,6 +23,7 @@ from app.services.setting_service import get_setting_by_key
 from prompts.story_abstractor_prompts import (
     CHARACTER_ARC_SYSTEM_PROMPT,
     CHARACTER_ARC_USER_PROMPT_TEMPLATE,
+    CHARACTER_ARC_BATCH_USER_PROMPT_TEMPLATE,
     PLOT_BEATS_SYSTEM_PROMPT,
     PLOT_BEATS_USER_PROMPT_TEMPLATE,
 )
@@ -119,21 +120,31 @@ class StoryAbstractor:
         return plot_beats
     
     
-    async def abstract_character_arc(self, character_name: str, character_growth: str) -> Dict[str, Any]:
-        """Transform a specific character's growth into a generalized arc structure and store it as TEMPLATE in DB"""
+    async def abstract_character_arcs_batch(self, character_arcs: Dict[str, str]) -> Dict[str, Any]:
+        """Batch transform all character arcs into generalized templates using a single AI call."""
         repo = CharacterArcsRepository(self.db)
-        # Check if already abstracted
-        existing_arc = repo.get_by_name_type_and_source_id(character_name, 'TEMPLATE', self.template_id)
-        if existing_arc:
-            return {
-                "original_character": character_name,
-                "abstract_arc": existing_arc.content,
-            }
-        
+        # Check for already abstracted arcs
+        existing_arcs = repo.get_by_type_and_source_id('TEMPLATE', self.template_id)
+        existing_names = {arc.name for arc in existing_arcs}
+        arcs_to_abstract = {name: content for name, content in character_arcs.items() if name not in existing_names}
+        results = {}
+        # If all arcs are already abstracted, return them
+        if not arcs_to_abstract:
+            for arc in existing_arcs:
+                results[arc.name] = {
+                    "original_character": arc.name,
+                    "abstract_arc": arc.content,
+                    "archetype": arc.archetype or "Unknown Archetype"
+                }
+            return results
+        # Prepare batch prompt
+        batch_text = ""
+        for name, content in arcs_to_abstract.items():
+            batch_text += f"CHARACTER: {name}\nFILE_START\n{content}\nFILE_END\n\n"
         model, temperature = await self._get_model_settings("character_arc")
         system_prompt = CHARACTER_ARC_SYSTEM_PROMPT
-        user_prompt = CHARACTER_ARC_USER_PROMPT_TEMPLATE.format(character_growth=character_growth)
-        logger.info(f"Abstracting character arc for: {character_name}")
+        user_prompt = CHARACTER_ARC_BATCH_USER_PROMPT_TEMPLATE.format(character_growth_batch=batch_text)
+        logger.info(f"Batch abstracting {len(arcs_to_abstract)} character arcs")
         logger.info(f"Using model: {model}, temperature: {temperature}")
         try:
             response = self.client.chat.completions.create(
@@ -144,43 +155,72 @@ class StoryAbstractor:
                     {"role": "user", "content": user_prompt}
                 ]
             )
-            abstract_content = response.choices[0].message.content.strip()
-            abstract_content = abstract_content.replace('```markdown', '').replace('```', '')
-                        
-            # Use the first line as the archetype title without complex parsing
-            lines = abstract_content.split('\n')
-            archetype = lines[0] if lines else "Unknown Archetype"
+            output = response.choices[0].message.content.strip()
+            # Parse output
+            pattern = r"CHARACTER: (.*?)\nFILE_START\n(.*?)\nFILE_END"
+            matches = re.findall(pattern, output, re.DOTALL)
+            input_names = list(arcs_to_abstract.keys())
+            used_names = set()
+            for idx, (name, abstract_content) in enumerate(matches):
+                # Always use the original input name by order
+                if idx < len(input_names):
+                    original_name = input_names[idx]
+                    if name.strip() != original_name:
+                        logger.warning(f"Model output name '{name.strip()}' does not match input '{original_name}'. Using input name.")
+                else:
+                    original_name = name.strip()
+                    logger.warning(f"Model output name '{name.strip()}' could not be matched by order; using as is.")
 
-            # Store in DB as TEMPLATE
-            # todo : update the prompt to get the role and extract the role and update in the DB tables
-            repo.create(
-                content=abstract_content,
-                type="TEMPLATE",
-                source_id=self.template_id,  
-                name=character_name,
-                archetype=archetype
-            )
-            return {
-                "original_character": character_name,
-                "abstract_arc": abstract_content,
-                "archetype": archetype
-            }
+                # Extract archetype and role from the first line
+                lines = abstract_content.strip().split('\n')
+                archetype = "Unknown Archetype"
+                role = "Unknown Role"
+                for line in lines:
+                    match = re.match(r"# ([^-]+) - ([^-]+)", line)
+                    if match:
+                        role = match.group(1).strip()
+                        archetype = match.group(2).strip()
+                        break
+
+                repo.create(
+                    content=abstract_content.strip(),
+                    type="TEMPLATE",
+                    source_id=self.template_id,
+                    name=original_name,
+                    archetype=archetype,
+                    role=role
+                )
+                results[original_name] = {
+                    "original_character": original_name,
+                    "abstract_arc": abstract_content.strip(),
+                    "archetype": archetype,
+                    "role": role
+                }
+            # Add already existing arcs
+            for arc in existing_arcs:
+                if arc.name not in results:
+                    results[arc.name] = {
+                        "original_character": arc.name,
+                        "abstract_arc": arc.content,
+                        "archetype": arc.archetype or "Unknown Archetype"
+                    }
+            return results
         except Exception as e:
-            logger.error(f"Error abstracting character arc: {str(e)}")
-            return {
-                "original_character": character_name,
-                "abstract_arc": f"# Character Arc Template\n\nCould not generate abstraction due to an error: {str(e)}",
-            }
+            logger.error(f"Error batch abstracting character arcs: {str(e)}")
+            # Return error for all arcs
+            for name in arcs_to_abstract:
+                results[name] = {
+                    "original_character": name,
+                    "abstract_arc": f"# Character Arc Template\n\nCould not generate abstraction due to an error: {str(e)}",
+                }
+            return results
     
     async def abstract_all_character_arcs(self) -> Dict[str, Any]:
-        """Abstract all character arcs into generalized templates"""
-        logger.info("Abstracting all character arcs")
+        """Abstract all character arcs into generalized templates using batch abstraction."""
+        logger.info("Abstracting all character arcs (batch mode)")
         self.template_repo.update_character_arc_template_status(self.template_id, TemplateStatusEnum.IN_PROGRESS)
         character_arcs = await self.read_character_arcs()
-        abstract_arcs = {}
-        for character_name, arc_content in character_arcs.items():
-            abstract_arc = await self.abstract_character_arc(character_name, arc_content)
-            abstract_arcs[character_name] = abstract_arc
+        abstract_arcs = await self.abstract_character_arcs_batch(character_arcs)
         self.template_repo.update_character_arc_template_status(self.template_id, TemplateStatusEnum.COMPLETED)
         return abstract_arcs
     

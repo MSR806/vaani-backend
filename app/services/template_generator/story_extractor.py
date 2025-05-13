@@ -161,7 +161,6 @@ class StoryExtractor:
     async def summarize_all_chapters(self) -> List[Dict[str, Any]]:
         """Summarize all chapters in the book"""
         self.template_repo.update_summary_status(self.template_id, TemplateStatusEnum.IN_PROGRESS)
-
         # Process all chapters
         chapters_to_process = self.chapters
         logger.info(f"Summarizing all {len(chapters_to_process)} chapters")
@@ -247,13 +246,13 @@ class StoryExtractor:
     async def analyze_all_plot_beats(self) -> List[Dict[str, Any]]:
         """Analyze all chapter summaries for plot beats using multi-chapter batches, using the database only."""
         logger.info("Analyzing plot beats from all chapter summaries")
-        self.template_repo.update_plot_beats_status(self.template_id, TemplateStatusEnum.IN_PROGRESS)
 
         # Check for existing plot beats in the database
         from app.repository.plot_beat_repository import PlotBeatRepository
         plot_beat_repo = PlotBeatRepository(self.db)
         existing_plot_beats = plot_beat_repo.get_by_source_id_and_type(self.book_id, "EXTRACTED")
         if existing_plot_beats:
+            self.template_repo.update_plot_beats_status(self.template_id, TemplateStatusEnum.COMPLETED)
             logger.info(f"Found {len(existing_plot_beats)} plot beats in the database for book_id {self.book_id}")
             return [
                 {
@@ -264,10 +263,10 @@ class StoryExtractor:
                 }
                 for pb in existing_plot_beats
             ]
-
         # If not found, generate plot beats
         logger.info("No plot beats found in the database, generating new plot beats")
         # Load all chapter summaries from the database (source_text)
+        self.template_repo.update_plot_beats_status(self.template_id, TemplateStatusEnum.IN_PROGRESS)
         summaries = []
         for chapter in self.chapters:
             if chapter.source_text:
@@ -365,17 +364,22 @@ class StoryExtractor:
             )
             
             character_markdown_content = response.choices[0].message.content
+            print(f"character_markdown_content: {character_markdown_content}")
             # Extract individual character files using regex pattern
             import re
-            # Updated pattern to also capture the role section
-            pattern = r"CHARACTER:\s*([^\n]+)\s*\nFILE_START\n([\s\S]*?)## Role\n(.+?)(?:\n|$)[\s\S]*?\nFILE_END"
+            # Updated pattern to capture everything between FILE_START and FILE_END for each character
+            pattern = r"CHARACTER:\s*([^\n]+)\s*\nFILE_START\n([\s\S]*?)FILE_END"
             matches = re.findall(pattern, character_markdown_content)
 
             # Save individual character arc in database
             character_arcs_repo = CharacterArcsRepository(self.db)
             character_arcs = []
-            for name, content, role in matches:
-                character_arc = character_arcs_repo.create(content=content.strip(), type='EXTRACTED', source_id=self.book_id, name=name.strip(), role=role.strip())
+            role_pattern = r"## Role\n([^\n]+)"
+            for name, content in matches:
+                # Extract the role using a second regex
+                role_match = re.search(role_pattern, content)
+                role = role_match.group(1).strip() if role_match else ""
+                character_arc = character_arcs_repo.create(content=content.strip(), type='EXTRACTED', source_id=self.book_id, name=name.strip(), role=role)
                 character_arcs.append(character_arc)
             self.template_repo.update_character_arc_status(self.template_id, TemplateStatusEnum.COMPLETED)
             return character_arcs
