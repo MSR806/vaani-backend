@@ -9,6 +9,7 @@ from .templates import router as templates_router
 from .storyboard import router as storyboard_router
 from .character_arcs import router as character_arcs_router
 from .plot_beats import router as plot_beats_router
+from .prompts import router as prompts_router
 
 
 # Create a main router that includes all the individual routers
@@ -25,3 +26,4 @@ router.include_router(templates_router)
 router.include_router(storyboard_router)
 router.include_router(character_arcs_router)
 router.include_router(plot_beats_router)
+router.include_router(prompts_router)

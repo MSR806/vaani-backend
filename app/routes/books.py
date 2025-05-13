@@ -89,6 +89,6 @@ def get_storyboard_by_book_id_route(
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_write_permission)
 ):
-    storyboard_service = StoryboardService()
+    storyboard_service = StoryboardService(db)
     storyboard = storyboard_service.get_storyboard_by_book_id(book_id)
     return storyboard

@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional, Dict, Any
 
 from .base_repository import BaseRepository
-from app.models.models import CharacterArc
+from app.models.models import CharacterArc, Storyboard
 from app.utils.exceptions import CharacterArcNotFoundException
 
 class CharacterArcsRepository(BaseRepository[CharacterArc]):
@@ -86,3 +86,14 @@ class CharacterArcsRepository(BaseRepository[CharacterArc]):
         self.db.refresh(arc)
         
         return arc
+    
+    def get_character_arcs_by_book_id(self, book_id: int) -> List[CharacterArc]:
+        character_arcs = self.db.query(CharacterArc).join(
+            Storyboard,
+            CharacterArc.source_id == Storyboard.id
+        ).filter(
+            Storyboard.book_id == book_id,
+            CharacterArc.type == "STORYBOARD"
+        ).all()
+        
+        return character_arcs
