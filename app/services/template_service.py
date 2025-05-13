@@ -1,13 +1,9 @@
-import asyncio
-from sqlalchemy.orm import Session
 from typing import List
-from app.schemas.schemas import TemplateStatusEnum, TemplateRead, CharacterArcRead, PlotBeatRead
+from app.schemas.schemas import TemplateStatusEnum, TemplateRead
 from app.repository.template_repository import TemplateRepository
 from app.repository.character_arcs_repository import CharacterArcsRepository
 from app.repository.plot_beat_repository import PlotBeatRepository
-from app.models.models import Template
 from app.services.background_jobs.tasks import add_template_creation_task_to_bg_jobs
-from app.services.template_generator.template_manager import TemplateManager
 
 class TemplateService:
     def __init__(self):

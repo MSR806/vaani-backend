@@ -15,3 +15,7 @@ class StoryboardCannotBeContinuedException(HTTPException):
 class CharacterArcNotFoundException(HTTPException):
     def __init__(self, character_arc_id: int):
         super().__init__(status_code=404, detail={"type": "CHARACTER_ARC_NOT_FOUND", "message": f"Character arc not found for character_arc_id {character_arc_id}"})
+
+class PlotBeatNotFoundException(HTTPException):
+    def __init__(self, message: str):
+        super().__init__(status_code=404, detail={"type": "PLOT_BEAT_NOT_FOUND", "message": message})
