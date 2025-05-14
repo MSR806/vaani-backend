@@ -61,6 +61,7 @@ class TemplateRepository(BaseRepository[Template]):
         return self.db.query(Template).all()
 
     def get_by_id(self, template_id):
+        self.db.expire_all()
         return self.db.query(Template).filter(Template.id == template_id).first()
 
     def get_by_book_id(self, book_id: int):
