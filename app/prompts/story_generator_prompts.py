@@ -164,12 +164,16 @@ Follow the JSON schema provided for your response.
 """
 
 CHAPTER_SUMMARY_USER_PROMPT_TEMPLATE = """
-
 CHARACTER ARCS:
 {character_arcs}
+
+PREVIOUS CHAPTER SUMMARIES:
+{previous_chapter_summaries}
 
 PLOT BEATS:
 {plot_beats}
 
-Based on the provided plot beats and character arcs, generate exactly {count} chapter summaries that tell a cohesive story.
+Based on the provided plot beats, character arcs, and previous chapter summaries (if any), generate exactly {count} chapter summaries that tell a cohesive story.
+If previous chapter summaries exist, ensure your new chapters continue the narrative seamlessly from where the story left off.
+Maintain consistency with established characters, plot elements, and themes from the previous chapters.
 """

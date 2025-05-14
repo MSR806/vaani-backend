@@ -220,8 +220,6 @@ async def generate_chapter_outline(
         ]
 
         try:
-            # Use beta.chat.completions.parse for structured outputs
-            print(f"Using model: {ai_model} with temperature: {temperature}")
             completion = client.beta.chat.completions.parse(
                 model=ai_model,
                 messages=messages,
@@ -374,7 +372,6 @@ async def stream_chapter_content(
 
         # Initialize OpenAI client with the selected model
         client = get_openai_client(ai_model)
-        print(f"Using model: {ai_model}, temperature: {temperature}")
         stream = client.chat.completions.create(
             model=ai_model,
             messages=messages,
