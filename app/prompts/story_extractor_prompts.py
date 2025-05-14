@@ -94,9 +94,7 @@ Analyzing Story Section: Chapters {start_chapter} to {end_chapter}
 1. Identify 5-7 major plot beats across this entire story section (NOT organized by individual chapters)
 2. For EACH plot beat, provide:
    - A descriptive title for the plot development
-   - A concise description of what happens
-   - An analysis of its significance to the overall narrative
-   - Whether it represents exposition, rising action, conflict, climax, falling action, or resolution
+   - Preserve emotional and physical relationship dynamics between the male protagonist and female protagonist
 
 3. Identify any major turning points in the story
 4. Analyze how this section advances the overall narrative arc
