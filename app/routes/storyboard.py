@@ -17,19 +17,19 @@ async def create_storyboard(
     # current_user: dict = Depends(require_storyboard_write_permission)):
     db: Session = Depends(get_db)):
 
-    storyboard_service = StoryboardService(db)
-    storyboard = storyboard_service.create_storyboard(storyboard.book_id, storyboard.template_id, storyboard.prompt, "test")
+    storyboard_service = StoryboardService(db, "test")
+    storyboard = storyboard_service.create_storyboard(storyboard.book_id, storyboard.template_id, storyboard.prompt)
     return storyboard
 
 @router.get("/storyboard/{storyboard_id}", response_model=StoryboardResponse)
 def get_storyboard_by_id(storyboard_id: int, db: Session = Depends(get_db)):
-    storyboard_service = StoryboardService(db)
+    storyboard_service = StoryboardService(db, "test")
     storyboard = storyboard_service.get_storyboard_by_id(storyboard_id)
     return storyboard
 
 @router.put("/storyboard/{storyboard_id}/continue", response_model=StoryboardResponse)
 def continue_storyboard(storyboard_id: int, db: Session = Depends(get_db)):
-    storyboard_service = StoryboardService(db)
+    storyboard_service = StoryboardService(db, "test")
     storyboard = storyboard_service.continue_storyboard(storyboard_id)
     return storyboard
 
