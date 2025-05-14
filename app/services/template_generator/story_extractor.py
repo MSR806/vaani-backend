@@ -20,6 +20,8 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.models import Book, Chapter
 from app.services.ai_service import get_openai_client
+from app.utils.model_settings import ModelSettings
+from app.utils.constants import SettingKeys
 from app.repository.base_repository import BaseRepository
 from app.repository.character_arcs_repository import CharacterArcsRepository
 # Import prompt templates
@@ -36,18 +38,6 @@ from prompts.story_extractor_prompts import (
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Constants
-OUTPUT_DIR = Path(__file__).parent / "output"
-
-# Hardcoded AI model settings
-SUMMARY_MODEL = "gpt-4o-mini"  # For chapter summaries (faster, cheaper)
-CHARACTER_MODEL = "gpt-4o-mini"     # For character extraction (better quality)
-PLOT_BEATS_MODEL = "gpt-4o-mini"  # For individual plot beat analysis (faster, cheaper)
-
-CHAPTER_SUMMARY_TEMPERATURE = 0.3
-PLOT_BEATS_TEMPERATURE = 0.3
-CHARACTER_GROWTH_TEMPERATURE = 0.3
-
 
 class StoryExtractor:
     def __init__(self, book_id: int, db: Session, template_id: int):
@@ -61,6 +51,7 @@ class StoryExtractor:
         self.client = get_openai_client()
         self.template_id = template_id
         self.template_repo = TemplateRepository(self.db)
+        self.model_settings = None
 
     async def initialize(self):
         """Load book and chapters from database"""
@@ -68,6 +59,10 @@ class StoryExtractor:
         self.book = self.db.query(Book).filter(Book.id == self.book_id).first()
         if not self.book:
             raise ValueError(f"Book with ID {self.book_id} not found")
+        
+        # Initialize model settings
+        self.model_settings = ModelSettings(self.db)
+        logger.info("Initialized model settings")
         
         # Load chapters in order
         self.chapters = self.db.query(Chapter).filter(
@@ -84,6 +79,8 @@ class StoryExtractor:
         logger.info(f"Found {len(self.chapters)} chapters")
             
         return self.book, self.chapters
+        
+    # Method removed and replaced with direct ModelSettings usage
     
     async def summarize_chapter(self, chapter: Chapter) -> Dict[str, Any]:
         """Summarize a single chapter while preserving key metadata and story elements"""
@@ -105,7 +102,9 @@ class StoryExtractor:
         
         
         logger.info(f"Summarizing Chapter {chapter.chapter_no}: {chapter.title}")
-        logger.info(f"Using model: {SUMMARY_MODEL}, temperature: {CHAPTER_SUMMARY_TEMPERATURE}")
+        
+        # Get model and temperature from settings
+        model, temperature = self.model_settings.chapter_summary_for_template()
 
         system_prompt = CHAPTER_SUMMARY_SYSTEM_PROMPT
         user_prompt = CHAPTER_SUMMARY_USER_PROMPT_TEMPLATE.format(
@@ -118,12 +117,12 @@ class StoryExtractor:
         try:
             def blocking_openai_call():
                 return self.client.chat.completions.create(
-                    model=SUMMARY_MODEL,
+                    model=model,
                     messages=[
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_prompt}
                     ],
-                    temperature=CHAPTER_SUMMARY_TEMPERATURE,
+                    temperature=temperature,
                 )
             response = await asyncio.to_thread(blocking_openai_call)
             summary_text = response.choices[0].message.content
@@ -213,14 +212,16 @@ class StoryExtractor:
         )
         
         try:
-            logger.info(f"Making API call to analyze plot beats for chapters {start_chapter}-{end_chapter} using {PLOT_BEATS_MODEL}")
+            # Get model and temperature from settings
+            model, temperature = self.model_settings.extracting_plot_beats()
+            logger.info(f"Making API call to analyze plot beats for chapters {start_chapter}-{end_chapter} using {model}")
             response = self.client.chat.completions.create(
-                model=PLOT_BEATS_MODEL,
+                model=model,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
                 ],
-                temperature=PLOT_BEATS_TEMPERATURE,
+                temperature=temperature,
             )
             
             plot_analysis = response.choices[0].message.content
@@ -365,14 +366,16 @@ class StoryExtractor:
         )
         
         try:
-            logger.info(f"Making API call to extract character arcs using {CHARACTER_MODEL}")
+            # Get model and temperature from settings
+            model, temperature = self.model_settings.extracting_character_arcs()
+            logger.info(f"Making API call to extract character arcs using {model}")
             response = self.client.chat.completions.create(
-                model=CHARACTER_MODEL,
+                model=model,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
                 ],
-                temperature=CHARACTER_GROWTH_TEMPERATURE,
+                temperature=temperature,
             )
             
             character_markdown_content = response.choices[0].message.content

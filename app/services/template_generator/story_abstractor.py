@@ -1,28 +1,15 @@
 #!/usr/bin/env python3
-import os
-import sys
-import json
-import time
 import re
-import asyncio
-import traceback
-from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 import logging
 
 from app.schemas.schemas import TemplateStatusEnum
-
-# Add the project root to the Python path so we can import app modules
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-
 from sqlalchemy.orm import Session
-from app.database import get_db
 from app.models.models import Book
 from app.services.ai_service import get_openai_client
-from app.services.setting_service import get_setting_by_key
-from prompts.story_abstractor_prompts import (
+from app.utils.model_settings import ModelSettings
+from app.prompts.story_abstractor_prompts import (
     CHARACTER_ARC_SYSTEM_PROMPT,
-    CHARACTER_ARC_USER_PROMPT_TEMPLATE,
     CHARACTER_ARC_BATCH_USER_PROMPT_TEMPLATE,
     PLOT_BEATS_SYSTEM_PROMPT,
     PLOT_BEATS_USER_PROMPT_TEMPLATE,
@@ -35,17 +22,6 @@ from app.repository.template_repository import TemplateRepository
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Constants
-INPUT_DIR = Path(__file__).parent / "output"
-
-# Hardcoded AI model settings
-CHARACTER_MODEL = "gpt-4o"      # For character arcs (better quality)
-PLOT_MODEL = "gpt-4o"          # For narrative skeleton (better quality)
-
-# Temperature settings
-CHARACTER_TEMPERATURE = 0.2
-PLOT_TEMPERATURE = 0.4
-
 
 class StoryAbstractor:
     def __init__(self, book_id: int, db: Session = None, template_id: int = None):
@@ -55,6 +31,7 @@ class StoryAbstractor:
         self.book = None
         self.template_id = template_id
         self.template_repo = TemplateRepository(self.db)
+        self.model_settings = None
         
         # Initialize AI client
         self.client = get_openai_client()
@@ -68,35 +45,17 @@ class StoryAbstractor:
             if not self.book:
                 raise ValueError(f"Book with ID {self.book_id} not found")
             
+            # Initialize model settings
+            self.model_settings = ModelSettings(self.db)
+            logger.info("Initialized model settings")
+            
             logger.info(f"Loaded book: {self.book.title}")
         
         logger.info(f"Initialized StoryAbstractor for book {self.book_id}")
         
         return True
     
-    async def _get_model_settings(self, abstraction_type: str):
-        """Get AI model settings based on abstraction type"""
-        # First try database settings, then fall back to hardcoded defaults
-        try:
-            # Try to get settings from database based on abstraction type
-            setting_key_prefix = f"story_abstractor_{abstraction_type.lower()}"
-            model = get_setting_by_key(f"{setting_key_prefix}_model")
-            temp = get_setting_by_key(f"{setting_key_prefix}_temperature")
-            
-            if model and temp:
-                return model, float(temp)
-        except:
-            # If any error occurs, use hardcoded settings
-            pass
-            
-        # Use hardcoded settings based on abstraction type
-        if abstraction_type == "character_arc":
-            return CHARACTER_MODEL, CHARACTER_TEMPERATURE
-        elif abstraction_type == "narrative_skeleton":
-            return PLOT_MODEL, PLOT_TEMPERATURE
-        else:
-            # Default to highest quality model if type not recognized
-            return "gpt-4o", 0.3
+    # Method removed and replaced with direct ModelSettings usage
     
     async def read_character_arcs(self) -> Dict[str, str]:
         """Read all character arcs from the database and return their contents"""
@@ -141,11 +100,10 @@ class StoryAbstractor:
         batch_text = ""
         for name, content in arcs_to_abstract.items():
             batch_text += f"CHARACTER: {name}\nFILE_START\n{content}\nFILE_END\n\n"
-        model, temperature = await self._get_model_settings("character_arc")
+        model, temperature = self.model_settings.character_arc_template()
         system_prompt = CHARACTER_ARC_SYSTEM_PROMPT
         user_prompt = CHARACTER_ARC_BATCH_USER_PROMPT_TEMPLATE.format(character_growth_batch=batch_text)
         logger.info(f"Batch abstracting {len(arcs_to_abstract)} character arcs")
-        logger.info(f"Using model: {model}, temperature: {temperature}")
         try:
             response = self.client.chat.completions.create(
                 model=model,
@@ -226,7 +184,7 @@ class StoryAbstractor:
     
     async def abstract_plot_beats(self, plot_beats: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Transform specific plot beats into a generalized narrative skeleton"""
-        model, temperature = await self._get_model_settings("narrative_skeleton")
+        model, temperature = self.model_settings.plot_beats_template()
         
         # Get character mappings from the already abstracted character arcs
         character_mappings = {}
@@ -254,7 +212,6 @@ class StoryAbstractor:
                     character_map_text += f"- {original} → {archetype}\n"
             user_prompt = PLOT_BEATS_USER_PROMPT_TEMPLATE.format(content=content, character_map_text=character_map_text)
             logger.info(f"Abstracting plot beats")
-            logger.info(f"Using model: {model}, temperature: {temperature}")
             try:
                 response = self.client.chat.completions.create(
                     model=model,

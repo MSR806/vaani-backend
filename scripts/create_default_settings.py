@@ -87,7 +87,7 @@ def create_default_settings():
         {
             "key": SettingKeys.CHARACTER_ARC_GENERATION_MODEL.value,
             "title": "Character Arc Generation AI Model",
-            "section": "Character Arc",
+            "section": "Storyboard",
             "value": "gpt-4o",
             "description": "AI model used for generating character arcs",
             "type": "list",
@@ -96,7 +96,7 @@ def create_default_settings():
         {
             "key": SettingKeys.CHARACTER_ARC_GENERATION_TEMPERATURE.value,
             "title": "Character Arc Generation Temperature",
-            "section": "Character Arc",
+            "section": "Storyboard",
             "value": "0.7",
             "description": "Temperature parameter for character arc generation",
             "type": "string",
@@ -105,7 +105,7 @@ def create_default_settings():
         {
             "key": SettingKeys.PLOT_BEAT_GENERATION_MODEL.value,
             "title": "Plot Beat Generation AI Model",
-            "section": "Plot",
+            "section": "Storyboard",
             "value": "gpt-4o",
             "description": "AI model used for generating plot beats",
             "type": "list",
@@ -114,7 +114,7 @@ def create_default_settings():
         {
             "key": SettingKeys.PLOT_BEAT_GENERATION_TEMPERATURE.value,
             "title": "Plot Beat Generation Temperature",
-            "section": "Plot",
+            "section": "Storyboard",
             "value": "0.7",
             "description": "Temperature parameter for plot beat generation",
             "type": "string",
@@ -123,7 +123,7 @@ def create_default_settings():
         {
             "key": SettingKeys.PLOT_SUMMARY_GENERATION_MODEL.value,
             "title": "Plot Summary Generation AI Model",
-            "section": "Plot",
+            "section": "Storyboard",
             "value": "gpt-4o-mini",
             "description": "AI model used for generating plot summaries",
             "type": "list",
@@ -132,9 +132,121 @@ def create_default_settings():
         {
             "key": SettingKeys.PLOT_SUMMARY_GENERATION_TEMPERATURE.value,
             "title": "Plot Summary Generation Temperature",
-            "section": "Plot",
+            "section": "Storyboard",
             "value": "0.4",
             "description": "Temperature parameter for plot summary generation",
+            "type": "string",
+            "options": None
+        },
+        
+        # Chapter summary generation settings
+        {
+            "key": SettingKeys.CHAPTER_SUMMARY_GENERATION_FROM_STORYBOARD_MODEL.value,
+            "title": "Chapter Summary Generation from Storyboard AI Model",
+            "section": "Templates",
+            "value": "gpt-4o",
+            "description": "AI model used for generating chapter summaries from storyboard",
+            "type": "list",
+            "options": model_options
+        },
+        {
+            "key": SettingKeys.CHAPTER_SUMMARY_GENERATION_FROM_STORYBOARD_TEMPERATURE.value,
+            "title": "Chapter Summary Generation from Storyboard Temperature",
+            "section": "Templates",
+            "value": "0.6",
+            "description": "Temperature parameter for chapter summary generation from storyboard",
+            "type": "string",
+            "options": None
+        },
+        
+        # Settings for extraction and abstraction/templating
+        {
+            "key": SettingKeys.EXTRACTING_CHARACTER_ARCS_MODEL.value,
+            "title": "Character Arc Extraction AI Model",
+            "section": "Templates",
+            "value": "gpt-4o",
+            "description": "AI model used for extracting character arcs from text",
+            "type": "list",
+            "options": model_options
+        },
+        {
+            "key": SettingKeys.EXTRACTING_CHARACTER_ARCS_TEMPERATURE.value,
+            "title": "Character Arc Extraction Temperature",
+            "section": "Templates",
+            "value": "0.3",
+            "description": "Temperature parameter for character arc extraction",
+            "type": "string",
+            "options": None
+        },
+        {
+            "key": SettingKeys.EXTRACTING_PLOT_BEATS_MODEL.value,
+            "title": "Plot Beat Extraction AI Model",
+            "section": "Templates",
+            "value": "gpt-4o",
+            "description": "AI model used for extracting plot beats from text",
+            "type": "list",
+            "options": model_options
+        },
+        {
+            "key": SettingKeys.EXTRACTING_PLOT_BEATS_TEMPERATURE.value,
+            "title": "Plot Beat Extraction Temperature",
+            "section": "Templates",
+            "value": "0.3",
+            "description": "Temperature parameter for plot beat extraction",
+            "type": "string",
+            "options": None
+        },
+        {
+            "key": SettingKeys.CHAPTER_SUMMARY_GENERATION_FOR_TEMPLATE_MODEL.value,
+            "title": "Chapter Summary Generation for Template AI Model",
+            "section": "Templates",
+            "value": "gpt-4o-mini",
+            "description": "AI model used for generating chapter summaries for templates",
+            "type": "list",
+            "options": model_options
+        },
+        {
+            "key": SettingKeys.CHAPTER_SUMMARY_GENERATION_FOR_TEMPLATE_TEMPERATURE.value,
+            "title": "Chapter Summary Generation for Template Temperature",
+            "section": "Templates",
+            "value": "0.3",
+            "description": "Temperature parameter for chapter summary generation for templates",
+            "type": "string",
+            "options": None
+        },
+        {
+            "key": SettingKeys.CHARACTER_ARC_TEMPLATE_MODEL.value,
+            "title": "Character Arc Template AI Model",
+            "section": "Templates",
+            "value": "gpt-4o",
+            "description": "AI model used for creating character arc templates",
+            "type": "list",
+            "options": model_options
+        },
+        {
+            "key": SettingKeys.CHARACTER_ARC_TEMPLATE_TEMPERATURE.value,
+            "title": "Character Arc Template Temperature",
+            "section": "Templates",
+            "value": "0.3",
+            "description": "Temperature parameter for character arc template creation",
+            "type": "string",
+            "options": None
+        },
+        {
+            "key": SettingKeys.PLOT_BEATS_TEMPLATE_MODEL.value,
+            "title": "Plot Beat Template AI Model",
+            "section": "Templates",
+            "value": "gpt-4o",
+            "description": "AI model used for creating plot beat templates",
+            "type": "list",
+            "options": model_options
+        },
+        {
+            "key": SettingKeys.PLOT_BEATS_TEMPLATE_TEMPERATURE.value,
+            "title": "Plot Beat Template Temperature",
+            "section": "Templates",
+            "value": "0.3",
+            "description": "Temperature parameter for plot beat template creation",
             "type": "string",
             "options": None
         }

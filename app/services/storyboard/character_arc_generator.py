@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.services.ai_service import get_openai_client
 from app.repository.storyboard_repository import StoryboardRepository
 from app.repository.character_arcs_repository import CharacterArcsRepository
-from app.services.setting_service import get_setting_by_key
+from app.utils.model_settings import ModelSettings
 from app.utils.constants import SettingKeys
 from app.models.enums import StoryboardStatus
 
@@ -26,6 +26,7 @@ class CharacterArcGenerator:
         self.storyboard_id = storyboard_id
         self.character_arc_repo = CharacterArcsRepository(self.db)
         self.storyboard_repo = StoryboardRepository(self.db)
+        self.model_settings = ModelSettings(self.db)
         
         # Initialize AI client
         try:
@@ -67,7 +68,7 @@ class CharacterArcGenerator:
             character_content = re.sub(r'\n```$', '', character_content)
             character_content = re.sub(r'^```\n', '', character_content)
             character_content = character_content.strip()
-            
+                
             # Add to batch data
             character_arcs_data.append({
                 'content': character_content,
@@ -87,13 +88,16 @@ class CharacterArcGenerator:
         character_templates_str = "\n\n".join([f"### Template {i}:\n{template.content}" for i, template in enumerate(self.character_arc_templates)])
         
         try:
+            # Get model and temperature from settings
+            model, temperature = self.model_settings.character_arc_generation()
+            
             response = self.client.chat.completions.create(
-                model=get_setting_by_key(self.db, SettingKeys.CHARACTER_ARC_GENERATION_MODEL.value).value,
+                model=model,
                 messages=[
                     {"role": "system", "content": CHARACTER_ARC_SYSTEM_PROMPT},
                     {"role": "user", "content": CHARACTER_ARC_USER_PROMPT_TEMPLATE.format(prompt=self.storyboard.prompt, character_templates=character_templates_str)}
                 ],
-                temperature=float(get_setting_by_key(self.db, SettingKeys.CHARACTER_ARC_GENERATION_TEMPERATURE.value).value),
+                temperature=temperature,
             )
             
             # Extract and process character arcs from the generated content
