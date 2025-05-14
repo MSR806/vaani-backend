@@ -114,18 +114,18 @@ class StoryExtractor:
             chapter_content=chapter.content
         )
         
+        import asyncio
         try:
-            # The OpenAI client doesn't return an awaitable in the newer version
-            # We need to handle it properly without awaiting
-            response = self.client.chat.completions.create(
-                model=SUMMARY_MODEL,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ],
-                temperature=CHAPTER_SUMMARY_TEMPERATURE,
-            )
-            
+            def blocking_openai_call():
+                return self.client.chat.completions.create(
+                    model=SUMMARY_MODEL,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt}
+                    ],
+                    temperature=CHAPTER_SUMMARY_TEMPERATURE,
+                )
+            response = await asyncio.to_thread(blocking_openai_call)
             summary_text = response.choices[0].message.content
             
             # Create summary with metadata (for tracking in memory)
@@ -160,18 +160,30 @@ class StoryExtractor:
     
     async def summarize_all_chapters(self) -> List[Dict[str, Any]]:
         """Summarize all chapters in the book"""
+        import time as _time
         self.template_repo.update_summary_status(self.template_id, TemplateStatusEnum.IN_PROGRESS)
-        # Process all chapters
         chapters_to_process = self.chapters
         logger.info(f"Summarizing all {len(chapters_to_process)} chapters")
-        
-        results = []
-        for chapter in chapters_to_process:
-            logger.info(f"Processing chapter {chapter.chapter_no}: {chapter.title}")
-            result = await self.summarize_chapter(chapter)
-            results.append(result)
-            
-        logger.info(f"All chapter summaries complete")
+
+        # Use a semaphore to limit concurrency
+        import asyncio
+        semaphore = asyncio.Semaphore(15)  # Limit to 15 concurrent tasks
+
+        async def limited_summarize(chapter):
+            async with semaphore:
+                logger.info(f"[START] Summarizing chapter {chapter.chapter_no}: {chapter.title}")
+                start_time = _time.time()
+                result = await self.summarize_chapter(chapter)
+                elapsed = _time.time() - start_time
+                logger.info(f"[DONE] Chapter {chapter.chapter_no}: {chapter.title} summarized in {elapsed:.2f}s")
+                return result
+
+        logger.info("[BATCH] Starting concurrent summarization of chapters...")
+        batch_start = _time.time()
+        tasks = [limited_summarize(chapter) for chapter in chapters_to_process]
+        results = await asyncio.gather(*tasks)
+        batch_elapsed = _time.time() - batch_start
+        logger.info(f"[BATCH] All chapter summaries complete in {batch_elapsed:.2f}s")
         self.template_repo.update_summary_status(self.template_id, TemplateStatusEnum.COMPLETED)
         return results
     
