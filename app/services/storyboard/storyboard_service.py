@@ -30,7 +30,7 @@ class StoryboardService:
         except StoryboardNotFoundException:
             pass
         
-        storyboard = self.storyboard_repo.create(book_id, template_id, prompt, user_id)
+        storyboard = self.storyboard_repo.create(book_id, template_id, prompt, self.user_id)
 
         storyboard = self.storyboard_repo.update(storyboard.id, status=StoryboardStatus.CHARACTER_ARC_GENERATION_IN_PROGRESS)
         
@@ -38,6 +38,7 @@ class StoryboardService:
         return storyboard
     
     def get_storyboard_by_id(self, storyboard_id: int):
+        self.db.expire_all()
         return self.storyboard_repo.get_by_id(storyboard_id)
     
     def get_storyboard_by_book_id(self, book_id: int):

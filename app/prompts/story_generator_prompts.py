@@ -27,13 +27,13 @@ Each character should follow one of the provided character arc templates.
 
 For each character, create a separate, well-formatted markdown file following this EXACT structure:
 ```markdown
-# [Character Name] - Character Arc Analysis
+# [Character Name] - Character Arc
 
 ## Description
 [Include the character's personality, appearance, setting, backstory, and other relevant details]
 
 ## Role
-[Specify the character's role in the story (protagonist, antagonist, supporting character, etc.)]
+[Specify the character's role in the story (protagonist, antagonist, supporting character, etc.)] IMPORTANT: DONOT generate a description of the character, just generate a two word phrase about the character]
 
 ## Key Relationships
 [Describe the character's significant relationships with other characters in the story]
@@ -110,20 +110,17 @@ Create detailed plot beats for the story based on the template, the story prompt
 3. Create natural connections and compelling interactions between the characters
 4. Maintain the narrative structure from the template while adapting it to this specific story
 5. Ensure continuity with any existing plot beats provided in "Story Progress So Far"
+6. Replace the Archetype names with the actual character names
+7. Don't add anything about the Story Progress So Far
 
-Each plot beat must follow this exact format:
-- [Title] - a descriptive title
-- Description: A paragraph describing what happens in this beat
-- Significance: How this beat advances the plot and relates to the story's themes
-- Character Development: How this beat affects the key characters and their arcs
-- Narrative Role: The structural function in the overall story (e.g., inciting incident, rising action, etc.)
+Each plot beat must follow the exact format from the plot beat template.
 
 Your plot outline should:
 - Include EXACTLY the same number of plot beats as in the template, no more and no less
-- Format each beat following the structure in the example above
+- Format each beat following the structure in the plot beat template
 - Ensure each character's arc is incorporated meaningfully
 - Create a coherent narrative flow from beginning to end
-- Maintain continuity with previous plot beats when continuing the story
+- Maintain continuity with previous plot beats when continuing the story also plot beat number should be progressive from previous plot beats
 """
 
 # Plot Summary Generation Prompt

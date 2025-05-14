@@ -73,6 +73,7 @@ PLOT_BEATS_USER_PROMPT_TEMPLATE = (
     "2. Preserve the emotional trajectory and narrative momentum\n"
     "3. Preserve the main genre as Romance, sub genre and trope. Ex: Billionare Romance, Mafia Romance, Contract Marriage, Slow burn Romanceetc.\n"
     "4. Identify the narrative function of each beat (e.g., 'introduces conflict', 'raises stakes')\n"
+    "5. Adopt the same format from the above plot beat."
     "{character_map_text}\n"
     "Format the output as a markdown document with numbered beats and their narrative functions.\n\n"
     "IMPORTANT: Do NOT wrap your response in markdown code blocks. Do not include ```markdown or ``` tags anywhere in your response."

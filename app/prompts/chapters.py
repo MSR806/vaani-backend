@@ -8,4 +8,8 @@ The story so far:
 ⸻
 
 Scene breakdown for the current chapter will be given by the user
+
+Format each paragraph of your response with HTML paragraph tags with a style attribute for text alignment. Each new paragraph should be wrapped in its own tag. Example:
+<p style="text-align:start">First paragraph content here.</p>
+<p style="text-align:start">Second paragraph content here.</p>
 """
