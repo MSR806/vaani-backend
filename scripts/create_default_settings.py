@@ -143,7 +143,7 @@ def create_default_settings():
         {
             "key": SettingKeys.CHAPTER_SUMMARY_GENERATION_FROM_STORYBOARD_MODEL.value,
             "title": "Chapter Summary Generation from Storyboard AI Model",
-            "section": "Templates",
+            "section": "Storyboard",
             "value": "gpt-4o",
             "description": "AI model used for generating chapter summaries from storyboard",
             "type": "list",
@@ -152,7 +152,7 @@ def create_default_settings():
         {
             "key": SettingKeys.CHAPTER_SUMMARY_GENERATION_FROM_STORYBOARD_TEMPERATURE.value,
             "title": "Chapter Summary Generation from Storyboard Temperature",
-            "section": "Templates",
+            "section": "Storyboard",
             "value": "0.6",
             "description": "Temperature parameter for chapter summary generation from storyboard",
             "type": "string",
