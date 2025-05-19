@@ -29,7 +29,8 @@ def create_engine_with_retry(max_retries=5, retry_interval=5):
                 SQLALCHEMY_DATABASE_URL,
                 connect_args={
                     "sslmode": "require",
-                }
+                },
+                pool_pre_ping=True,
             )
             
             # Test the connection
