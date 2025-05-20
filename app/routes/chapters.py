@@ -19,6 +19,7 @@ from ..services.chapter_service import (
     stream_chapter_content,
     patch_chapter_source_text,
     delete_chapter,
+    delete_all_chapters,
     patch_chapter_state,
     bulk_upload_chapters,
 )
@@ -85,6 +86,13 @@ def delete_chapter_route(book_id: int, chapter_id: int, db: Session = Depends(ge
     if not success:
         raise HTTPException(status_code=404, detail="Chapter not found")
     return {"detail": "Chapter deleted successfully"}
+
+
+@router.delete("/books/{book_id}/chapters")
+def delete_all_chapters_route(book_id: int, db: Session = Depends(get_db), current_user: dict = Depends(require_write_permission)):
+    """Delete all chapters for a book"""
+    result = delete_all_chapters(db, book_id)
+    return result
 
 
 @router.post("/books/{book_id}/chapters/{chapter_id}/generate-scenes")

@@ -79,8 +79,10 @@ def update_chapter(
     if not chapter:
         return None
 
-    chapter.content = chapter_update.content
-    chapter.source_text = chapter_update.source_text
+    if chapter_update.content:
+        chapter.content = chapter_update.content
+    if chapter_update.source_text:
+        chapter.source_text = chapter_update.source_text
     chapter.updated_at = int(time.time())
     chapter.updated_by = user_id
     db.commit()
@@ -346,6 +348,8 @@ async def stream_chapter_content(
         previous_chapters=previous_chapters_context,
     )
     user_message = (
+        "📌 CONTINUATION RULE:\n"
+        "Begin immediately where the previous chapter ended. Do not start a new timeline or day. Do not reintroduce the characters. Flow directly from the final emotional or narrative beat of the last paragraph in the previous chapter.\n\n"
         "### Scene Breakdown:\n\n"
         f"{scenes_context}\n\n"
         "---\n\n"
@@ -422,8 +426,8 @@ async def stream_chapter_content(
 
 def delete_chapter(db: Session, book_id: int, chapter_id: int):
     # Delete scenes first
-    # db.query(Scene).filter(Scene.chapter_id == chapter_id).delete()
-    # db.flush()
+    db.query(Scene).filter(Scene.chapter_id == chapter_id).delete()
+    db.flush()
     
     chapter = (
         db.query(Chapter)
@@ -433,9 +437,30 @@ def delete_chapter(db: Session, book_id: int, chapter_id: int):
     if not chapter:
         return None
 
+
     db.delete(chapter)
     db.commit()
     return {"message": "Chapter deleted successfully"}
+
+
+def delete_all_chapters(db: Session, book_id: int):
+    """Delete all chapters for a book"""
+    # Get all chapter IDs for this book
+    chapter_ids = db.query(Chapter.id).filter(Chapter.book_id == book_id).all()
+    chapter_ids = [c.id for c in chapter_ids]
+    
+    if not chapter_ids:
+        return {"message": "No chapters found to delete"}
+    
+    # Delete all scenes for these chapters
+    db.query(Scene).filter(Scene.chapter_id.in_(chapter_ids)).delete(synchronize_session=False)
+    db.flush()
+    
+    # Delete all chapters
+    deleted_count = db.query(Chapter).filter(Chapter.book_id == book_id).delete(synchronize_session=False)
+    db.commit()
+    
+    return {"message": f"Successfully deleted {deleted_count} chapters"}
 
 
 def bulk_upload_chapters(db: Session, book_id: int, html_content: str, user_id: str):
