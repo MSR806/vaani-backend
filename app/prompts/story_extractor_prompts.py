@@ -4,9 +4,9 @@
 # Character Arc Extraction Prompts
 CHARACTER_ARC_EXTRACTION_SYSTEM_PROMPT = (
     "You are a literary analysis expert specializing in character identification and development arcs. "
-    "First, identify the main characters in the story. Then, for each significant character, "
-    "analyze their complete journey throughout the narrative, tracking their growth, changes, and "
-    "development from beginning to end."
+    "First, identify the main and supporting characters in the story. Then, for each character, "
+    "extract their background, status, relationships, power dynamics, sexual relationship/attraction, BDSM roles/relations with other characters, and any other relevant details. "
+    "For protagonists and antagonists, keep relationship descriptions brief and focused on key dynamics."
 )
 
 CHARACTER_ARC_EXTRACTION_USER_PROMPT_TEMPLATE = """
@@ -23,38 +23,39 @@ Author: {book_author}
 
 ## Analysis Instructions
 
-Create individual markdown files for each IMPORTANT character in the story:
+Create individual markdown files for each character in the story. Include all characters major and minor:
 
-1. Include ONLY the most significant characters (those that drive the plot or undergo meaningful development)
+1. IMPORTANT: Extract all characters major and minor
 
 2. For each character, create a separate, well-formatted markdown file following this EXACT structure:
-```markdown
-# [Character Name] - Character Arc Analysis
+
+# [Character Name] - Character Arc
 
 ## Description
-[Include the character's personality, appearance, setting, backstory, and other relevant details]
+[Detailed Description of the character, Include the character's personality, approx age, gender, appearance, setting, backstory, and other relevant details]
 
 ## Role
 [Specify the character's role in the story (Female & Male Protagonist, Antagonist, etc.), IMPORTANT: DONOT generate a description of the character, just generate a two word phrase about the character]
 
 ## Key Relationships
-[Describe the character's significant relationships with other characters in the story]
+[Detailed Description of the character's key relationships with other characters, For Main characters like protagonists and antagonists: Provide a detailed description of key relationships, focusing on:
+- Main relationship type (romantic, antagonistic, etc.)
+- Sexual dynamics if present
+- BDSM roles/relations if applicable
+- Blood relationships if applicable]
+Format: [Character Name] - [Brief Description of the character's key relationships]
+
+For other characters: Provide a basic description of the character's role in the story, you can skip the non important characters.
+
+## Power Dynamics
+[Detailed Description of the character's power dynamics with main characters, if any]
 
 ## Motivation
-[Explain the character's core drives and desires throughout the story]
-
-## Starting State
-[Describe the character's initial condition, mindset, and relationships at the beginning]
-
-## Transformation
-[Identify the key moments and catalysts that change the character throughout the story]
-
-## Ending State
-[Describe the character's final state and how they've changed from their starting point]
-```
+[Detailed Description of the character's core drives and desires throughout the story]
 
 3. Format your output as follows to allow me to easily extract each character's analysis:
 
+Format your output as follows (see example):
 CHARACTER: [Character Name 1]
 FILE_START
 [Complete markdown document for Character 1 following the structure above]
@@ -66,49 +67,32 @@ FILE_START
 FILE_END
 
 And so on for each important character...
-
-Be thorough but concise in your analysis. Focus on quality over quantity, and include only characters with significant development or importance to the story.
 """
 
 # Plot Beat Analysis Prompts
 PLOT_BEAT_ANALYSIS_SYSTEM_PROMPT = (
-    "You are a literary analysis assistant specializing in identifying plot beats and narrative structure. "
-    "Your task is to analyze the provided chapter summaries and extract key plot events, "
-    "turning points, and narrative progression. Analyze how the narrative develops across "
-    "these consecutive chapters, identifying key events and their significance to the overall story."
+    "You are a system that directly uses chapter summaries as plot beats. "
+    "No additional processing or analysis is needed - the chapter summary will be used as-is."
 )
 
 PLOT_BEAT_ANALYSIS_USER_PROMPT_TEMPLATE = """
-# Plot Beat Analysis Task
+# Plot Beat Assignment
 
-## Story Section Information
-Analyzing Story Section: Chapters {start_chapter} to {end_chapter}
+## Chapter Information
+Chapter Number: {chapter_number}
 
-## Chapter Summaries
+## Chapter Summary
 ```
-{combined_summaries}
+{chapter_summary}
 ```
 
-## Analysis Instructions
-
-1. Identify 5-7 major plot beats across this entire story section (NOT organized by individual chapters)
-2. For EACH plot beat, provide:
-   - A descriptive title for the plot development
-   - Preserve emotional and physical relationship dynamics between the male protagonist and female protagonist
-
-3. Identify any major turning points in the story
-4. Analyze how this section advances the overall narrative arc
-5. Extract key themes and character developments
-6. Identify any foreshadowing or setup for future events
-
-Format your response as a cohesive narrative analysis with plot beats that span across chapters.
-Do NOT organize by chapter numbers - treat this as a continuous story section.
+The above chapter summary will be used directly as the plot beat for this chapter.
 """
 
 CHAPTER_SUMMARY_SYSTEM_PROMPT = (
     "You are a literary assistant specializing in precise chapter summarization. "
     "Your task is to create a concise summary of the chapter that captures all key story elements. "
-    "Focus on preserving plot points, character actions, and significant developments. "
+    "Focus on preserving plot points, character actions, and significant developments, sexual relationship/attraction, sexual events, BDSM roles/relations and power dynamics, etc."
     "Your summary should maintain the narrative flow while condensing the content."
 )
 
@@ -132,8 +116,7 @@ Please create a concise but comprehensive summary of this chapter that:
 2. Identifies all characters who appear and their actions
 3. Preserves important dialogue and interactions
 4. Notes any character development or emotional changes
-5. Highlights setting changes or important locations
-6. Includes any foreshadowing or thematic elements
+5. Preserves sexual relationship/attraction, sexual events and BDSM roles/relations and power dynamics, etc.
 
-Aim for a summary that is approximately 15-20% of the original length while ensuring no important story elements are lost.
+Aim for a summary that is approximately 15-20% of the original length while ensuring everthing above is retained.
 """

@@ -9,7 +9,10 @@ CHARACTER_ARC_SYSTEM_PROMPT = (
     "You are a literary analysis expert specializing in character development arcs. "
     "Your task is to create an ensemble of characters for a story based on multiple character templates. "
     "For each character, create a detailed character arc following the exact format provided. "
-    "Make sure the characters form a cohesive ensemble and have meaningful interactions with each other."
+    "Make sure the characters form a cohesive ensemble and have meaningful interactions with each other. "
+    "IMPORTANT: No details should be missed - capture all relationship dynamics, sexual elements, BDSM roles, and power dynamics. "
+    "For protagonists and antagonists, keep relationship descriptions brief and focused on key dynamics."
+    "Assign new names to the characters, if not provided by the user, do not use the names from the character arc templates."
 )
 
 CHARACTER_ARC_USER_PROMPT_TEMPLATE = """
@@ -24,32 +27,44 @@ CHARACTER_ARC_USER_PROMPT_TEMPLATE = """
 ## Task:
 Create unique and interesting characters for this story, ensuring they form a cohesive ensemble.
 Each character should follow one of the provided character arc templates.
+IMPORTANT: You must generate characters for all the characters arc templates which are provided above, do not skip any character.
 
 For each character, create a separate, well-formatted markdown file following this EXACT structure:
 ```markdown
 # [Character Name] - Character Arc
 
 ## Description
-[Include the character's personality, appearance, setting, backstory, and other relevant details]
+[Include the character's personality, approx age, gender, appearance, setting, backstory, and other relevant details]
 
 ## Role
-[Specify the character's role in the story (protagonist, antagonist, supporting character, etc.)] IMPORTANT: DONOT generate a description of the character, just generate a two word phrase about the character]
+[Specify the character's role in the story (Ex. Female & Male Protagonist, Antagonist, Supporting, etc.), IMPORTANT: DONOT generate a description of the character, just generate a two word phrase about the character]
 
 ## Key Relationships
-[Describe the character's significant relationships with other characters in the story]
+[Detailed Description of the character's key relationships with other characters, For Main characters like protagonists and antagonists: Provide a detailed description of key relationships, focusing on:
+- Main relationship type (romantic, antagonistic, etc.)
+- Sexual dynamics if present
+- BDSM roles/relations if applicable
+- Blood relationships if applicable]
+Format: [Character Name] - [Brief Description of the character's key relationships]
+
+For other characters: Provide a basic description of the character's role in the story.
+
+## Power Dynamics
+[Detailed Description of the character's power dynamics with main characters, if any]
 
 ## Motivation
-[Explain the character's core drives and desires throughout the story]
-
-## Starting State
-[Describe the character's initial condition, mindset, and relationships at the beginning]
-
-## Transformation
-[Identify the key moments and catalysts that change the character throughout the story]
-
-## Ending State
-[Describe the character's final state and how they've changed from their starting point]
+[Detailed Description of the character's core drives and desires throughout the story]
 ```
+
+IMPORTANT REQUIREMENTS:
+1. Follow the EXACT structure above - no additional sections
+2. NO details should be missed which are in the character arc template - capture everything
+3. Include ALL relationship dynamics
+4. Include ALL sexual elements and BDSM roles
+5. Include ALL power dynamics
+6. Keep protagonist/antagonist relationships detailed
+7. Keep supporting character descriptions basic
+8. Maintain consistency with other characters' relationships
 
 Format your output as follows to allow me to easily extract each character's analysis:
 
@@ -67,18 +82,13 @@ And so on for each character...
 """
 
 # Plot Beat Generation Prompts
-PLOT_BEAT_SYSTEM_PROMPT = (
-    "You are a master storyteller and narrative structure expert specializing in plot development. "
-    "Your task is to create detailed plot beats for a story based on a template, character arcs, and a simple prompt. "
-    "You may be creating either the beginning of a story or continuing an existing narrative. "
-    "Design a cohesive narrative structure that allows all character arcs to develop naturally throughout the story, "
-    "while maintaining the dramatic progression and emotional impact from the plot template. "
-    "When continuing a story, ensure smooth continuity with the existing narrative."
-    "Ensure that numbering is maintained for a continuing story."
-)
+PLOT_BEAT_SYSTEM_PROMPT = """You are a master storyteller specializing in adapting plot templates to specific stories.
+Your task is to take a single plot template and adapt it into a chapter summary for the given story world, setting, and characters.
+IMPORTANT: Preserve ALL details from the template - nothing should be omitted or changed.
+Maintain all relationship dynamics, sexual elements, BDSM roles, and power dynamics from the template.
+Your output should be a clear, concise chapter summary that captures all the essential elements from the template."""
 
-PLOT_BEAT_USER_PROMPT_TEMPLATE = """
-# Plot Beat Generation Task
+PLOT_BEAT_USER_PROMPT_TEMPLATE = """# Chapter Summary Generation Task
 
 ## Story Prompt
 {prompt}
@@ -86,42 +96,34 @@ PLOT_BEAT_USER_PROMPT_TEMPLATE = """
 ## Character Arcs to Integrate
 {character_content}
 
-## Story Progress So Far
-```
-{plot_till_now}
-```
-
-## Plot Template to Apply
+## Plot Template to Adapt
 ```
 {plot_template}
 ```
 
 ## Instructions
 
-You are generating plot beats for a PROGRESSING STORY. This means:
+Your task is to adapt this single plot template into a chapter summary for the specific story:
 
-1. If the "Story Progress So Far" section is empty, this is the BEGINNING of the story. Create the initial plot beats.
-2. If the "Story Progress So Far" section contains content, you are CONTINUING the story. Your plot beats should follow naturally from what has already happened.
+1. Take the template
+2. Adapt it to the story's:
+   - World and setting
+   - Characters and their relationships
+   - Sexual dynamics and BDSM roles
+   - Power dynamics
+3. Create a clear, concise chapter summary that:
+   - Preserves ALL details from the template
+   - Replaces template character names with actual character names
+   - Maintains all relationships and dynamics
+   - Keeps all sexual and BDSM elements exactly as in the template
+   - Preserves all power dynamics from the template
 
-Create detailed plot beats for the story based on the template, the story prompt, and the character arcs:
-
-1. Transform the abstract plot template into a specific storyline that fits the prompt
-2. Design key plot points that allow all characters to develop according to their arcs
-3. Create natural connections and compelling interactions between the characters
-4. Maintain the narrative structure from the template while adapting it to this specific story
-5. Ensure continuity with any existing plot beats provided in "Story Progress So Far"
-6. Replace the Archetype names with the actual character names
-7. Don't add anything about the Story Progress So Far
-
-Each plot beat must follow the exact format from the plot beat template.
-
-Your plot outline should:
-- Include EXACTLY the same number of plot beats as in the template, no more and no less
-- Format each beat following the structure in the plot beat template
-- Ensure each character's arc is incorporated meaningfully
-- Create a coherent narrative flow from beginning to end
-- Maintain continuity with previous plot beats when continuing the story also plot beat number should be progressive from previous plot beats
-"""
+IMPORTANT:
+- DO NOT omit any details from the template
+- DO NOT modify the relationships or dynamics
+- Keep all sexual and BDSM elements exactly as in the template
+- Maintain all power dynamics from the template
+- Focus on creating a single, well-structured chapter summary"""
 
 # Plot Summary Generation Prompt
 
@@ -174,3 +176,18 @@ Based on the provided plot beats, character arcs, and previous chapter summaries
 If previous chapter summaries exist, ensure your new chapters continue the narrative seamlessly from where the story left off.
 Maintain consistency with established characters, plot elements, and themes from the previous chapters.
 """
+
+# Character Identification Prompts
+CHARACTER_IDENTIFICATION_SYSTEM_PROMPT = """You are an AI assistant that identifies characters in plot beats. 
+Your task is to analyze the plot beat content and identify which characters are involved.
+Return only the character IDs in a structured format."""
+
+CHARACTER_IDENTIFICATION_USER_PROMPT_TEMPLATE = """Given the following plot beat content and list of characters with their IDs, identify which characters are involved in this plot beat.
+
+Characters:
+{character_list_with_ids}
+
+Plot Beat Content:
+{plot_beat_content}
+
+Return only the character IDs in a structured format."""

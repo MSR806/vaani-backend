@@ -1,6 +1,5 @@
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, Table, LargeBinary, BigInteger, Enum
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, LargeBinary, BigInteger, Enum, ARRAY
 from sqlalchemy.orm import relationship
-from sqlalchemy.ext.declarative import declarative_base
 from ..database import Base
 from .enums import StoryboardStatus, PromptSource
 
@@ -54,6 +53,7 @@ class Chapter(Base):
     chapter_no = Column(Integer, nullable=False)
     content = Column(Text, nullable=False)
     source_text = Column(Text, nullable=True)
+    character_ids = Column(ARRAY(Integer), nullable=True, default=[])
     state = Column(String, default="DRAFT", nullable=False)
     created_at = Column(BigInteger, nullable=False)  # Unix timestamp
     updated_at = Column(BigInteger, nullable=False)  # Unix timestamp
@@ -110,6 +110,7 @@ class PlotBeat(Base):
     content = Column(Text, nullable=False)
     type = Column(Text, nullable=False)
     source_id = Column(Integer, nullable=True)
+    character_ids = Column(ARRAY(Integer), nullable=True, default=[])
 
 
 class Template(Base):

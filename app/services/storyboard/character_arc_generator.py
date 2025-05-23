@@ -90,8 +90,9 @@ class CharacterArcGenerator:
         try:
             # Get model and temperature from settings
             model, temperature = self.model_settings.character_arc_generation()
+            client = get_openai_client(model)
             
-            response = self.client.chat.completions.create(
+            response = client.chat.completions.create(
                 model=model,
                 messages=[
                     {"role": "system", "content": CHARACTER_ARC_SYSTEM_PROMPT},
@@ -112,7 +113,7 @@ class CharacterArcGenerator:
                 
             
         except Exception as e:
-            logger.error(f"Error generating character arc for template {template.name}: {str(e)}")
+            logger.error(f"Error generating character arcs: {str(e)}")
                 
         logger.info("Character arc generation completed")
     

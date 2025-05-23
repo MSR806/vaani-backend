@@ -89,3 +89,10 @@ class ModelSettings:
             SettingKeys.PLOT_BEATS_TEMPLATE_MODEL.value,
             SettingKeys.PLOT_BEATS_TEMPLATE_TEMPERATURE.value
         ))
+
+    def character_identification(self) -> Tuple[str, float]:
+        """For identifying characters in plot beats"""
+        return self.get_model_and_temperature((
+            SettingKeys.CHARACTER_IDENTIFICATION_MODEL.value,
+            SettingKeys.CHARACTER_IDENTIFICATION_TEMPERATURE.value
+        ))

@@ -30,3 +30,7 @@ class SettingKeys(Enum):
     
     PLOT_BEATS_TEMPLATE_MODEL = "plot_beats_template_model"
     PLOT_BEATS_TEMPLATE_TEMPERATURE = "plot_beats_template_temperature"
+
+    # Character identification settings
+    CHARACTER_IDENTIFICATION_MODEL = "character_identification_model"
+    CHARACTER_IDENTIFICATION_TEMPERATURE = "character_identification_temperature"

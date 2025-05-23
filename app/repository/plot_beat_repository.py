@@ -20,7 +20,7 @@ class PlotBeatRepository(BaseRepository[PlotBeat]):
         return plot_beat
 
     def get_by_source_id_and_type(self, source_id: int, type: str) -> List[PlotBeat]:
-        return self.db.query(PlotBeat).filter(PlotBeat.source_id == source_id, PlotBeat.type == type).all() 
+        return self.db.query(PlotBeat).filter(PlotBeat.source_id == source_id, PlotBeat.type == type).order_by(PlotBeat.id.asc()).all() 
     
     def get_by_id(self, id: int) -> PlotBeat:
         plot_beat = self.db.query(PlotBeat).filter(PlotBeat.id == id).first()

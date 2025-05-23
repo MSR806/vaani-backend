@@ -30,4 +30,6 @@ Return your output in the following JSON format:
     ]
 }
 ```
+📌 CONTINUATION RULE(not applicable for first chapter):
+Begin immediately where the previous chapter ended. Do not start a new timeline or day. Do not reintroduce the characters. Flow directly from the final emotional or narrative beat of the last paragraph in the previous chapter.
 """

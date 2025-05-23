@@ -73,6 +73,8 @@ class StoryAbstractor:
         plot_beats = []
         repo = PlotBeatRepository(self.db)
         beats = repo.get_by_source_id_and_type(self.book_id, 'EXTRACTED')
+        # Sort beats by ID in ascending order (from lowest to highest)
+        beats = sorted(beats, key=lambda x: x.id, reverse=False)
         for beat in beats:
             if beat.content:
                 plot_beats.append({"content": beat.content})

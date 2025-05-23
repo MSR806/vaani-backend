@@ -29,9 +29,7 @@ from prompts.story_extractor_prompts import (
     CHAPTER_SUMMARY_SYSTEM_PROMPT,
     CHAPTER_SUMMARY_USER_PROMPT_TEMPLATE,
     CHARACTER_ARC_EXTRACTION_SYSTEM_PROMPT,
-    CHARACTER_ARC_EXTRACTION_USER_PROMPT_TEMPLATE,
-    PLOT_BEAT_ANALYSIS_SYSTEM_PROMPT,
-    PLOT_BEAT_ANALYSIS_USER_PROMPT_TEMPLATE
+    CHARACTER_ARC_EXTRACTION_USER_PROMPT_TEMPLATE
 )
 
 # Set up logging
@@ -161,8 +159,15 @@ class StoryExtractor:
         """Summarize all chapters in the book"""
         import time as _time
         self.template_repo.update_summary_status(self.template_id, TemplateStatusEnum.IN_PROGRESS)
-        chapters_to_process = self.chapters
-        logger.info(f"Summarizing all {len(chapters_to_process)} chapters")
+        
+        # Filter out chapters that already have summaries
+        chapters_to_process = [chapter for chapter in self.chapters if not chapter.source_text]
+        logger.info(f"Found {len(chapters_to_process)} chapters that need summarization out of {len(self.chapters)} total chapters")
+
+        if not chapters_to_process:
+            logger.info("All chapters already have summaries, skipping summarization")
+            self.template_repo.update_summary_status(self.template_id, TemplateStatusEnum.COMPLETED)
+            return []
 
         # Use a semaphore to limit concurrency
         import asyncio
@@ -188,77 +193,9 @@ class StoryExtractor:
     
     # The extract_characters_from_summaries method has been removed as it's now part of extract_character_arcs
     
-    async def analyze_plot_beats_batch(self, chapter_batch: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """Analyze plot beats from multiple chapter summaries at once"""
-        if not chapter_batch:
-            logger.error("No chapters provided for batch plot analysis")
-            return {"error": "No chapters provided"}
-        
-        # Get the range of chapters in this batch
-        start_chapter = chapter_batch[0]["chapter_no"]
-        end_chapter = chapter_batch[-1]["chapter_no"]
-        logger.info(f"Analyzing plot beats for chapters {start_chapter} to {end_chapter}")
-        
-        # Combine the chapter summaries
-        combined_summaries = ""
-        for chapter in chapter_batch:
-            combined_summaries += f"\n\nCHAPTER {chapter['chapter_no']}: {chapter['title']}\n{chapter['summary']}"
-        
-        system_prompt = PLOT_BEAT_ANALYSIS_SYSTEM_PROMPT
-        user_prompt = PLOT_BEAT_ANALYSIS_USER_PROMPT_TEMPLATE.format(
-            start_chapter=start_chapter,
-            end_chapter=end_chapter,
-            combined_summaries=combined_summaries
-        )
-        
-        try:
-            # Get model and temperature from settings
-            model, temperature = self.model_settings.extracting_plot_beats()
-            logger.info(f"Making API call to analyze plot beats for chapters {start_chapter}-{end_chapter} using {model}")
-            response = self.client.chat.completions.create(
-                model=model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ],
-                temperature=temperature,
-            )
-            
-            plot_analysis = response.choices[0].message.content
-
-            # Save each plot beat to the database using PlotBeatRepository
-            from app.repository.plot_beat_repository import PlotBeatRepository
-            plot_beat_repo = PlotBeatRepository(self.db)
-            plot_beat_repo.create(
-                content=plot_analysis,
-                type="EXTRACTED",
-                source_id=self.book_id,
-            )
-            
-            # Create a result dict with metadata
-            result = {
-                "start_chapter": start_chapter,
-                "end_chapter": end_chapter,
-                "chapters": [ch["chapter_no"] for ch in chapter_batch],
-                "plot_analysis": plot_analysis,
-                "timestamp": int(time.time())
-            }
-            
-            return result
-            
-        except Exception as e:
-            error_message = f"Error analyzing plot beats for chapters {start_chapter}-{end_chapter}: {str(e)}"
-            logger.error(error_message)
-            logger.error(traceback.format_exc())
-            return {    
-                "start_chapter": start_chapter,
-                "end_chapter": end_chapter,
-                "error": error_message
-            }
-    
     async def analyze_all_plot_beats(self) -> List[Dict[str, Any]]:
-        """Analyze all chapter summaries for plot beats using multi-chapter batches, using the database only."""
-        logger.info("Analyzing plot beats from all chapter summaries")
+        """Create plot beats directly from chapter summaries"""
+        logger.info("Creating plot beats from chapter summaries")
 
         # Check for existing plot beats in the database
         from app.repository.plot_beat_repository import PlotBeatRepository
@@ -276,10 +213,12 @@ class StoryExtractor:
                 }
                 for pb in existing_plot_beats
             ]
-        # If not found, generate plot beats
-        logger.info("No plot beats found in the database, generating new plot beats")
-        # Load all chapter summaries from the database (source_text)
+
+        # If not found, create plot beats from chapter summaries
+        logger.info("No plot beats found in the database, creating new plot beats")
         self.template_repo.update_plot_beats_status(self.template_id, TemplateStatusEnum.IN_PROGRESS)
+        
+        # Load all chapter summaries from the database (source_text)
         summaries = []
         for chapter in self.chapters:
             if chapter.source_text:
@@ -292,30 +231,33 @@ class StoryExtractor:
                 logger.warning(f"No summary (source_text) found for chapter {chapter.chapter_no}")
 
         if not summaries:
-            logger.error("No chapter summaries found for plot beat analysis")
+            logger.error("No chapter summaries found for plot beat creation")
             return [{"error": "No summaries available"}]
 
-        logger.info(f"Loaded {len(summaries)} chapter summaries for plot beat analysis")
+        logger.info(f"Loaded {len(summaries)} chapter summaries for plot beat creation")
 
-        # Process in larger batches (10 chapters at a time for narrative continuity)
-        BATCH_SIZE = 10
+        # Save each chapter summary as a plot beat
         all_results = []
-        batch_count = (len(summaries) + BATCH_SIZE - 1) // BATCH_SIZE
-        logger.info(f"Processing {len(summaries)} chapters in {batch_count} multi-chapter batches")
+        try:
+            for summary in summaries:
+                plot_beat = plot_beat_repo.create(
+                    content=summary['summary'],
+                    type="EXTRACTED",
+                    source_id=self.book_id,
+                )
+                all_results.append({
+                    "chapter_no": summary["chapter_no"],
+                    "content": plot_beat.content,
+                    "type": plot_beat.type,
+                    "source_id": plot_beat.source_id,
+                    "id": plot_beat.id
+                })
+        except Exception as e:
+            error_message = f"Error creating plot beats: {str(e)}"
+            logger.error(error_message)
+            logger.error(traceback.format_exc())
+            return [{"error": error_message}]
 
-        for i in range(0, len(summaries), BATCH_SIZE):
-            batch = summaries[i:i+BATCH_SIZE]
-            start_ch = batch[0]['chapter_no']
-            end_ch = batch[-1]['chapter_no']
-            logger.info(f"Processing batch {i//BATCH_SIZE + 1}/{batch_count} (chapters {start_ch}-{end_ch})")
-
-            # Analyze this batch of chapters together
-            batch_result = await self.analyze_plot_beats_batch(batch)
-            all_results.append(batch_result)
-
-            # Brief pause between batches to avoid rate limits
-            if i + BATCH_SIZE < len(summaries):
-                await asyncio.sleep(2)
         self.template_repo.update_plot_beats_status(self.template_id, TemplateStatusEnum.COMPLETED)
         return all_results
     
@@ -383,8 +325,17 @@ class StoryExtractor:
             # Extract individual character files using regex pattern
             import re
             # Updated pattern to capture everything between FILE_START and FILE_END for each character
-            pattern = r"CHARACTER:\s*([^\n]+)\s*\nFILE_START\n([\s\S]*?)FILE_END"
+            pattern = re.compile(
+                r"CHARACTER:\s*([^\n]+)\s*\n"        # name line
+                r"FILE_START\s*\n"                   # allow spaces before the newline
+                r"([\s\S]*?)"                        # block content (non-greedy)
+                r"\s*FILE_END",                      # optional spaces before FILE_END
+                re.DOTALL
+            )
+            
+            # Find all matches
             matches = re.findall(pattern, character_markdown_content)
+            logger.info(f"Found {len(matches)} characters in the response")
 
             # Save individual character arc in database
             character_arcs_repo = CharacterArcsRepository(self.db)
@@ -395,6 +346,7 @@ class StoryExtractor:
                 role_match = re.search(role_pattern, content)
                 role = role_match.group(1).strip() if role_match else ""
                 character_arc = character_arcs_repo.create(content=content.strip(), type='EXTRACTED', source_id=self.book_id, name=name.strip(), role=role)
+                logger.info(f"Saved character arc: {character_arc.name}")
                 character_arcs.append(character_arc)
             self.template_repo.update_character_arc_status(self.template_id, TemplateStatusEnum.COMPLETED)
             return character_arcs

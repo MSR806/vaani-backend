@@ -69,6 +69,7 @@ class ChapterRepository(BaseRepository[Chapter]):
                     content=data.get("content", ""),
                     source_text=data.get("source_text"),
                     state=data.get("state", "DRAFT"),
+                    character_ids=data.get("character_ids", []),
                     created_at=current_time,
                     updated_at=current_time,
                     created_by=user_id,

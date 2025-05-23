@@ -23,7 +23,7 @@ def create_default_settings():
     db = SessionLocal()
     
     # Define default settings
-    model_options = json.dumps(["gpt-4o-mini", "grok-3-latest", "gpt-4o"])
+    model_options = json.dumps(["gpt-4o-mini", "grok-3-latest", "gpt-4o", "o3"])
     settings = [
         # AI Model settings for chapter outline generation
         {
@@ -249,6 +249,25 @@ def create_default_settings():
             "description": "Temperature parameter for plot beat template creation",
             "type": "string",
             "options": None
+        },
+        # Character identification settings
+        {
+            "key": SettingKeys.CHARACTER_IDENTIFICATION_MODEL.value,
+            "title": "Character Identification AI Model",
+            "section": "Storyboard",
+            "value": "o3",
+            "description": "AI model used for identifying characters in plot beats",
+            "type": "list",
+            "options": model_options
+        },
+        {
+            "key": SettingKeys.CHARACTER_IDENTIFICATION_TEMPERATURE.value,
+            "title": "Character Identification Temperature",
+            "section": "Storyboard",
+            "value": "1",
+            "description": "Temperature parameter for character identification in plot beats",
+            "type": "string",
+            "options": None
         }
     ]
 
@@ -296,9 +315,9 @@ def create_default_settings():
                 else:
                     print(f"Setting already exists (no changes needed): {setting_data['key']}")
         
-        except IntegrityError:
+        except IntegrityError as e:
             db.rollback()
-            print(f"Error creating setting: {setting_data['key']}")
+            print(f"Error creating setting: {setting_data['key']} - {e}")
         except Exception as e:
             db.rollback()
             print(f"Unexpected error: {e}")

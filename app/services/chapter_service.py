@@ -1,3 +1,4 @@
+import logging
 from app.prompts.scenes import SCENE_GENERATION_SYSTEM_PROMPT_V1
 from app.prompts.chapters import CHAPTER_GENERATION_FROM_SCENE_SYSTEM_PROMPT_V1
 from app.services.character_arc_service import CharacterArcService
@@ -20,6 +21,8 @@ from fastapi.responses import StreamingResponse
 from ..services.setting_service import get_setting_by_key
 from app.prompts import format_prompt
 import time
+
+logger = logging.getLogger(__name__)
 
 
 def create_chapter(db: Session, book_id: int, chapter: ChapterCreate, user_id: str):
@@ -189,6 +192,9 @@ async def generate_chapter_outline(
 
         character_arc_service = CharacterArcService()
         character_arcs = character_arc_service.get_character_arcs_by_book_id(book_id)
+        character_arcs = [arc for arc in character_arcs if arc.id in chapter.character_ids]
+        # log character names
+        logger.info(f"Considering only {len(character_arcs)} character arcs: {', '.join([arc.name for arc in character_arcs])}")
 
         print(system_prompt)
         
