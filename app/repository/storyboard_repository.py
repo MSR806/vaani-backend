@@ -1,11 +1,12 @@
 import time
-from app.utils.exceptions import StoryboardNotFoundException
+from app.utils.exceptions import StoryboardNotFoundException, rollback_on_exception
 
 from app.models.models import Storyboard
 from .base_repository import BaseRepository
 from app.models.models import StoryboardStatus
 
 class StoryboardRepository(BaseRepository[Storyboard]):
+    @rollback_on_exception
     def create(self, book_id: int, template_id: int, prompt: str, user_id: str) -> Storyboard:
         storyboard = Storyboard(
             book_id=book_id,
@@ -22,6 +23,7 @@ class StoryboardRepository(BaseRepository[Storyboard]):
         self.db.refresh(storyboard)
         return storyboard
     
+    @rollback_on_exception
     def update(self, storyboard_id: int, **kwargs) -> Storyboard:
         storyboard = self.db.query(Storyboard).filter(Storyboard.id == storyboard_id).first()
         if not storyboard:

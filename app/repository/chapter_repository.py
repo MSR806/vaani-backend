@@ -4,6 +4,7 @@ from app.models.models import Chapter
 from typing import List, Optional, Dict, Any
 import time
 import logging
+from app.utils.exceptions import rollback_on_exception
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +19,7 @@ class ChapterRepository(BaseRepository[Chapter]):
     def get_by_book_id(self, book_id: int) -> List[Chapter]:
         return self.db.query(Chapter).filter(Chapter.book_id == book_id).all()
 
+    @rollback_on_exception
     def create(self, book_id: int, title: str, chapter_no: int, content: str, source_text: str = None, state: str = None, user_id: str = None) -> Chapter:
         current_time = int(time.time())
         chapter = Chapter(
@@ -37,12 +39,14 @@ class ChapterRepository(BaseRepository[Chapter]):
         self.db.refresh(chapter)
         return chapter
 
+    @rollback_on_exception
     def update(self, chapter: Chapter) -> Chapter:
         merged_chapter = self.db.merge(chapter)
         self.db.commit()
         self.db.refresh(merged_chapter)
         return merged_chapter
 
+    @rollback_on_exception
     def delete(self, chapter_id: int) -> bool:
         chapter = self.get_by_id(chapter_id)
         if not chapter:
@@ -51,6 +55,7 @@ class ChapterRepository(BaseRepository[Chapter]):
         self.db.commit()
         return True
         
+    @rollback_on_exception
     def batch_create(self, chapters_data: List[Dict[str, Any]], user_id: Optional[str] = None) -> List[Chapter]:
         try:
             if not chapters_data:

@@ -12,6 +12,7 @@ from .ai_service import get_openai_client
 from ..config import OPENAI_MODEL
 import json
 import time
+from app.utils.exceptions import rollback_on_exception
 
 # Load environment variables
 load_dotenv()
@@ -89,6 +90,7 @@ def get_books(db: Session) -> list[Book]:
     # Return just the book objects
     return [book for book, _ in books]
 
+@rollback_on_exception
 def update_book(db: Session, book_id: int, book_update: BookUpdate, user_id: str) -> Book:
     book = get_book(db, book_id)
     if not book:

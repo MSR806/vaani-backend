@@ -1,4 +1,27 @@
 from fastapi import HTTPException
+from functools import wraps
+from sqlalchemy.orm import Session
+from typing import Callable, TypeVar, Any
+
+F = TypeVar("F", bound=Callable[..., Any])
+
+def rollback_on_exception(func: F) -> F:
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        db: Session = kwargs.get("db") or next((a for a in args if isinstance(a, Session)), None)
+        # If not found, check if first arg is self and has .db
+        if not db and args:
+            self_obj = args[0]
+            db = getattr(self_obj, "db", None)
+        if not db:
+            raise ValueError("SQLAlchemy session (db: Session) is required")
+
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            db.rollback()
+            raise
+    return wrapper  # type: ignore
 
 class StoryboardAlreadyExistsException(HTTPException):
     def __init__(self, book_id: int):

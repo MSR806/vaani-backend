@@ -3,12 +3,13 @@ from typing import List, Optional, Dict, Any
 
 from .base_repository import BaseRepository
 from app.models.models import CharacterArc, Storyboard
-from app.utils.exceptions import CharacterArcNotFoundException
+from app.utils.exceptions import CharacterArcNotFoundException, rollback_on_exception
 
 class CharacterArcsRepository(BaseRepository[CharacterArc]):
     def __init__(self, db: Session):
         super().__init__(db)
 
+    @rollback_on_exception
     def create(self, content: str, type: str, source_id: int, name: str = None, role: str = None, archetype: str = None) -> CharacterArc:
         arc = CharacterArc(
             content=content,
@@ -23,6 +24,7 @@ class CharacterArcsRepository(BaseRepository[CharacterArc]):
         self.db.refresh(arc)
         return arc
         
+    @rollback_on_exception
     def batch_create(self, character_arcs: List[dict]) -> List[CharacterArc]:
         """
         Create multiple character arcs in a single transaction
@@ -76,6 +78,7 @@ class CharacterArcsRepository(BaseRepository[CharacterArc]):
             
         return arc
     
+    @rollback_on_exception
     def update(self, character_arc_id: int, update_data: Dict[str, Any]) -> CharacterArc:
         arc = self.get_by_id(character_arc_id)
         for key, value in update_data.items():
