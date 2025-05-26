@@ -18,8 +18,8 @@ logger = logging.getLogger(__name__)
 class StoryboardService:
     def __init__(self, db: Session, user_id: str | None = None):
         self.db = db
-        self.storyboard_repo = StoryboardRepository()
-        self.plot_beat_repo = PlotBeatRepository()
+        self.storyboard_repo = StoryboardRepository(db)
+        self.plot_beat_repo = PlotBeatRepository(db)
         self.user_id = user_id
     
     def create_storyboard(self, book_id: int, template_id: int, prompt: str):

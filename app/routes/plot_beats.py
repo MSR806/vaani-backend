@@ -1,4 +1,7 @@
-from fastapi import APIRouter, HTTPException, Path
+from fastapi import APIRouter, Depends, HTTPException, Path
+from requests import Session
+
+from database import get_db
 
 from ..services.plot_beat_service import PlotBeatService
 from ..utils.exceptions import PlotBeatNotFoundException
@@ -9,18 +12,20 @@ router = APIRouter()
 @router.get("/plot-beats")
 def get_plot_beats_by_type_and_source_id(
     type: str,
-    source_id: int
+    source_id: int,
+    db: Session = Depends(get_db)
 ):
-    service = PlotBeatService()
+    service = PlotBeatService(db)
     return service.get_plot_beats_by_type_and_source_id(type, source_id)
 
 @router.put("/plot-beats/{plot_beat_id}")
 def update_plot_beat(
     update_data: PlotBeatUpdate,
-    plot_beat_id: int = Path(..., gt=0)
+    plot_beat_id: int = Path(..., gt=0),
+    db: Session = Depends(get_db)
 ):
 
-    service = PlotBeatService()
+    service = PlotBeatService(db)
     try:
         # Convert Pydantic model to dict, excluding None values
         update_dict = {k: v for k, v in update_data.dict().items() if v is not None}

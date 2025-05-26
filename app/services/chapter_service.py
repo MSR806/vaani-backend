@@ -187,7 +187,7 @@ async def generate_chapter_outline(
             previous_chapters=previous_chapters_context
         )
 
-        character_arc_service = CharacterArcService()
+        character_arc_service = CharacterArcService(db)
         character_arcs = character_arc_service.get_character_arcs_by_book_id(book_id)
 
         print(system_prompt)

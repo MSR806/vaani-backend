@@ -6,7 +6,7 @@ from app.models.models import CharacterArc, Storyboard
 from app.utils.exceptions import CharacterArcNotFoundException
 
 class CharacterArcsRepository(BaseRepository[CharacterArc]):
-    def __init__(self, db: Optional[Session] = None):
+    def __init__(self, db: Session):
         super().__init__(db)
 
     def create(self, content: str, type: str, source_id: int, name: str = None, role: str = None, archetype: str = None) -> CharacterArc:

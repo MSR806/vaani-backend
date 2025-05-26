@@ -4,12 +4,13 @@ from app.repository.template_repository import TemplateRepository
 from app.repository.character_arcs_repository import CharacterArcsRepository
 from app.repository.plot_beat_repository import PlotBeatRepository
 from app.services.background_jobs.tasks import add_template_creation_task_to_bg_jobs
+from sqlalchemy.orm import Session
 
 class TemplateService:
-    def __init__(self):
-        self.template_repo = TemplateRepository()
-        self.character_arc_repo = CharacterArcsRepository()
-        self.plot_beat_repo = PlotBeatRepository()
+    def __init__(self, db: Session):
+        self.template_repo = TemplateRepository(db)
+        self.character_arc_repo = CharacterArcsRepository(db)
+        self.plot_beat_repo = PlotBeatRepository(db)
 
     def create_template(self, book_id: int, name: str) -> dict:
         # Check if a template already exists for this book_id
