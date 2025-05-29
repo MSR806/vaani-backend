@@ -34,12 +34,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Set global session for repositories at startup
-@app.on_event("startup")
-async def set_global_db_session():
-    db = SessionLocal()
-    BaseRepository.set_session(db)
-
 # Include routers
 app.include_router(router, prefix="/vaani/api/v1", dependencies=[Depends(get_current_user)])
 

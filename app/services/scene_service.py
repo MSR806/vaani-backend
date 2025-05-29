@@ -4,7 +4,9 @@ from ..schemas.schemas import (
     SceneCreate, SceneUpdate
 )
 import time
+from app.utils.exceptions import rollback_on_exception
 
+@rollback_on_exception
 def create_scene(db: Session, scene: SceneCreate, user_id: str):
     # Check if chapter exists
     chapter = db.query(Chapter).filter(Chapter.id == scene.chapter_id).first()
@@ -28,6 +30,7 @@ def create_scene(db: Session, scene: SceneCreate, user_id: str):
     db.refresh(db_scene)
     return db_scene
 
+@rollback_on_exception
 def update_scene(db: Session, scene_id: int, scene_update: SceneUpdate, user_id: str):
     scene = db.query(Scene).filter(Scene.id == scene_id).first()
     if not scene:
@@ -57,6 +60,7 @@ def get_scenes(db: Session, chapter_id: int = None):
         query = query.filter(Scene.chapter_id == chapter_id)
     return query.all()
 
+@rollback_on_exception
 def delete_scene(db: Session, scene_id: int, user_id: str):
     scene = db.query(Scene).filter(Scene.id == scene_id).first()
     if not scene:
@@ -86,6 +90,7 @@ def delete_scene(db: Session, scene_id: int, user_id: str):
     db.commit()
     return True
 
+@rollback_on_exception
 def reorder_scenes(db: Session, scene_updates: list):
     """
     Reorder scenes based on the provided scene_id and new scene_number pairs.

@@ -190,7 +190,7 @@ async def generate_chapter_outline(
             previous_chapters=previous_chapters_context
         )
 
-        character_arc_service = CharacterArcService()
+        character_arc_service = CharacterArcService(db)
         character_arcs = character_arc_service.get_character_arcs_by_book_id(book_id)
         character_arcs = [arc for arc in character_arcs if arc.id in chapter.character_ids]
         # log character names

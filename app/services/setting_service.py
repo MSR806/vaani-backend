@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException
 
 from ..models.models import Setting
+from app.utils.exceptions import rollback_on_exception
 
 
 def get_setting_by_key(db: Session, key: str):
@@ -22,6 +23,7 @@ def get_setting_by_id(db: Session, setting_id: int):
         raise HTTPException(status_code=404, detail="Setting not found")
     return setting
 
+@rollback_on_exception
 def batch_update_settings(db: Session, settings_data: list):
     """Update multiple settings in a batch operation"""
     updated_settings = []

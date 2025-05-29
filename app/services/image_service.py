@@ -4,6 +4,7 @@ import requests
 from ..models.models import Image
 import io
 import time
+from app.utils.exceptions import rollback_on_exception
 
 async def store_image_from_url(db: Session, url: str, name: str = "image", user_id: str = None) -> Image:
     """
@@ -64,6 +65,7 @@ def get_image(db: Session, image_id: int) -> Image:
     """
     return db.query(Image).filter(Image.id == image_id).first()
 
+@rollback_on_exception
 def delete_image(db: Session, image_id: int, user_id: str = None) -> bool:
     """
     Delete an image from the database.
