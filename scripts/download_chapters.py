@@ -9,7 +9,7 @@ import argparse
 API_BASE_URL = "http://localhost/vaani/api/v1"  # Update as needed
 
 # Access token placeholder - User will update this
-ACCESS_TOKEN = "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Il9QbzVTVHpUWEZXOHdMa1FseTlUMSJ9.eyJpc3MiOiJodHRwczovL3ZhYW5pLmV1LmF1dGgwLmNvbS8iLCJzdWIiOiJnb29nbGUtb2F1dGgyfDEwOTUwNjExNTIyMjY5ODE2MjY2NCIsImF1ZCI6WyJjZjQ4MWQ0NC1mY2RiLTRlOWMtYTI5ZC00ZDk0OWQ0MTliY2EiLCJodHRwczovL3ZhYW5pLmV1LmF1dGgwLmNvbS91c2VyaW5mbyJdLCJpYXQiOjE3NDg0MjY4NTYsImV4cCI6MTc0ODUxMzI1Niwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCIsImF6cCI6IkNCVnNDWmg5ZHN3U24wUXJqVlFUMGlDdUVDbXlScTg0IiwicGVybWlzc2lvbnMiOlsiYm9vazpkZWxldGUiLCJib29rOnJlYWQiLCJib29rOndyaXRlIl19.vno55nXeO-Y2MYw5a7R6D5LEnwxaYO4XrhQrPnFUgOXIQfN9vKl9V1COoygEQKe6heLazRH_cQlbsrm7UZoNl6gu5vFv93HDbVKDhZzN1OzHJ0-RPS4Ymj3Spdy3Br6ipJRcJAH_yPg1xiCITgOo_oo6eDTq75SvD8p_oBJkl4qJ_cVwgq_spxRyDYqjydodhEr_RCJyKfWPDRZatlyMIoCzJ8OL7_3h84jU0T5f_Nh3hOsm0sxjuwAjGnqaK3Of8Vc_-Kd44MH9kc8bMaQ9BfVEbiGabamGficmHC8rEbV6bd02YeLEH4EdUKxj8feNUbzegFR8zzmUvy7NenJN_Q"
+ACCESS_TOKEN = "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Ill3OGhmeWV2cjJneG9qY3oxMWIzeCJ9.eyJpc3MiOiJodHRwczovL2Rldi02bTN2N3RnaXZ1enJzNXdlLnVzLmF1dGgwLmNvbS8iLCJzdWIiOiJnb29nbGUtb2F1dGgyfDEwOTUwNjExNTIyMjY5ODE2MjY2NCIsImF1ZCI6WyI5YTI0NDkyZi04MDNjLTQ2MWMtYjA1MS1mMWRkN2NlM2M1MDQiLCJodHRwczovL2Rldi02bTN2N3RnaXZ1enJzNXdlLnVzLmF1dGgwLmNvbS91c2VyaW5mbyJdLCJpYXQiOjE3NDg0MjY3ODYsImV4cCI6MTc0ODUxMzE4Niwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCIsImF6cCI6IkhXWFlNRHVsYXFxY3UzTTJmRHduZlJpU0NDUzRNUFN2IiwicGVybWlzc2lvbnMiOlsiYm9vazpkZWxldGUiLCJib29rOnJlYWQiLCJib29rOndyaXRlIiwic3RvcnlfYm9hcmQ6cmVhZCIsInN0b3J5X2JvYXJkOndyaXRlIiwidGVtcGxhdGU6cmVhZCIsInRlbXBsYXRlOndyaXRlIl19.cfwNn-ZQc3ApSYWGV5xkSCpYtVJ4C9pzSNqeJ9HmuXOdU2GpvB7nJEx14FLLS2eFtnWjrsSA_7C95c1Tq77Zu_qMnRHAQppfkd-EmQxGDg6V8SBXFtcXKKP5Twa_9MOO3v-PDp42TG0bvTnMJjQIXjdqczUTlSxjYFkVT0IyGc6_HidWRt5SbZtARBOyW53XnSyPa6JEuDzhzoe3fCMetGDum1BZ6phvRwKMax_lgZdk0hV2VlnlaIlvA97_XfNoLPyF5N4WfZgnXCeKuUXng0_kwPj3GUCSiyDL91PKJAGYyno3DwPy5EANo-NxM3XKrel7MbvDo-rsfdrm9lRKjA"
 
 # Headers for API requests
 headers = {
@@ -75,30 +75,10 @@ def get_chapter_content(book_id, chapter_id):
         print(response.text)
         return None
 
-def get_chapter_scenes(book_id, chapter_id):
-    # Get existing scenes for a chapter
-    start_time = time.time()
-    url = f"{API_BASE_URL}/scenes?chapter_id={chapter_id}"
-    print(f"API Request: GET {url}")
-    response = requests.get(url, headers=headers)
-    request_time = time.time() - start_time
-    
-    if response.status_code == 200:
-        scenes = response.json()
-        print(f"API Response: {response.status_code} (Time: {format_time_delta(request_time)})")
-        return scenes
-    else:
-        print(f"API Error: {response.status_code} (Time: {format_time_delta(request_time)})")
-        print(response.text)
-        return []
-
 def create_output_directory(book_id, book_title):
-    # Create a clean directory name from the book title
-    clean_title = ''.join(c if c.isalnum() or c == ' ' else '_' for c in book_title).strip()
-    clean_title = clean_title.replace(' ', '_')
-    
-    # Create directory path
-    dir_path = f"output/book_{book_id}_{clean_title}"
+    # Create directory path using the specified absolute path
+    base_dir = "/Users/msr/Documents/personal/GitHub/view-html-files/books"
+    dir_path = os.path.join(base_dir, f"{book_title} ({book_id})")
     
     # Create directory if it doesn't exist
     if not os.path.exists(dir_path):
@@ -137,9 +117,16 @@ def download_book_chapters(book_id, output_format="text"):
     all_chapters_file = None
     
     if output_format == "single":
-        combined_file_path = os.path.join(output_dir, f"{book_title}_complete.txt")
+        combined_file_path = os.path.join(output_dir, f"{book_title}.html")
         all_chapters_file = open(combined_file_path, 'w', encoding='utf-8')
-        all_chapters_file.write(f"# {book_title}\n\n")
+        all_chapters_file.write(f"""<!DOCTYPE html>
+<html>
+<head>
+    <title>{book_title}</title>
+</head>
+<body>
+    <h1>{book_title}</h1>
+""")
     
     # Download each chapter
     successful_downloads = 0
@@ -166,40 +153,44 @@ def download_book_chapters(book_id, output_format="text"):
         
         # Write to individual file
         if output_format != "single":
-            # Create file name with chapter number for proper ordering
-            file_name = f"chapter_{chapter_no:03d}_{chapter_title}.txt"
-            clean_file_name = ''.join(c if c.isalnum() or c in ' _-.' else '_' for c in file_name)
-            file_path = os.path.join(output_dir, clean_file_name)
+            # Create file name with chapter number
+            file_name = f"Chapter_{chapter_no}.html"
+            file_path = os.path.join(output_dir, file_name)
             
             with open(file_path, 'w', encoding='utf-8') as f:
-                # Write chapter header
-                f.write(f"# Chapter {chapter_no}: {chapter_title}\n\n")
-                f.write(content)
-                
-            # Also get scenes if needed
-            scenes = get_chapter_scenes(book_id, chapter_id)
-            if scenes and len(scenes) > 0:
-                scenes_file_name = f"chapter_{chapter_no:03d}_{chapter_title}_scenes.json"
-                clean_scenes_file_name = ''.join(c if c.isalnum() or c in ' _-.' else '_' for c in scenes_file_name)
-                scenes_file_path = os.path.join(output_dir, clean_scenes_file_name)
-                
-                with open(scenes_file_path, 'w', encoding='utf-8') as f:
-                    json.dump(scenes, f, indent=2)
-                    
-                print(f"Saved {len(scenes)} scenes for Chapter {chapter_no}")
+                # Write HTML structure
+                f.write(f"""<!DOCTYPE html>
+<html>
+<head>
+    <title>Chapter {chapter_no}: {chapter_title}</title>
+</head>
+<body>
+    <h1>Chapter {chapter_no}: {chapter_title}</h1>
+    <div class="chapter-content">
+        {content}
+    </div>
+</body>
+</html>""")
             
             print(f"Saved Chapter {chapter_no} content to {file_path}")
         
         # Append to combined file if using single file format
         if output_format == "single" and all_chapters_file:
-            all_chapters_file.write(f"## Chapter {chapter_no}: {chapter_title}\n\n")
-            all_chapters_file.write(content)
-            all_chapters_file.write("\n\n---\n\n")
+            all_chapters_file.write(f"""
+    <h2>Chapter {chapter_no}: {chapter_title}</h2>
+    <div class="chapter-content">
+        {content}
+    </div>
+    <hr>
+""")
         
         successful_downloads += 1
     
     # Close the combined file if it was created
     if output_format == "single" and all_chapters_file:
+        all_chapters_file.write("""
+</body>
+</html>""")
         all_chapters_file.close()
         print(f"\nAll chapters saved to combined file: {combined_file_path}")
     

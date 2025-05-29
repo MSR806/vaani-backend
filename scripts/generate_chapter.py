@@ -4,6 +4,26 @@ import time
 import sys
 import datetime
 
+# API Base URL - assuming local development
+API_BASE_URL = "http://localhost/vaani/api/v1"  # Update as needed
+
+# Access token placeholder - User will update this
+ACCESS_TOKEN = "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Ill3OGhmeWV2cjJneG9qY3oxMWIzeCJ9.eyJpc3MiOiJodHRwczovL2Rldi02bTN2N3RnaXZ1enJzNXdlLnVzLmF1dGgwLmNvbS8iLCJzdWIiOiJnb29nbGUtb2F1dGgyfDEwOTUwNjExNTIyMjY5ODE2MjY2NCIsImF1ZCI6WyI5YTI0NDkyZi04MDNjLTQ2MWMtYjA1MS1mMWRkN2NlM2M1MDQiLCJodHRwczovL2Rldi02bTN2N3RnaXZ1enJzNXdlLnVzLmF1dGgwLmNvbS91c2VyaW5mbyJdLCJpYXQiOjE3NDg0MjY3ODYsImV4cCI6MTc0ODUxMzE4Niwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCIsImF6cCI6IkhXWFlNRHVsYXFxY3UzTTJmRHduZlJpU0NDUzRNUFN2IiwicGVybWlzc2lvbnMiOlsiYm9vazpkZWxldGUiLCJib29rOnJlYWQiLCJib29rOndyaXRlIiwic3RvcnlfYm9hcmQ6cmVhZCIsInN0b3J5X2JvYXJkOndyaXRlIiwidGVtcGxhdGU6cmVhZCIsInRlbXBsYXRlOndyaXRlIl19.cfwNn-ZQc3ApSYWGV5xkSCpYtVJ4C9pzSNqeJ9HmuXOdU2GpvB7nJEx14FLLS2eFtnWjrsSA_7C95c1Tq77Zu_qMnRHAQppfkd-EmQxGDg6V8SBXFtcXKKP5Twa_9MOO3v-PDp42TG0bvTnMJjQIXjdqczUTlSxjYFkVT0IyGc6_HidWRt5SbZtARBOyW53XnSyPa6JEuDzhzoe3fCMetGDum1BZ6phvRwKMax_lgZdk0hV2VlnlaIlvA97_XfNoLPyF5N4WfZgnXCeKuUXng0_kwPj3GUCSiyDL91PKJAGYyno3DwPy5EANo-NxM3XKrel7MbvDo-rsfdrm9lRKjA"
+
+# Headers for API requests
+headers = {
+    "Authorization": ACCESS_TOKEN,
+    "Content-Type": "application/json"
+}
+
+# Hardcoded book ID
+BOOK_ID = 43  # Update with the appropriate book ID
+
+# Configuration flags
+SKIP_SCENE_GENERATION = False  # Set to True to skip scene generation
+
+CHAPTERS_TO_GENERATE = [x for x in range(1, 20 +1)]
+
 # Global placeholders for prompts
 SCENE_GENERATION_PROMPT = """
 This is a web novel serialized fiction.
@@ -16,12 +36,11 @@ Do not try to invent anything follow the chapter summary. Don't introduce new ch
 This chapter should maintain a sense of ongoing tension or development, not closure.
 
 🌍 World Setting & Genre:
-- Billionaire Romance: The love interest is an ultra-wealthy CEO, and the heroine is from a modest background.
-- Single Mother/Secret Baby: A key element involves pregnancy and child rearing from an unacknowledged father.
-- Revenge & Redemption Romance: Themes of fighting for justice and respect through legal and emotional confrontation.
-- Gender Dynamics: A wealthy, dismissive man vs. a socially weaker woman - is central.
+- Legal world setting.
+- Contemporary Billionaire Romance, contract marriage, possessive husband
+- Tone: Slow burn, emotionally intense, dramatic, and sensual
 - Highly sexual and romantic events.
-- Sexual desire, vulnerability, and emotional conflict are central.
+- Sexual desire, jealousy, vulnerability, and emotional conflict are central
 - Physical intimacy should be emotionally charged and built through sustained tension (not rushed or purely physical)
 - Scenes should feel intimate, sexual, cinematic, and high-stakes in both personal and professional contexts.
 """
@@ -39,12 +58,11 @@ Character Introduction Instructions:
 ---
 
 🌍 World Setting & Genre:
-- Billionaire Romance: The love interest is an ultra-wealthy CEO, and the heroine is from a modest background.
-- Single Mother/Secret Baby: A key element involves pregnancy and child rearing from an unacknowledged father.
-- Revenge & Redemption Romance: Themes of fighting for justice and respect through legal and emotional confrontation.
-- Gender Dynamics: A wealthy, dismissive man vs. a socially weaker woman - is central.
+- Legal world setting.
+- Contemporary Billionaire Romance, contract marriage, possessive husband
+- Tone: Slow burn, emotionally intense, dramatic, and sensual
 - Highly sexual and romantic events.
-- Sexual desire, vulnerability, and emotional conflict are central.
+- Sexual desire, jealousy, vulnerability, and emotional conflict are central
 - Physical intimacy should be emotionally charged and built through sustained tension (not rushed or purely physical)
 - Scenes should feel intimate, sexual, cinematic, and high-stakes in both personal and professional contexts.
 
@@ -52,24 +70,6 @@ Character Introduction Instructions:
 
 Now begin the chapter.
 """
-
-# API Base URL - assuming local development
-API_BASE_URL = "http://localhost/vaani/api/v1"  # Update as needed
-
-# Access token placeholder - User will update this
-ACCESS_TOKEN = "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Il9QbzVTVHpUWEZXOHdMa1FseTlUMSJ9.eyJpc3MiOiJodHRwczovL3ZhYW5pLmV1LmF1dGgwLmNvbS8iLCJzdWIiOiJnb29nbGUtb2F1dGgyfDEwOTUwNjExNTIyMjY5ODE2MjY2NCIsImF1ZCI6WyJjZjQ4MWQ0NC1mY2RiLTRlOWMtYTI5ZC00ZDk0OWQ0MTliY2EiLCJodHRwczovL3ZhYW5pLmV1LmF1dGgwLmNvbS91c2VyaW5mbyJdLCJpYXQiOjE3NDgzMzQ4ODEsImV4cCI6MTc0ODQyMTI4MSwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCIsImF6cCI6IkNCVnNDWmg5ZHN3U24wUXJqVlFUMGlDdUVDbXlScTg0IiwicGVybWlzc2lvbnMiOlsiYm9vazpkZWxldGUiLCJib29rOnJlYWQiLCJib29rOndyaXRlIl19.MbFOo3y20ZmuRsYJbUWfADf-5gf6GQzaBsXWKXZx3BnLkRcFiXO0bX3LOX-7E9CcDCXZtglLxO04wO3USEqB5Ax1Q46e7GvCyXPcnIKkrYHOF_oul8SPL1h14fDe-SMIK1GwiY25gzqAh_U9-D1uvl5VmEowVYs6BEzqdpCPx2dWbb9eqJpFOqO9yB5v9o-XmzblnLY98IpiYULbXwL2QpBIkYeoM1S0PifsLf-Q-cXDdqz9xfCxjQ585J6TzQPm1J8xsD9LOXaLLFbjGMAQMEZm4T6wDCoVh29gLcy1e1NZ9RiAMGwebrf8Y2yjdQCjFFa4hDaE7Xfmp3ju7oBQdw"
-
-# Headers for API requests
-headers = {
-    "Authorization": ACCESS_TOKEN,
-    "Content-Type": "application/json"
-}
-
-# Hardcoded book ID
-BOOK_ID = 20  # Update with the appropriate book ID
-
-# Configuration flags
-SKIP_SCENE_GENERATION = False  # Set to True to skip scene generation
 
 def get_all_chapters(book_id):
     start_time = time.time()
@@ -277,7 +277,7 @@ def main():
         chapter_id = chapter.get("id")
         chapter_no = chapter.get("chapter_no")
         chapter_title = chapter.get("title", "Untitled")
-        if chapter_no not in [1]:
+        if chapter_no not in CHAPTERS_TO_GENERATE:
             continue
         
         chapter_start_time = time.time()

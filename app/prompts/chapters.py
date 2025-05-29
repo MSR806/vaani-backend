@@ -24,7 +24,8 @@ Don't repeat what happened before. Keep the story moving forward.
 5. Do not summarize previous chapters(if any). Instead, if the scene breakdown contains backstory, emotional state, or character context, convert it into **spoken dialogue, reactions, or interaction**.
 6. Each scene must begin and end with verbal or physical interaction — **never internal narration**.
 7. No paragraph should exceed 3 lines of text.
-8. Use very minimal subtext, which comes after the dialogue.
+8. Subtext should not be verbose, literary and flowery English language instead keep simple english to read
+9. If there are any intimate and sexual scenes, describe them in great detail.
 ---
 
 🎯 Output Format:

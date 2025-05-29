@@ -34,7 +34,7 @@ For each character, create a separate, well-formatted markdown file following th
 # [Character Name] - Character Arc
 
 ## Description
-[Include the character's personality, approx age, gender, appearance, setting, backstory, and other relevant details]
+[Include the character's personality, approx age, gender, appearance, setting, backstory, profession, status, and other relevant details]
 
 ## Role
 [Specify the character's role in the story (Ex. Female & Male Protagonist, Antagonist, Supporting, etc.), IMPORTANT: DONOT generate a description of the character, just generate a two word phrase about the character]
@@ -84,97 +84,73 @@ And so on for each character...
 # Plot Beat Generation Prompts
 PLOT_BEAT_SYSTEM_PROMPT = """You are a master storyteller specializing in adapting plot templates to specific stories.
 Your task is to take a single plot template and adapt it into a chapter summary for the given story world, setting, and characters.
-IMPORTANT: Preserve ALL details from the template - nothing should be omitted or changed.
-Maintain all relationship dynamics, sexual elements, BDSM roles, and power dynamics from the template.
-Your output should be a clear, concise chapter summary that captures all the essential elements from the template."""
+Your job is to generate a very crisp and concise 5-6 bullet points summary of the chapter.
+Also include a section listing all **characters involved**."""
 
 PLOT_BEAT_USER_PROMPT_TEMPLATE = """# Chapter Summary Generation Task
 
-## Story Prompt
+## User Prompt
 {prompt}
 
-## Character Arcs to Integrate
+---
+
+## Character Arcs:
 {character_content}
 
-## Plot Template to Adapt
-```
+---
+
+## Plot Template to Adapt:
 {plot_template}
-```
+
+---
 
 ## Instructions
 
-Your task is to adapt this single plot template into a chapter summary for the specific story:
+Your task is to adapt the plot template into a chapter summary for the specific story.
 
-1. Take the template
-2. Adapt it to the story's:
-   - World and setting
-   - Characters and their relationships
-   - Sexual dynamics and BDSM roles
-   - Power dynamics
-3. Create a clear, concise chapter summary that:
-   - Preserves ALL details from the template
-   - Replaces template character names with actual character names
-   - Maintains all relationships and dynamics
-   - Keeps all sexual and BDSM elements exactly as in the template
-   - Preserves all power dynamics from the template
+### You must do the following:
 
-IMPORTANT:
-- DO NOT omit any details from the template
-- DO NOT modify the relationships or dynamics
-- Keep all sexual and BDSM elements exactly as in the template
-- Maintain all power dynamics from the template
-- Focus on creating a single, well-structured chapter summary"""
+1. Adapt the plot beat to reflect:
+   - The story’s **world and setting**
+   - The **characters** and their current relationships
+   - **Sexual dynamics**, including **BDSM roles** (if any)
+   - **Power dynamics** between characters
 
-# Plot Summary Generation Prompt
+2. Write a **very crisp and concise chapter summary** in **5–6 bullet points**.  
+Each bullet must:
+- Describe one **key plot event** that occurs in the chapter.
+- **Explicitly mention sexual or intimate events** (e.g., kissing, touching, sex) if they happen, using direct and bold language.
+- Use **simple, clear phrasing** with no poetic or overly descriptive language.
 
-PLOT_SUMMARY_SYSTEM_PROMPT = """
-You are a literary expert specializing in narrative structure and plot analysis. 
-Your task is to create a concise, coherent summary of plot beats that have been generated so far. 
-The summary should capture the key developments, character arcs, and narrative progression 
-in a way that provides clear context for generating the next plot beats.
-End of the story focus on the final plot beats.
-"""
+3. Write a **BACKGROUND, EMOTION & CONTEXT** section.  
+This section is essential for informing full chapter generation later. It must include:
+- Emotional tone and psychological state of characters in this chapter.
+- Motivations, shifting dynamics, and narrative turning points.
+- Power imbalances or role-based tension (e.g., dom/sub, boss/employee).
+- Sexual energy, desire, tension, or release (if applicable).
+- How this chapter fits into the broader story arc.
 
-PLOT_SUMMARY_USER_PROMPT_TEMPLATE = """
-# Plot Summary Task
+4. Include a **CHARACTERS INVOLVED** section.
 
-## Plot Beats Generated So Far:
-```
-{plot_beats_till_now}
-```
+---
 
-## Instructions:
-Provide a concise summary (300-500 words) of the plot so far, focusing on:
-1. The main narrative threads and how they've developed
-2. Key character developments and transformations
-3. Important plot points and their significance
-4. The current state of the story (where things stand now)
+### OUTPUT FORMAT:
 
-Your summary should maintain narrative continuity and highlight elements that will be important
-for generating subsequent plot beats. Avoid unnecessary details while preserving the essential
-structure and progression of the story.
-"""
+**CHAPTER SUMMARY**
+- [<Plot event 1>]
+- [<Plot event 2>]
+- [<Plot event 3>]
+...
 
-# Chapter Summary Generation Prompts
+**BACKGROUND, EMOTION & CONTEXT**
+- [Emotional tone of the chapter]
+- [Character motivations and conflicts]
+- [Power or sexual dynamics at play]
+- [Narrative significance and turning points]
+- [Setup for what might follow]
 
-CHAPTER_SUMMARY_SYSTEM_PROMPT = """
-You are an expert storyteller assistant that generates cohesive chapter summaries based on plot beats and character arcs.
-Follow the JSON schema provided for your response.
-"""
-
-CHAPTER_SUMMARY_USER_PROMPT_TEMPLATE = """
-CHARACTER ARCS:
-{character_arcs}
-
-PREVIOUS CHAPTER SUMMARIES:
-{previous_chapter_summaries}
-
-PLOT BEATS:
-{plot_beats}
-
-Based on the provided plot beats, character arcs, and previous chapter summaries (if any), generate exactly {count} chapter summaries that tell a cohesive story.
-If previous chapter summaries exist, ensure your new chapters continue the narrative seamlessly from where the story left off.
-Maintain consistency with established characters, plot elements, and themes from the previous chapters.
+**CHARACTERS INVOLVED**
+- [List of all named or meaningful characters present or referenced]
 """
 
 # Character Identification Prompts

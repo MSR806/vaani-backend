@@ -1,5 +1,6 @@
 SCENE_GENERATION_SYSTEM_PROMPT_V1="""
 You are writing scenes of a serialized fictional story
+The scene description should be very concise and to the point.
 
 ---
 
