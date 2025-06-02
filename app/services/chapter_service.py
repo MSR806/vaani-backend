@@ -368,11 +368,24 @@ async def stream_chapter_content(
                 for s in scenes
             ]
         )
+    
+    character_arc_service = CharacterArcService(db)
+    character_arcs = character_arc_service.get_character_arcs_by_book_id(book_id)
+    character_arcs = [arc for arc in character_arcs if arc.id in chapter.character_ids]
+    # log character names
+    logger.info(f"Considering only {len(character_arcs)} character arcs: {', '.join([arc.name for arc in character_arcs])}")
+    
+    character_arcs_content = ""
+    if character_arcs:
+        character_arcs_content = "\n            -------- Character Arcs--------\n"
+        for arc in character_arcs:
+            character_arcs_content += f"{arc.content}\n\n"
 
     # Prepare the messages for GPT
     system_prompt = format_prompt(
         CHAPTER_GENERATION_FROM_SCENE_SYSTEM_PROMPT_V1,
         previous_chapters=previous_chapters_context,
+        character_arcs=character_arcs_content,
     )
     user_message = (
         "📌 CONTINUATION RULE:\n"

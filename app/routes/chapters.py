@@ -23,6 +23,7 @@ from ..services.chapter_service import (
     patch_chapter_state,
     bulk_upload_chapters,
 )
+from ..services.chapter_rewrite_service import stream_chapter_rewrite
 from ..services.book_service import (
     get_book,
     get_book_chapters,
@@ -175,3 +176,17 @@ def bulk_upload_chapters_route(
     if chapters is None:
         raise HTTPException(status_code=404, detail="Book not found")
     return chapters
+
+
+@router.get("/books/{book_id}/chapters/{chapter_id}/rewrite")
+async def rewrite_chapter_route(
+    book_id: int,
+    chapter_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_write_permission)
+):
+    """
+    Rewrite a chapter based on critique feedback.
+    The response is streamed as Server-Sent Events (SSE), and the rewritten content replaces the original in the database.
+    """
+    return await stream_chapter_rewrite(db, book_id, chapter_id)
