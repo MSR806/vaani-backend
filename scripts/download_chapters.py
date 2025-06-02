@@ -4,6 +4,15 @@ import time
 import os
 import sys
 import argparse
+import re
+
+# Try to import BeautifulSoup, but provide fallback if not available
+try:
+    from bs4 import BeautifulSoup
+    BEAUTIFULSOUP_AVAILABLE = True
+except ImportError:
+    BEAUTIFULSOUP_AVAILABLE = False
+    print("BeautifulSoup not found. Using regex-based HTML cleaning.")
 
 # API Base URL - assuming local development
 API_BASE_URL = "http://localhost/vaani/api/v1"  # Update as needed
@@ -16,6 +25,35 @@ headers = {
     "Authorization": ACCESS_TOKEN,
     "Content-Type": "application/json"
 }
+
+def clean_html_content(html_content):
+    if not html_content:
+        return ""
+    
+    if BEAUTIFULSOUP_AVAILABLE:
+        # Parse HTML content with BeautifulSoup
+        soup = BeautifulSoup(html_content, 'html.parser')
+        
+        # Get text content and preserve paragraph structure
+        paragraphs = soup.find_all('p')
+        if paragraphs:
+            # If we have paragraphs, preserve their structure
+            cleaned_text = "\n\n".join(p.get_text() for p in paragraphs)
+        else:
+            # Otherwise just get all text
+            cleaned_text = soup.get_text()
+    else:
+        # Fallback method using regex
+        # Remove HTML tags
+        cleaned_text = re.sub(r'<[^>]+>', '\n', html_content)
+        
+        # Remove style attributes
+        cleaned_text = re.sub(r'style=\"[^\"]*\"', '', cleaned_text)
+    
+    # Clean up extra whitespace for both methods
+    cleaned_text = "\n".join(line.strip() for line in cleaned_text.splitlines() if line.strip())
+    
+    return cleaned_text
 
 def format_time_delta(seconds):
     # Format time deltas for better readability
@@ -152,7 +190,7 @@ def download_book_chapters(book_id, output_format="text"):
             continue
         
         # Write to individual file
-        if output_format != "single":
+        if output_format != "single" and output_format != "docs":
             # Create file name with chapter number
             file_name = f"Chapter_{chapter_no}.html"
             file_path = os.path.join(output_dir, file_name)
@@ -173,6 +211,7 @@ def download_book_chapters(book_id, output_format="text"):
 </html>""")
             
             print(f"Saved Chapter {chapter_no} content to {file_path}")
+
         
         # Append to combined file if using single file format
         if output_format == "single" and all_chapters_file:
@@ -194,6 +233,33 @@ def download_book_chapters(book_id, output_format="text"):
         all_chapters_file.close()
         print(f"\nAll chapters saved to combined file: {combined_file_path}")
     
+    # Create a single docs file for the entire book if using docs format
+    if output_format == "docs":
+        combined_docs_path = os.path.join(output_dir, f"{book_title}.txt")
+        with open(combined_docs_path, 'w', encoding='utf-8') as f:
+            f.write(f"{book_title}\n\n")
+            
+            # Instead of fetching chapters again, use the ones we already processed
+            for i, chapter in enumerate(chapters):
+                chapter_no = chapter.get("chapter_no")
+                chapter_title = chapter.get("title", "Untitled")
+                chapter_id = chapter.get("id")
+                
+                # Get chapter content if we haven't already
+                chapter_details = get_chapter_content(book_id, chapter_id)
+                if chapter_details:
+                    content = chapter_details.get("content", "").strip()
+                    if content:
+                        # Clean HTML tags from content
+                        clean_content = clean_html_content(content)
+                        
+                        f.write(f"\n\nChapter {chapter_no}: {chapter_title}\n\n")
+                        f.write(clean_content)
+                        successful_downloads += 1
+                        print(f"Added Chapter {chapter_no} to combined file")
+            
+        print(f"\nAll chapters saved to combined docs file: {combined_docs_path}")
+    
     total_time = time.time() - total_start_time
     print(f"\nDownload complete! Downloaded {successful_downloads} out of {len(chapters)} chapters")
     print(f"Total time: {format_time_delta(total_time)}")
@@ -202,10 +268,10 @@ def download_book_chapters(book_id, output_format="text"):
     return True
 
 def main():
-    parser = argparse.ArgumentParser(description="Download all chapters from a book")
-    parser.add_argument("--book_id", type=int, required=True, help="ID of the book to download chapters from")
-    parser.add_argument("--format", choices=["text", "single"], default="text", 
-                       help="Output format: 'text' for individual files, 'single' for one combined file")
+    parser = argparse.ArgumentParser(description="Download all chapters for a book")
+    parser.add_argument("book_id", help="ID of the book to download chapters for")
+    parser.add_argument("--format", choices=["text", "single", "docs"], default="text",
+                        help="Output format: 'text' for individual HTML files, 'single' for one combined HTML file, 'docs' for one combined text file for Google Docs")
     
     args = parser.parse_args()
     

@@ -34,10 +34,13 @@ For each character, create a separate, well-formatted markdown file following th
 # [Character Name] - Character Arc
 
 ## Description
-[Include the character's personality, approx age, gender, appearance, setting, backstory, profession, status, and other relevant details]
+[Include the character's personality, appearance, backstory, profession, social status, and other relevant details]
 
 ## Role
 [Specify the character's role in the story (Ex. Female & Male Protagonist, Antagonist, Supporting, etc.), IMPORTANT: DONOT generate a description of the character, just generate a two word phrase about the character]
+
+## Gender and age
+[Specify the character's gender and age if available, if not available, just skip this section]
 
 ## Key Relationships
 [Detailed Description of the character's key relationships with other characters, For Main characters like protagonists and antagonists: Provide a detailed description of key relationships, focusing on:
@@ -99,34 +102,36 @@ PLOT_BEAT_USER_PROMPT_TEMPLATE = """# Chapter Summary Generation Task
 
 ---
 
-## Plot Template to Adapt:
+## Summary Template to Adapt:
 {plot_template}
 
 ---
 
 ## Instructions
 
-Your task is to adapt the plot template into a chapter summary for the specific story.
+Your task is to adapt the summary template into the new world provided by the user and create a chapter summary for the story.
 
 ### You must do the following:
 
-1. Adapt the plot beat to reflect:
-   - The story’s **world and setting**
+1. Adapt the summary template to reflect:
+   - The story's **world and setting**
    - The **characters** and their current relationships
    - **Sexual dynamics**, including **BDSM roles** (if any)
    - **Power dynamics** between characters
 
-2. Write a **very crisp and concise chapter summary** in **5–6 bullet points**.  
+2. Write a **very crisp and concise chapter summary** in **5-6 bullet points**.  
 Each bullet must:
 - Describe one **key plot event** that occurs in the chapter.
 - **Explicitly mention sexual or intimate events** (e.g., kissing, touching, sex) if they happen, using direct and bold language.
 - Use **simple, clear phrasing** with no poetic or overly descriptive language.
+- Preserve any timeline related details like time of day, date, 3 weeks later, 6 months later, etc.
+- Always preserve any professional details like job, job transformations, etc.
 
-3. Write a **BACKGROUND, EMOTION & CONTEXT** section.  
+3. Write a **BACKGROUND, EMOTION & CONTEXT** section.
 This section is essential for informing full chapter generation later. It must include:
 - Emotional tone and psychological state of characters in this chapter.
 - Motivations, shifting dynamics, and narrative turning points.
-- Power imbalances or role-based tension (e.g., dom/sub, boss/employee).
+- Power dynamics or role-based tension (e.g., dom/sub, boss/employee).
 - Sexual energy, desire, tension, or release (if applicable).
 - How this chapter fits into the broader story arc.
 
@@ -158,12 +163,12 @@ CHARACTER_IDENTIFICATION_SYSTEM_PROMPT = """You are an AI assistant that identif
 Your task is to analyze the plot beat content and identify which characters are involved.
 Return only the character IDs in a structured format."""
 
-CHARACTER_IDENTIFICATION_USER_PROMPT_TEMPLATE = """Given the following plot beat content and list of characters with their IDs, identify which characters are involved in this plot beat.
+CHARACTER_IDENTIFICATION_USER_PROMPT_TEMPLATE = """Given the following chapter summary and list of characters with their IDs, identify which characters are involved in this chapter summary.
 
 Characters:
 {character_list_with_ids}
 
-Plot Beat Content:
+Chapter Summary:
 {plot_beat_content}
 
 Return only the character IDs in a structured format."""

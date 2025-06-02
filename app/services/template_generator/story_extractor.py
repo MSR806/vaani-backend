@@ -269,6 +269,7 @@ class StoryExtractor:
         db_character_arcs = character_arcs_repo.get_by_type_and_source_id('EXTRACTED', self.book_id)
         if db_character_arcs:
             logger.info(f"Found {len(db_character_arcs)} character arcs in the database for book_id {self.book_id}")
+            self.template_repo.update_character_arc_status(self.template_id, TemplateStatusEnum.COMPLETED)
             return db_character_arcs
         
         self.template_repo.update_character_arc_status(self.template_id, TemplateStatusEnum.IN_PROGRESS)

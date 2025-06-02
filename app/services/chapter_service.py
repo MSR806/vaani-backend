@@ -228,16 +228,32 @@ async def generate_chapter_outline(
         ]
 
         try:
-            completion = client.beta.chat.completions.parse(
+            completion = client.chat.completions.create(
                 model=ai_model,
                 messages=messages,
                 temperature=temperature,
-                response_format=ChapterOutlineResponse,
             )
 
-            # Get the parsed response
-            outline_response = completion.choices[0].message.parsed
-
+            # Get the response text
+            response_text = completion.choices[0].message.content
+            print("Raw response text:", response_text)
+            
+            # Extract scenes using regex pattern matching
+            import re
+            scene_pattern = r'<scene-([0-9]+)>\s*<title>(.*?)</title>\s*([\s\S]*?)\s*</scene-\1>'
+            scene_matches = list(re.finditer(scene_pattern, response_text))
+            
+            # If no scenes were found with the pattern, try a fallback approach
+            if not scene_matches:
+                logger.warning("No scenes matched the expected format. Attempting fallback parsing.")
+                # Try a more lenient pattern that might catch variations
+                alt_pattern = r'(?:scene|SCENE)[\s-]*([0-9]+)[:\s]*\s*(?:title|TITLE)?[:\s]*\s*([^\n]+)\n([\s\S]*?)(?=(?:scene|SCENE)[\s-]*[0-9]+|$)'
+                scene_matches = list(re.finditer(alt_pattern, response_text))
+                
+            if not scene_matches:
+                logger.error("Failed to extract any scenes from the response.")
+                raise HTTPException(status_code=500, detail="Failed to extract scenes from AI response. Please try again.")
+            
             # Store scenes in the database and create response objects
             scene_responses = []
 
@@ -246,15 +262,20 @@ async def generate_chapter_outline(
             db.flush()
 
             current_time = int(time.time())
-            print(outline_response)
-            # Process scenes
-            for scene in outline_response.scenes:
+            
+            # Process extracted scenes
+            for match in scene_matches:
+                # Extract scene information from regex match
+                scene_number = int(match.group(1))
+                scene_title = match.group(2).strip()
+                scene_content = match.group(3).strip()
+                
                 # Create scene
                 db_scene = Scene(
                     chapter_id=chapter_id,
-                    scene_number=scene.scene_number,
-                    title=scene.title,
-                    content=scene.content,
+                    scene_number=scene_number,
+                    title=scene_title,
+                    content=scene_content,
                     created_at=current_time,
                     updated_at=current_time,
                     created_by=user_id,

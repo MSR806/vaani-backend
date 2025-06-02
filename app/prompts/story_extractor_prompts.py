@@ -69,26 +69,6 @@ FILE_END
 And so on for each important character...
 """
 
-# Plot Beat Analysis Prompts
-PLOT_BEAT_ANALYSIS_SYSTEM_PROMPT = (
-    "You are a system that directly uses chapter summaries as plot beats. "
-    "No additional processing or analysis is needed - the chapter summary will be used as-is."
-)
-
-PLOT_BEAT_ANALYSIS_USER_PROMPT_TEMPLATE = """
-# Plot Beat Assignment
-
-## Chapter Information
-Chapter Number: {chapter_number}
-
-## Chapter Summary
-```
-{chapter_summary}
-```
-
-The above chapter summary will be used directly as the plot beat for this chapter.
-"""
-
 CHAPTER_SUMMARY_SYSTEM_PROMPT = (
     "You are a literary assistant specializing in precise chapter summarization. "
     "Your task is to create a concise summary of the chapter that captures all key story elements. "
