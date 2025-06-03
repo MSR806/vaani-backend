@@ -22,7 +22,7 @@ BOOK_ID = 49  # Update with the appropriate book ID
 # Configuration flags
 SKIP_SCENE_GENERATION = False  # Set to True to skip scene generation
 
-CHAPTERS_TO_GENERATE = [x for x in range(1, 20 +1)]
+CHAPTERS_TO_GENERATE = [x for x in range(10, 20 +1)]
 
 # Global placeholders for prompts
 SCENE_GENERATION_PROMPT = """

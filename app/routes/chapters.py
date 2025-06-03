@@ -178,7 +178,7 @@ def bulk_upload_chapters_route(
     return chapters
 
 
-@router.get("/books/{book_id}/chapters/{chapter_id}/rewrite")
+@router.post("/books/{book_id}/chapters/{chapter_id}/rewrite")
 async def rewrite_chapter_route(
     book_id: int,
     chapter_id: int,

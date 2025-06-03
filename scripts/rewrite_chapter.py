@@ -4,6 +4,7 @@ import time
 import sys
 import datetime
 import os
+import html
 
 # API Base URL - assuming local development
 API_BASE_URL = "http://localhost/vaani/api/v1"  # Update as needed
@@ -21,7 +22,10 @@ headers = {
 BOOK_ID = 49
 
 # Chapters to rewrite - update as needed
-CHAPTERS_TO_REWRITE = [1]  # Example: rewrite chapter 1
+CHAPTERS_TO_REWRITE = [x for x in range(10, 20 +1)]
+
+# Whether to update the chapter content in the database
+UPDATE_DATABASE = False
 
 
 def get_all_chapters(book_id):
@@ -46,9 +50,51 @@ def format_time_delta(seconds):
     return f"{seconds:.2f}s"
 
 
-def rewrite_chapter(book_id, chapter_id):
+def get_chapter_content(book_id, chapter_id):
+    """Get the content of a chapter"""
+    url = f"{API_BASE_URL}/books/{book_id}/chapters/{chapter_id}"
+    
+    try:
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        chapter_data = response.json()
+        return chapter_data.get("content", "")
+    except requests.exceptions.RequestException as e:
+        print(f"Error getting chapter content: {e}")
+        return ""
+
+
+def update_chapter_content(book_id, chapter_id, content):
+    """Update the content of a chapter in the database"""
+    start_time = time.time()
+    url = f"{API_BASE_URL}/books/{book_id}/chapters/{chapter_id}"
+    
+    data = {
+        "content": content
+    }
+    
+    try:
+        print(f"\nAPI Request: PUT {url} (updating chapter content)")
+        response = requests.put(url, headers=headers, json=data)
+        response.raise_for_status()
+        request_time = time.time() - start_time
+        
+        if response.status_code in [200, 201, 204]:
+            print(f"API Response: {response.status_code} - Successfully updated chapter content in database (Time: {format_time_delta(request_time)})")
+            return True
+        else:
+            print(f"API Error: {response.status_code} - Failed to update chapter content (Time: {format_time_delta(request_time)})")
+            print(response.text)
+            return False
+    except requests.exceptions.RequestException as e:
+        print(f"Error updating chapter content: {e}")
+        return False
+
+
+def rewrite_chapter(book_id, chapter_id, chapter_no, chapter_title, original_content):
     """Rewrite a chapter using the streaming API endpoint"""
     url = f"{API_BASE_URL}/books/{book_id}/chapters/{chapter_id}/rewrite"
+    chunk_count = 0
     
     try:
         # Make request with stream=True to handle SSE
@@ -83,8 +129,21 @@ def rewrite_chapter(book_id, chapter_id):
                             data = json.loads(data_str)
                             if 'content' in data:
                                 content = data['content']
-                                print(content, end="", flush=True)
                                 full_content += content
+                                
+                                # Update progress with spinning animation
+                                chunk_count += 1
+                                spinner_chars = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
+                                spinner_idx = chunk_count % len(spinner_chars)
+                                
+                                # Every 25 chunks, update the counter with more details
+                                if chunk_count % 25 == 0:
+                                    progress_msg = f"\rRewriting chapter: {spinner_chars[spinner_idx]} {chunk_count} chunks | {len(full_content)} chars"
+                                else:
+                                    progress_msg = f"\rRewriting chapter: {spinner_chars[spinner_idx]}"
+                                    
+                                sys.stdout.write(progress_msg)
+                                sys.stdout.flush()
                                 
                             # Handle any errors
                             if "error" in data:
@@ -94,9 +153,98 @@ def rewrite_chapter(book_id, chapter_id):
                         except json.JSONDecodeError:
                             print(f"\nError parsing SSE data: {data_str}")
             
-            print(f"\n{'-' * 60}")
-            print(f"Chapter {chapter_id} rewrite complete!")
+            print(f"\n\n{'-' * 60}")
+            print(f"Chapter {chapter_no} rewrite complete! ({len(full_content)} characters)")
             print(f"{'-' * 60}\n")
+            
+            # Save the original and rewritten content to a file
+            save_dir = os.path.join(os.getcwd(), "rewritten_chapters")
+            os.makedirs(save_dir, exist_ok=True)
+            
+            # Format the filename
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            safe_title = "".join(c for c in chapter_title if c.isalnum() or c in ". -_").replace(" ", "_")
+            filename = f"chapter_{chapter_no:02d}_{safe_title}_{timestamp}.html"
+            file_path = os.path.join(save_dir, filename)
+            
+            # Create HTML content with styling
+            html_content = f"""
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter {chapter_no}: {chapter_title}</title>
+    <style>
+        body {{  
+            font-family: 'Georgia', serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #f9f9f9;
+            color: #333;
+        }}
+        h1, h2 {{  
+            text-align: center;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 10px;
+            margin-top: 30px;
+        }}
+        .content {{  
+            background-color: white;
+            padding: 30px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            white-space: pre-wrap;
+        }}
+        .divider {{  
+            text-align: center;
+            margin: 40px 0;
+            color: #888;
+        }}
+        .timestamp {{  
+            text-align: right;
+            font-size: 0.8em;
+            color: #888;
+            margin-top: 20px;
+        }}
+    </style>
+</head>
+<body>
+    <h1>Chapter {chapter_no}: {html.escape(chapter_title)}</h1>
+    
+    <h2>Original Version</h2>
+    <div class="content">
+{original_content}
+    </div>
+    
+    <div class="divider">* * * * *</div>
+    
+    <h2>Rewritten Version</h2>
+    <div class="content">
+{full_content}
+    </div>
+    
+    <div class="timestamp">Generated on: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</div>
+</body>
+</html>
+            """
+            
+            # Write HTML content to file
+            with open(file_path, "w", encoding="utf-8") as file:
+                file.write(html_content)
+                
+            print(f"Saved original and rewritten chapter to: {file_path}")
+            
+            # Update content in database if configured
+            if UPDATE_DATABASE:
+                if update_chapter_content(book_id, chapter_id, full_content):
+                    print(f"Chapter {chapter_no} content updated in database.")
+                else:
+                    print(f"Failed to update Chapter {chapter_no} content in database.")
             
             return full_content
         else:
@@ -151,16 +299,22 @@ def main():
             continue
         
         print(f"Found Chapter {chapter_no}: '{chapter_title}' (ID: {chapter_id})")
+        print(f"Rewriting Chapter {chapter_no}...")
+
         
-        # Confirm before proceeding
-        confirmation = input(f"Rewrite Chapter {chapter_no}? (y/n): ")
-        if confirmation.lower() != 'y':
-            print(f"Skipping Chapter {chapter_no}.")
+        # Get the original chapter content
+        print(f"Fetching original content for Chapter {chapter_no}...")
+        original_content = get_chapter_content(BOOK_ID, chapter_id)
+        if not original_content:
+            print(f"Failed to retrieve original content for Chapter {chapter_no}. Skipping.")
             continue
+        
+        print(f"Original content: {len(original_content)} characters")
+        print(f"Starting rewrite process...")
         
         # Start the rewrite process
         start_time = time.time()
-        rewritten_content = rewrite_chapter(BOOK_ID, chapter_id)
+        rewritten_content = rewrite_chapter(BOOK_ID, chapter_id, chapter_no, chapter_title, original_content)
         end_time = time.time()
         
         if rewritten_content:

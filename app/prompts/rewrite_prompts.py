@@ -3,5 +3,5 @@ Rewrite this chapter addressing the critique analysis while maintaining the core
 
 Critique Analysis: {critique_analysis}
 
-Preserve all plot points and character personalities.
+Preserve all plot points, character personalities, character introduction and basic character details.
 """

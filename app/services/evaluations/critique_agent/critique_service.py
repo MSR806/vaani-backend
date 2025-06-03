@@ -41,6 +41,7 @@ async def generate_chapter_critique(db: Session, chapter: Chapter, previous_chap
         # Call OpenAI API to analyze the chapter
         logger.info(f"Calling OpenAI API with model: {ai_model}")
         try:
+            logging.info(f"Critique Agent System Prompt: {CRITIQUE_AGENT_SYSTEM_PROMPT}")
             client = get_openai_client(ai_model)
             response = client.chat.completions.create(
                 model=ai_model,
@@ -50,6 +51,7 @@ async def generate_chapter_critique(db: Session, chapter: Chapter, previous_chap
                 ],
                 temperature=temperature
             )
+
             logger.info("OpenAI API call successful")
         except Exception as e:
             logger.error(f"OpenAI API call failed: {str(e)}")
