@@ -4,13 +4,10 @@ import time
 import sys
 import datetime
 import os
-import html
+from keys import ACCESS_TOKEN
 
 # API Base URL - assuming local development
 API_BASE_URL = "http://localhost/vaani/api/v1"  # Update as needed
-
-# Access token placeholder - User will update this
-ACCESS_TOKEN = "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Ill3OGhmeWV2cjJneG9qY3oxMWIzeCJ9.eyJpc3MiOiJodHRwczovL2Rldi02bTN2N3RnaXZ1enJzNXdlLnVzLmF1dGgwLmNvbS8iLCJzdWIiOiJnb29nbGUtb2F1dGgyfDEwOTUwNjExNTIyMjY5ODE2MjY2NCIsImF1ZCI6WyI5YTI0NDkyZi04MDNjLTQ2MWMtYjA1MS1mMWRkN2NlM2M1MDQiLCJodHRwczovL2Rldi02bTN2N3RnaXZ1enJzNXdlLnVzLmF1dGgwLmNvbS91c2VyaW5mbyJdLCJpYXQiOjE3NDg4Mzk1MDAsImV4cCI6MTc0ODkyNTkwMCwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCIsImF6cCI6IkhXWFlNRHVsYXFxY3UzTTJmRHduZlJpU0NDUzRNUFN2IiwicGVybWlzc2lvbnMiOlsiYm9vazpkZWxldGUiLCJib29rOnJlYWQiLCJib29rOndyaXRlIiwic3RvcnlfYm9hcmQ6cmVhZCIsInN0b3J5X2JvYXJkOndyaXRlIiwidGVtcGxhdGU6cmVhZCIsInRlbXBsYXRlOndyaXRlIl19.DYmOSr6Ps2H0Dg_iM3nGoKPMtWvkrYxHh_TwW9Abv-DgxdRmw-avGYqRZpivkI-FZy-yi-5axBnXMY5S9SVraigIfb6gBsZb3qvfkVKok_-PqsyMXB06a4-61EZyuy923xZTEhq64-oZsJWAyXXE7GyAiB7eie__n4MbqkN8P7BMfGMxI8F-wny6QfOcVHIw5bTxZZP24HHbBGKE6lJQ9YAgCS5JV-x5Neqx3I9FcQIETEHY8i0pwQ5ZCvFHhCJ4w_h_G7gd1hqmBJVPCZ3akm-FtNBU7F-KMR_0TDwD3iZgBvH2sDxLh7DFjZ4gehLz6WUiestrK_zmAs1XIs-LvA"
 
 # Headers for API requests
 headers = {
@@ -19,10 +16,10 @@ headers = {
 }
 
 # Hardcoded book ID - update as needed
-BOOK_ID = 50
+BOOK_ID = 22
 
 # Chapters to process - update as needed
-CHAPTERS_TO_PROCESS = [x for x in range(1, 20 + 1)] 
+CHAPTERS_TO_PROCESS = [x for x in range(17, 60 + 1)] 
 
 # Whether to update the chapter content in the database
 UPDATE_DATABASE = True
@@ -60,9 +57,6 @@ Generate a 1500-2000 word chapter based strictly on the scene breakdown provided
 > Every scene element given must be represented fully in the chapter.
 > End the chapter where the scene ends do not add any extra content.
 
-Character Introduction Instructions:
-> Whenever introducing the main characters, for the first time, in a line or two describe their socaial status, professinal outlook.
-> Whenever introducing a new side character, in a line or two describe backstory and relevance to the main characters.
 ---
 
 🌍 World Setting & Genre:
@@ -80,7 +74,7 @@ Now begin the chapter.
 """
 
 # Base save directory for HTML reports
-BASE_SAVE_DIR = os.path.join(os.getcwd(), "generated_and_rewritten_chapters")
+BASE_SAVE_DIR = "/Users/msr/Documents/personal/GitHub/view-html-files-v2/public/books"
 
 def format_time_delta(seconds):
     """Format time delta in seconds to a readable string"""

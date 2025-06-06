@@ -1,7 +1,5 @@
 CHAPTER_REWRITE_PROMPT = """
-Rewrite this chapter addressing the critique analysis while maintaining the core story and characters.
+Based on the critique analysis, make focused edits to the chapter, don't rewrite the entire chapter. Make sure the content is same as the previous generated, only edit the lines which are suggested by the critique analysis.
 
 Critique Analysis: {critique_analysis}
-
-Preserve all plot points, character personalities, character introduction and basic character details.
 """

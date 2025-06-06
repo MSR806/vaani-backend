@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from ..models.models import Book, Chapter, Scene
 from ..prompts.rewrite_prompts import CHAPTER_REWRITE_PROMPT
 from ..prompts.chapters import CHAPTER_GENERATION_FROM_SCENE_SYSTEM_PROMPT_V1 as CHAPTER_GENERATION_SYSTEM_PROMPT
+from ..services.chapter_service import get_context_chapters
 from ..services.evaluations.critique_agent.critique_service import generate_chapter_critique
 from ..services.setting_service import get_setting_by_key
 from ..services.ai_service import get_openai_client
@@ -52,7 +53,7 @@ async def stream_chapter_rewrite(db: Session, book_id: int, chapter_id: int):
         
         # Generate critique for the chapter
         logging.info(f"Generating critique for chapter {chapter.chapter_no}")
-        critique_text = await generate_chapter_critique(db, chapter, previous_chapters)
+        critique_text = await generate_chapter_critique(db, chapter)
         logging.info(f"Critique analysis: {critique_text}")
         
         if not critique_text:
@@ -65,12 +66,9 @@ async def stream_chapter_rewrite(db: Session, book_id: int, chapter_id: int):
         ai_model = get_setting_by_key(db, "create_chapter_content_ai_model").value
         temperature = float(get_setting_by_key(db, "create_chapter_content_temperature").value)
         
-        # Get previous chapters context
-        previous_chapters_context = "\n\n".join(
-            [
-                f"Chapter {ch.chapter_no}: {ch.title}\n{ch.content}"
-                for ch in previous_chapters
-            ]
+        # Get previous chapters, last chapter, and next chapter context
+        previous_chapters_context, last_chapter_content, next_chapter_content = get_context_chapters(
+            db, book_id, chapter.chapter_no, context_size
         )
         
         # Get scenes if they exist
@@ -96,6 +94,8 @@ async def stream_chapter_rewrite(db: Session, book_id: int, chapter_id: int):
         system_prompt = format_prompt(
             CHAPTER_GENERATION_SYSTEM_PROMPT,
             previous_chapters=previous_chapters_context,
+            last_chapter=last_chapter_content,
+            next_chapter=next_chapter_content,
         )
         
         # Use the same user message format as original chapter generation

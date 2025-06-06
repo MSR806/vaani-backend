@@ -6,11 +6,12 @@ from pathlib import Path
 from app.services.ai_service import get_openai_client
 from app.models.models import Book, Chapter
 from app.prompts.critique_prompts import CRITIQUE_AGENT_SYSTEM_PROMPT, CRITIQUE_AGENT_USER_PROMPT
+from app.services.chapter_service import get_context_chapters
 from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 
-async def generate_chapter_critique(db: Session, chapter: Chapter, previous_chapters: List[Chapter] = None) -> Optional[str]:
+async def generate_chapter_critique(db: Session, chapter: Chapter) -> Optional[str]:
     logger.info(f"Generating critique for chapter {chapter.chapter_no}: {chapter.title}")
     logger.info(f"Chapter content length: {len(chapter.content)} chars")
     
@@ -19,29 +20,33 @@ async def generate_chapter_critique(db: Session, chapter: Chapter, previous_chap
         ai_model = "o3"
         temperature = 1
         
-        # Prepare user prompt with previous chapters for context
-        previous_chapter_content = ""
-        if previous_chapters:
-            # Combine previous chapters content with clear separators
-            prev_chapters_text = []
-            for prev_chapter in previous_chapters:
-                prev_chapters_text.append(f"CHAPTER {prev_chapter.chapter_no}: {prev_chapter.title}\n\n{prev_chapter.content}")
-                logger.info(f"Including previous chapter {prev_chapter.chapter_no} in context")
-            
-            previous_chapter_content = "\n\n---\n\n".join(prev_chapters_text)
-            logger.info(f"Previous chapters context length: {len(previous_chapter_content)} chars")
+        # Get appropriate context size from settings
+        # Use a reasonable default if the setting doesn't exist
+        context_size = 5
+        
+        # Get all three chapter contexts using our unified helper
+        previous_chapters_context, last_chapter_content, next_chapter_content = get_context_chapters(
+            db, chapter.book_id, chapter.chapter_no, context_size
+        )
+        
+        logger.info(f"Previous chapters context length: {len(previous_chapters_context)} chars")
+        logger.info(f"Last chapter context length: {len(last_chapter_content)} chars")
+        logger.info(f"Next chapter context length: {len(next_chapter_content)} chars")
         
         chapter_content = f"CHAPTER {chapter.chapter_no}: {chapter.title}\n\n{chapter.content}"
         
         user_prompt = CRITIQUE_AGENT_USER_PROMPT.format(
-            previous_chapter=previous_chapter_content,
+            previous_chapters=previous_chapters_context,
+            last_chapter=last_chapter_content,
+            next_chapter=next_chapter_content,
             chapter=chapter_content
         )
+
         
         # Call OpenAI API to analyze the chapter
         logger.info(f"Calling OpenAI API with model: {ai_model}")
         try:
-            logging.info(f"Critique Agent System Prompt: {CRITIQUE_AGENT_SYSTEM_PROMPT}")
+            logger.info(f"User prompt: {user_prompt}")
             client = get_openai_client(ai_model)
             response = client.chat.completions.create(
                 model=ai_model,
@@ -65,28 +70,5 @@ async def generate_chapter_critique(db: Session, chapter: Chapter, previous_chap
     
     except Exception as e:
         logger.error(f"Error generating critique for chapter {chapter.chapter_no}: {str(e)}")
-        logger.error(traceback.format_exc())
-        return None
-
-async def save_critique_result(book: Book, chapter: Chapter, critique_text: str) -> Optional[Path]:
-    try:
-        # Create directory for saving results if it doesn't exist
-        output_dir = Path(f"output/critique_analysis/{book.id}")
-        output_dir.mkdir(parents=True, exist_ok=True)
-        logger.info(f"Created output directory: {output_dir}")
-        
-        # Create filename - use .txt extension for plain text
-        filename = output_dir / f"chapter_{chapter.chapter_no:02d}_{chapter.id}.txt"
-        
-        # Save the raw text to file
-        with open(filename, "w") as f:
-            f.write(critique_text)
-            logger.info(f"Critique text length: {len(critique_text)} chars")
-        
-        logger.info(f"Saved critique analysis to {filename}")
-        return filename
-    
-    except Exception as e:
-        logger.error(f"Error saving critique analysis: {str(e)}")
         logger.error(traceback.format_exc())
         return None

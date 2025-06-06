@@ -5,6 +5,8 @@ import os
 import sys
 import argparse
 import re
+import datetime
+from keys import ACCESS_TOKEN
 
 # Try to import BeautifulSoup, but provide fallback if not available
 try:
@@ -16,9 +18,6 @@ except ImportError:
 
 # API Base URL - assuming local development
 API_BASE_URL = "http://localhost/vaani/api/v1"  # Update as needed
-
-# Access token placeholder - User will update this
-ACCESS_TOKEN = "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Ill3OGhmeWV2cjJneG9qY3oxMWIzeCJ9.eyJpc3MiOiJodHRwczovL2Rldi02bTN2N3RnaXZ1enJzNXdlLnVzLmF1dGgwLmNvbS8iLCJzdWIiOiJnb29nbGUtb2F1dGgyfDEwOTUwNjExNTIyMjY5ODE2MjY2NCIsImF1ZCI6WyI5YTI0NDkyZi04MDNjLTQ2MWMtYjA1MS1mMWRkN2NlM2M1MDQiLCJodHRwczovL2Rldi02bTN2N3RnaXZ1enJzNXdlLnVzLmF1dGgwLmNvbS91c2VyaW5mbyJdLCJpYXQiOjE3NDg0MjY3ODYsImV4cCI6MTc0ODUxMzE4Niwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCIsImF6cCI6IkhXWFlNRHVsYXFxY3UzTTJmRHduZlJpU0NDUzRNUFN2IiwicGVybWlzc2lvbnMiOlsiYm9vazpkZWxldGUiLCJib29rOnJlYWQiLCJib29rOndyaXRlIiwic3RvcnlfYm9hcmQ6cmVhZCIsInN0b3J5X2JvYXJkOndyaXRlIiwidGVtcGxhdGU6cmVhZCIsInRlbXBsYXRlOndyaXRlIl19.cfwNn-ZQc3ApSYWGV5xkSCpYtVJ4C9pzSNqeJ9HmuXOdU2GpvB7nJEx14FLLS2eFtnWjrsSA_7C95c1Tq77Zu_qMnRHAQppfkd-EmQxGDg6V8SBXFtcXKKP5Twa_9MOO3v-PDp42TG0bvTnMJjQIXjdqczUTlSxjYFkVT0IyGc6_HidWRt5SbZtARBOyW53XnSyPa6JEuDzhzoe3fCMetGDum1BZ6phvRwKMax_lgZdk0hV2VlnlaIlvA97_XfNoLPyF5N4WfZgnXCeKuUXng0_kwPj3GUCSiyDL91PKJAGYyno3DwPy5EANo-NxM3XKrel7MbvDo-rsfdrm9lRKjA"
 
 # Headers for API requests
 headers = {
@@ -115,7 +114,7 @@ def get_chapter_content(book_id, chapter_id):
 
 def create_output_directory(book_id, book_title):
     # Create directory path using the specified absolute path
-    base_dir = "/Users/msr/Documents/personal/GitHub/view-html-files/books"
+    base_dir = "/Users/msr/Documents/personal/GitHub/view-html-files-v2/books"
     dir_path = os.path.join(base_dir, f"{book_title} ({book_id})")
     
     # Create directory if it doesn't exist
@@ -158,9 +157,48 @@ def download_book_chapters(book_id, output_format="text"):
         combined_file_path = os.path.join(output_dir, f"{book_title}.html")
         all_chapters_file = open(combined_file_path, 'w', encoding='utf-8')
         all_chapters_file.write(f"""<!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{book_title}</title>
+    <style>
+        body {{  
+            font-family: 'Georgia', serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #f9f9f9;
+            color: #333;
+        }}
+        h1, h2 {{  
+            text-align: center;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 10px;
+            margin-top: 30px;
+        }}
+        .content {{  
+            background-color: white;
+            padding: 30px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            white-space: pre-wrap;
+        }}
+        .chapter-divider {{  
+            text-align: center;
+            margin: 40px 0;
+            color: #888;
+        }}
+        .timestamp {{  
+            text-align: right;
+            font-size: 0.8em;
+            color: #888;
+            margin-top: 20px;
+        }}
+    </style>
 </head>
 <body>
     <h1>{book_title}</h1>
@@ -191,22 +229,61 @@ def download_book_chapters(book_id, output_format="text"):
         
         # Write to individual file
         if output_format != "single" and output_format != "docs":
-            # Create file name with chapter number
-            file_name = f"Chapter_{chapter_no}.html"
-            file_path = os.path.join(output_dir, file_name)
+            # Format the filename
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            safe_title = "".join(c for c in chapter_title if c.isalnum() or c in ". -_").replace(" ", "_")
+            filename = f"chapter_{chapter_no:02d}_{safe_title}_{timestamp}.html"
+            file_path = os.path.join(output_dir, filename)
             
             with open(file_path, 'w', encoding='utf-8') as f:
-                # Write HTML structure
+                # Write HTML structure with improved formatting
                 f.write(f"""<!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chapter {chapter_no}: {chapter_title}</title>
+    <style>
+        body {{  
+            font-family: 'Georgia', serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #f9f9f9;
+            color: #333;
+        }}
+        h1, h2 {{  
+            text-align: center;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 10px;
+            margin-top: 30px;
+        }}
+        .content {{  
+            background-color: white;
+            padding: 30px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            white-space: pre-wrap;
+        }}
+        .timestamp {{  
+            text-align: right;
+            font-size: 0.8em;
+            color: #888;
+            margin-top: 20px;
+        }}
+    </style>
 </head>
 <body>
     <h1>Chapter {chapter_no}: {chapter_title}</h1>
-    <div class="chapter-content">
-        {content}
+    
+    <div class="content">
+{content}
     </div>
+    
+    <div class="timestamp">Downloaded on: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</div>
 </body>
 </html>""")
             
@@ -217,17 +294,18 @@ def download_book_chapters(book_id, output_format="text"):
         if output_format == "single" and all_chapters_file:
             all_chapters_file.write(f"""
     <h2>Chapter {chapter_no}: {chapter_title}</h2>
-    <div class="chapter-content">
-        {content}
+    <div class="content">
+{content}
     </div>
-    <hr>
+    <div class="chapter-divider">* * * * *</div>
 """)
         
         successful_downloads += 1
     
     # Close the combined file if it was created
     if output_format == "single" and all_chapters_file:
-        all_chapters_file.write("""
+        all_chapters_file.write(f"""
+    <div class="timestamp">Downloaded on: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</div>
 </body>
 </html>""")
         all_chapters_file.close()

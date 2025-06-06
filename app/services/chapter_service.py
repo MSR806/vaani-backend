@@ -137,6 +137,83 @@ def patch_chapter_state(db: Session, book_id: int, chapter_id: int, state: str |
     return chapter
 
 
+def get_context_chapters(
+    db: Session, book_id: int, current_chapter_no: int, context_size: int
+) -> tuple[str, str, str]: # Returns (previous_ctx, last_ctx, next_ctx)
+        from sqlalchemy import or_, and_
+
+        previous_chapters_lower_bound = current_chapter_no - context_size
+
+        queried_chapters = (
+            db.query(Chapter)
+            .filter(
+                Chapter.book_id == book_id,
+                or_(
+                    # Previous chapters: context_size chapters immediately before the current one
+                    and_(
+                        Chapter.chapter_no < current_chapter_no,
+                        Chapter.chapter_no >= previous_chapters_lower_bound
+                    ),
+                    # Next chapter: the one immediately after the current one
+                    Chapter.chapter_no == current_chapter_no + 1
+                )
+            )
+            .order_by(Chapter.chapter_no)  # Ensures previous chapters are first, then next chapter
+            .all()
+        )
+
+        all_previous_chapters_list = []
+        next_chapter_obj = None
+
+        for ch_obj in queried_chapters:
+            if ch_obj.chapter_no < current_chapter_no:
+                all_previous_chapters_list.append(ch_obj)  # Already sorted chronologically
+            elif ch_obj.chapter_no == current_chapter_no + 1:
+                next_chapter_obj = ch_obj
+        
+        # Separate all_previous_chapters_list into previous (n-1-k) and last (n-1)
+        actual_previous_chapters = []
+        last_chapter_obj = None
+        if all_previous_chapters_list:
+            if len(all_previous_chapters_list) > 0:
+                last_chapter_obj = all_previous_chapters_list[-1]
+                actual_previous_chapters = all_previous_chapters_list[:-1]
+            else: # Should not happen if context_size >=1 and chapters exist
+                pass # last_chapter_obj remains None, actual_previous_chapters remains []
+        # Prepare context from previous chapters (n-1-k)
+        if actual_previous_chapters:
+            previous_chapters_context_str = "\n\n".join(
+                [
+                    f"Chapter {ch.chapter_no}: {ch.title}\n{ch.source_text}" #summary
+                    for ch in actual_previous_chapters
+                ]
+            )
+            print("Previous chapters (n-1-k) for context:")
+            print([ch.chapter_no for ch in actual_previous_chapters])
+        else:
+            previous_chapters_context_str = "No previous chapters (n-1-k) available."
+            print("Previous chapters (n-1-k) for context: None")
+
+        # Prepare context for last chapter (n-1)
+        if last_chapter_obj:
+            last_chapter_content_str = f"Chapter {last_chapter_obj.chapter_no}: {last_chapter_obj.title}\n{last_chapter_obj.content}"
+            print("Last chapter (n-1) for context:")
+            print(last_chapter_obj.chapter_no)
+        else:
+            last_chapter_content_str = "No last chapter (n-1) available."
+            print("Last chapter (n-1) for context: None")
+
+        # Format next chapter content (n+1)
+        if next_chapter_obj:
+            next_chapter_content_str = f"Chapter {next_chapter_obj.chapter_no}: {next_chapter_obj.title}\n{next_chapter_obj.source_text or 'No content yet.'}"
+            print("Next chapter (n+1) for context:")
+            print(next_chapter_obj.chapter_no)
+        else:
+            next_chapter_content_str = "No next chapter (n+1) available."
+            print("Next chapter (n+1) for context: None")
+        
+        return previous_chapters_context_str, last_chapter_content_str, next_chapter_content_str
+
 async def generate_chapter_outline(
     db: Session, book_id: int, chapter_id: int, user_prompt: str, user_id: str
 ) -> List[SceneOutlineResponse]:
@@ -158,36 +235,19 @@ async def generate_chapter_outline(
             raise HTTPException(status_code=404, detail="Chapter not found")
 
         # Get context size setting for how many previous chapters to include for scene generation
+        # context_size includes both previous chapters (n-1-k) and the last chapter (n-1)
         context_size = int(get_setting_by_key(db, "scenes_previous_chapters_context_size").value)
-            
-        # Get the specified number of previous chapters in order
-        previous_chapters = (
-            db.query(Chapter)
-            .filter(Chapter.book_id == book_id, Chapter.chapter_no < chapter.chapter_no)
-            .order_by(Chapter.chapter_no.desc())
-            .limit(context_size)
-            .all()
-        )
-        
-        # Reverse to get chronological order
-        previous_chapters.reverse()
 
-        # print chapters no.
-        print("Previous chapters:")
-        print([ch.chapter_no for ch in previous_chapters])
-
-        # Prepare context from previous chapters
-        previous_chapters_context = "\n\n".join(
-            [
-                f"Chapter {ch.chapter_no}: {ch.title}\n{ch.content}"
-                for ch in previous_chapters
-            ]
+        previous_chapters_context, last_chapter_content, next_chapter_content = get_context_chapters(
+            db, book_id, chapter.chapter_no, context_size
         )
 
         # Prepare the messages for GPT
         system_prompt = format_prompt(
             SCENE_GENERATION_SYSTEM_PROMPT_V1,
-            previous_chapters=previous_chapters_context
+            previous_chapters=previous_chapters_context,
+            last_chapter=last_chapter_content,
+            next_chapter=next_chapter_content
         )
 
         character_arc_service = CharacterArcService(db)
@@ -325,22 +385,11 @@ async def stream_chapter_content(
 
     # Get context size setting for how many previous chapters to include for chapter content generation
     context_size = int(get_setting_by_key(db, "chapter_content_previous_chapters_context_size").value)
-        
-    # Get the specified number of previous chapters in order
-    previous_chapters = (
-        db.query(Chapter)
-        .filter(Chapter.book_id == book_id, Chapter.chapter_no < chapter.chapter_no)
-        .order_by(Chapter.chapter_no.desc())
-        .limit(context_size)
-        .all()
-    )
     
-    # Reverse to get chronological order
-    previous_chapters.reverse()
-
-    # print chapters no.
-    print("Previous chapters:")
-    print([ch.chapter_no for ch in previous_chapters])
+    # Get all three chapter contexts: previous chapters, last chapter, and next chapter
+    previous_chapters_context, last_chapter_content, next_chapter_content = get_context_chapters(
+        db, book_id, chapter.chapter_no, context_size
+    )
 
     # Get all scenes for the current chapter
     scenes = (
@@ -348,14 +397,6 @@ async def stream_chapter_content(
         .filter(Scene.chapter_id == chapter_id)
         .order_by(Scene.scene_number)
         .all()
-    )
-
-    # Prepare context from previous chapters
-    previous_chapters_context = "\n\n".join(
-        [
-            f"Chapter {ch.chapter_no}: {ch.title}\n{ch.content}"
-            for ch in previous_chapters
-        ]
     )
 
     # Prepare context from scenes if they exist
@@ -385,6 +426,8 @@ async def stream_chapter_content(
     system_prompt = format_prompt(
         CHAPTER_GENERATION_FROM_SCENE_SYSTEM_PROMPT_V1,
         previous_chapters=previous_chapters_context,
+        last_chapter=last_chapter_content,
+        next_chapter=next_chapter_content,
         character_arcs=character_arcs_content,
     )
     user_message = (

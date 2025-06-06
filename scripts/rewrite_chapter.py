@@ -10,7 +10,7 @@ import html
 API_BASE_URL = "http://localhost/vaani/api/v1"  # Update as needed
 
 # Access token placeholder - User will update this
-ACCESS_TOKEN = "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Ill3OGhmeWV2cjJneG9qY3oxMWIzeCJ9.eyJpc3MiOiJodHRwczovL2Rldi02bTN2N3RnaXZ1enJzNXdlLnVzLmF1dGgwLmNvbS8iLCJzdWIiOiJnb29nbGUtb2F1dGgyfDEwOTUwNjExNTIyMjY5ODE2MjY2NCIsImF1ZCI6WyI5YTI0NDkyZi04MDNjLTQ2MWMtYjA1MS1mMWRkN2NlM2M1MDQiLCJodHRwczovL2Rldi02bTN2N3RnaXZ1enJzNXdlLnVzLmF1dGgwLmNvbS91c2VyaW5mbyJdLCJpYXQiOjE3NDg4Mzk1MDAsImV4cCI6MTc0ODkyNTkwMCwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCIsImF6cCI6IkhXWFlNRHVsYXFxY3UzTTJmRHduZlJpU0NDUzRNUFN2IiwicGVybWlzc2lvbnMiOlsiYm9vazpkZWxldGUiLCJib29rOnJlYWQiLCJib29rOndyaXRlIiwic3RvcnlfYm9hcmQ6cmVhZCIsInN0b3J5X2JvYXJkOndyaXRlIiwidGVtcGxhdGU6cmVhZCIsInRlbXBsYXRlOndyaXRlIl19.DYmOSr6Ps2H0Dg_iM3nGoKPMtWvkrYxHh_TwW9Abv-DgxdRmw-avGYqRZpivkI-FZy-yi-5axBnXMY5S9SVraigIfb6gBsZb3qvfkVKok_-PqsyMXB06a4-61EZyuy923xZTEhq64-oZsJWAyXXE7GyAiB7eie__n4MbqkN8P7BMfGMxI8F-wny6QfOcVHIw5bTxZZP24HHbBGKE6lJQ9YAgCS5JV-x5Neqx3I9FcQIETEHY8i0pwQ5ZCvFHhCJ4w_h_G7gd1hqmBJVPCZ3akm-FtNBU7F-KMR_0TDwD3iZgBvH2sDxLh7DFjZ4gehLz6WUiestrK_zmAs1XIs-LvA"
+ACCESS_TOKEN = "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Ill3OGhmeWV2cjJneG9qY3oxMWIzeCJ9.eyJpc3MiOiJodHRwczovL2Rldi02bTN2N3RnaXZ1enJzNXdlLnVzLmF1dGgwLmNvbS8iLCJzdWIiOiJnb29nbGUtb2F1dGgyfDEwOTUwNjExNTIyMjY5ODE2MjY2NCIsImF1ZCI6WyI5YTI0NDkyZi04MDNjLTQ2MWMtYjA1MS1mMWRkN2NlM2M1MDQiLCJodHRwczovL2Rldi02bTN2N3RnaXZ1enJzNXdlLnVzLmF1dGgwLmNvbS91c2VyaW5mbyJdLCJpYXQiOjE3NDg5NDkwNjAsImV4cCI6MTc0OTAzNTQ2MCwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCIsImF6cCI6IkhXWFlNRHVsYXFxY3UzTTJmRHduZlJpU0NDUzRNUFN2IiwicGVybWlzc2lvbnMiOlsiYm9vazpkZWxldGUiLCJib29rOnJlYWQiLCJib29rOndyaXRlIiwic3RvcnlfYm9hcmQ6cmVhZCIsInN0b3J5X2JvYXJkOndyaXRlIiwidGVtcGxhdGU6cmVhZCIsInRlbXBsYXRlOndyaXRlIl19.NEZIBi7CP5weOYTBaug2cJttosrqA6o8cPAfmpMdoEhAmuWlcQhh5T6fd4ATshPbEXBKVyOzlsLiEeYLhwDBqvGJMwt9mDPY-vy9ySO2Xp6MwJ3or_s2GNEEVawyw2iDxqjVD4Sb-zY27i_D35wyGdkSJ8oMXGSlkvhUhLubUnKmt6cKVM2_-8qEBHmGZlASVBUPAMwJl2s36Ir-e-vsp8oFxwJDtQCfwYMPm2K9L19yHId0Kr3I_wIKyHeYqDBy6EUo3h0Jr9ByG5Lvtv-3u7QmmOJYtC0Iak6jiitmtrt4GqCBuDDkVbRCl7rnLbYIPzCp2yLci_fKqZCLLwR6Bw"
 
 # Headers for API requests
 headers = {
@@ -22,7 +22,8 @@ headers = {
 BOOK_ID = 49
 
 # Chapters to rewrite - update as needed
-CHAPTERS_TO_REWRITE = [x for x in range(10, 20 +1)]
+# CHAPTERS_TO_REWRITE = [x for x in range(10, 20 +1)]
+CHAPTERS_TO_REWRITE = [17]
 
 # Whether to update the chapter content in the database
 UPDATE_DATABASE = False
@@ -99,7 +100,7 @@ def rewrite_chapter(book_id, chapter_id, chapter_no, chapter_title, original_con
     try:
         # Make request with stream=True to handle SSE
         print(f"API Request: GET {url} (streaming)")
-        response = requests.get(url, headers=headers, stream=True)
+        response = requests.post(url, headers=headers, stream=True)
         response.raise_for_status()
         
         # Create a buffer to hold the complete rewritten content
