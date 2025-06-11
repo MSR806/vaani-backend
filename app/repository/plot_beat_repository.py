@@ -19,6 +19,25 @@ class PlotBeatRepository(BaseRepository[PlotBeat]):
         self.db.commit()
         self.db.refresh(plot_beat)
         return plot_beat
+        
+    @rollback_on_exception
+    def batch_create(self, items: List[Dict[str, Any]]) -> List[PlotBeat]:
+        plot_beats = []
+        for item in items:
+            plot_beat = PlotBeat(
+                content=item["content"],
+                type=item["type"],
+                source_id=item["source_id"]
+            )
+            plot_beats.append(plot_beat)
+        
+        self.db.add_all(plot_beats)
+        self.db.commit()
+        
+        for plot_beat in plot_beats:
+            self.db.refresh(plot_beat)
+            
+        return plot_beats
 
     def get_by_source_id_and_type(self, source_id: int, type: str) -> List[PlotBeat]:
         return self.db.query(PlotBeat).filter(PlotBeat.source_id == source_id, PlotBeat.type == type).order_by(PlotBeat.id.asc()).all() 

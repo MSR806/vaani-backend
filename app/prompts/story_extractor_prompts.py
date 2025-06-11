@@ -4,9 +4,11 @@
 # Character Arc Extraction Prompts
 CHARACTER_ARC_EXTRACTION_SYSTEM_PROMPT = (
     "You are a literary analysis expert specializing in character identification and development arcs. "
-    "First, identify the main and supporting characters in the story. Then, for each character, "
+    "First, identify the main and supporting characters in the story who have proper names. Then, for each named character, "
     "extract their background, status, relationships, power dynamics, sexual relationship/attraction, BDSM roles/relations with other characters, and any other relevant details. "
-    "For protagonists and antagonists, keep relationship descriptions brief and focused on key dynamics."
+    "Also preserve the nature of the profession or social status of the character. Ex. Very big CEO, rich man, ordinary, small job, etc."
+    "For protagonists and antagonists, keep relationship descriptions brief and focused on key dynamics. "
+    "IMPORTANT: Only include characters who have explicit proper names in the text. Do not include unnamed characters."
 )
 
 CHARACTER_ARC_EXTRACTION_USER_PROMPT_TEMPLATE = """
@@ -32,20 +34,22 @@ Create individual markdown files for each character in the story. Include all ch
 # [Character Name] - Character Arc
 
 ## Description
-[Detailed Description of the character, Include the character's personality, approx age, gender, appearance, setting, backstory, and other relevant details]
+[Detailed Description of the character, Include the character's personality, approx age, gender, appearance, setting, backstory, professional details and other relevant details]
 
 ## Role
 [Specify the character's role in the story (Female & Male Protagonist, Antagonist, etc.), IMPORTANT: DONOT generate a description of the character, just generate a two word phrase about the character]
 
 ## Key Relationships
-[Detailed Description of the character's key relationships with other characters, For Main characters like protagonists and antagonists: Provide a detailed description of key relationships, focusing on:
+[Detailed Description of the character's key relationships with other characters. For main characters like protagonists and antagonists: Provide a detailed description of key relationships, focusing on:
 - Main relationship type (romantic, antagonistic, etc.)
 - Sexual dynamics if present
-- BDSM roles/relations if applicable
-- Blood relationships if applicable]
+- BDSM roles/relations if applicable]
 Format: [Character Name] - [Brief Description of the character's key relationships]
 
 For other characters: Provide a basic description of the character's role in the story, you can skip the non important characters.
+
+## Blood Relations
+[List all blood relatives of the character (parents, siblings, children, etc.), specifying their names and relationship to the character. If none, write 'None'.]
 
 ## Power Dynamics
 [Detailed Description of the character's power dynamics with main characters, if any]
@@ -98,5 +102,37 @@ Please create a concise but comprehensive summary of this chapter that:
 4. Notes any character development or emotional changes
 5. Preserves sexual relationship/attraction, sexual events and BDSM roles/relations and power dynamics, etc.
 
-Aim for a summary that is approximately 15-20% of the original length while ensuring everthing above is retained.
+Aim for a summary that is approximately 15-20% of the original length while ensuring everthing above is retained."""
+
+# Character Consolidation Prompts
+CHARACTER_CONSOLIDATION_SYSTEM_PROMPT = (
+    "You are a helpful assistant that identifies the same characters across different text sections. "
+    "Your task is to group character references that refer to the same individual, even when names vary slightly. "
+    "Respond only with the requested JSON format."
+)
+
+CHARACTER_CONSOLIDATION_PROMPT_TEMPLATE = """
+I need to consolidate character references from different parts of a book. 
+Below are references to characters that may be the same person but with slightly different names.
+
+{character_references}
+
+Group these character references by matching the same characters together.
+For each group, also provide the most complete and accurate name to use for that character.
+
+Return a JSON object with the following structure:
+1. "groups": an array of objects where each object has:
+   - "indices": an array of indices from the original list that refer to the same character
+   - "canonical_name": the most appropriate name to use for this character (prefer more complete names)
+
+For example:
+{{
+  "groups": [
+    {{"indices": [0, 2, 5], "canonical_name": "John Smith"}},
+    {{"indices": [1, 4], "canonical_name": "Mary Johnson"}},
+    {{"indices": [3], "canonical_name": "Robert Wilson"}}
+  ]
+}}
+
+Only return the JSON object with the 'groups' field as shown above, nothing else.
 """

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import re
+import json
 from typing import List, Dict, Any
 import logging
 
@@ -9,14 +9,15 @@ from app.models.models import Book
 from app.services.ai_service import get_openai_client
 from app.utils.model_settings import ModelSettings
 from app.prompts.story_abstractor_prompts import (
-    CHARACTER_ARC_SYSTEM_PROMPT,
-    CHARACTER_ARC_BATCH_USER_PROMPT_TEMPLATE,
     PLOT_BEATS_SYSTEM_PROMPT,
     PLOT_BEATS_USER_PROMPT_TEMPLATE,
 )
 from app.repository.character_arcs_repository import CharacterArcsRepository
 from app.repository.plot_beat_repository import PlotBeatRepository
 from app.repository.template_repository import TemplateRepository
+from app.utils.story_abstractor_utils import process_character_abstractions
+from app.schemas.character_arcs import CharacterArc, CharacterArcContent
+from app.models.models import CharacterArc as CharacterArcModel
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -57,15 +58,11 @@ class StoryAbstractor:
     
     # Method removed and replaced with direct ModelSettings usage
     
-    async def read_character_arcs(self) -> Dict[str, str]:
+    async def read_character_arcs(self) -> List[CharacterArcModel]:
         """Read all character arcs from the database and return their contents"""
-        character_arcs = {}
         repo = CharacterArcsRepository(self.db)
         arcs = repo.get_by_type_and_source_id('EXTRACTED', self.book_id)
-        for arc in arcs:
-            if arc.name and arc.content:
-                character_arcs[arc.name] = arc.content
-        return character_arcs
+        return arcs
     
     
     async def read_plot_beats(self) -> List[Dict[str, Any]]:
@@ -81,111 +78,87 @@ class StoryAbstractor:
         return plot_beats
     
     
-    async def abstract_character_arcs_batch(self, character_arcs: Dict[str, str]) -> Dict[str, Any]:
-        """Batch transform all character arcs into generalized templates using a single AI call."""
+    async def abstract_character_arcs(self, character_arcs: List[CharacterArcModel]):
         repo = CharacterArcsRepository(self.db)
-        # Check for already abstracted arcs
         existing_arcs = repo.get_by_type_and_source_id('TEMPLATE', self.template_id)
-        existing_names = {arc.name for arc in existing_arcs}
-        arcs_to_abstract = {name: content for name, content in character_arcs.items() if name not in existing_names}
-        results = {}
-        # If all arcs are already abstracted, return them
-        if not arcs_to_abstract:
-            for arc in existing_arcs:
-                results[arc.name] = {
-                    "original_character": arc.name,
-                    "abstract_arc": arc.content,
-                    "archetype": arc.archetype or "Unknown Archetype"
-                }
-            return results
-        # Prepare batch prompt
-        batch_text = ""
-        for name, content in arcs_to_abstract.items():
-            batch_text += f"CHARACTER: {name}\nFILE_START\n{content}\nFILE_END\n\n"
+        if existing_arcs:
+            logger.info(f"Found {len(existing_arcs)} existing character arcs")
+            return
+        
+        character_arc_objects = []
+        for arc in character_arcs:
+            character_arc_objects.append(CharacterArc(name=arc.name, role=arc.role, content_json=[CharacterArcContent(**json.loads(item)) for item in arc.content_json]))
+            
+        logger.info(f"Async abstracting {len(character_arcs)} character arcs")
+        
         model, temperature = self.model_settings.character_arc_template()
-        system_prompt = CHARACTER_ARC_SYSTEM_PROMPT
-        user_prompt = CHARACTER_ARC_BATCH_USER_PROMPT_TEMPLATE.format(character_growth_batch=batch_text)
-        logger.info(f"Batch abstracting {len(arcs_to_abstract)} character arcs")
         try:
-            response = self.client.chat.completions.create(
-                model=model,
-                temperature=temperature,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ]
+            # Use the new process_character_abstractions utility function
+            abstraction_results = await process_character_abstractions(
+                character_arc_objects, 
+                self.client, 
+                model, 
+                temperature
             )
-            output = response.choices[0].message.content.strip()
-            # Parse output
-            pattern = r"CHARACTER: (.*?)\nFILE_START\n(.*?)\nFILE_END"
-            matches = re.findall(pattern, output, re.DOTALL)
-            input_names = list(arcs_to_abstract.keys())
-            used_names = set()
-            for idx, (name, abstract_content) in enumerate(matches):
-                # Always use the original input name by order
-                if idx < len(input_names):
-                    original_name = input_names[idx]
-                    if name.strip() != original_name:
-                        logger.warning(f"Model output name '{name.strip()}' does not match input '{original_name}'. Using input name.")
-                else:
-                    original_name = name.strip()
-                    logger.warning(f"Model output name '{name.strip()}' could not be matched by order; using as is.")
+            
+            # Save the abstracted character arcs to the database
+            character_abstractions = abstraction_results
+            
+            # Convert results to match the expected output format of this function
+            results = {}
+            for abstraction in character_abstractions:
+                # Convert content_json to string if it's not already
+                name = abstraction.get("name", "") # original_name of the character arc
+                content_json = abstraction.get("content_json", [])
+                archetype = abstraction.get("abstract_name", "") # abstract_name of the character arc
+                role = ""
 
-                # Extract archetype and role from the first line
-                lines = abstract_content.strip().split('\n')
-                archetype = "Unknown Archetype"
-                role = "Unknown Role"
-                for line in lines:
-                    match = re.match(r"# ([^-]+) - ([^-]+)", line)
-                    if match:
-                        role = match.group(1).strip()
-                        archetype = match.group(2).strip()
-                        break
-
+                # Extract role if available from the first segment
+                if content_json:
+                    # Check the first segment for a role line
+                    first_segment = content_json[0]
+                    content = first_segment.get("content", "")
+                    lines = content.split("\n")
+                    for line in lines:
+                        if line.startswith("# ") and " - " in line:
+                            role = line.split(" - ")[0][2:].strip()
+                            break
+                
+                # Save to database
                 repo.create(
-                    content=abstract_content.strip(),
+                    name=name,
                     type="TEMPLATE",
                     source_id=self.template_id,
-                    name=original_name,
-                    archetype=archetype,
-                    role=role
+                    content_json=json.dumps(content_json),
+                    role=role,
+                    archetype=archetype
                 )
-                results[original_name] = {
-                    "original_character": original_name,
-                    "abstract_arc": abstract_content.strip(),
-                    "archetype": archetype,
-                    "role": role
-                }
-            # Add already existing arcs
-            for arc in existing_arcs:
-                if arc.name not in results:
-                    results[arc.name] = {
-                        "original_character": arc.name,
-                        "abstract_arc": arc.content,
-                        "archetype": arc.archetype or "Unknown Archetype"
-                    }
-            return results
+            
         except Exception as e:
-            logger.error(f"Error batch abstracting character arcs: {str(e)}")
+            logger.error(f"Error abstracting character arcs: {str(e)}")
             # Return error for all arcs
+            results = {}
             for name in arcs_to_abstract:
                 results[name] = {
                     "original_character": name,
                     "abstract_arc": f"# Character Arc Template\n\nCould not generate abstraction due to an error: {str(e)}",
+                    "error": str(e)
                 }
             return results
     
-    async def abstract_all_character_arcs(self) -> Dict[str, Any]:
-        """Abstract all character arcs into generalized templates using batch abstraction."""
+    async def abstract_all_character_arcs(self):
         logger.info("Abstracting all character arcs (batch mode)")
         self.template_repo.update_character_arc_template_status(self.template_id, TemplateStatusEnum.IN_PROGRESS)
         character_arcs = await self.read_character_arcs()
-        abstract_arcs = await self.abstract_character_arcs_batch(character_arcs)
+        await self.abstract_character_arcs(character_arcs)
         self.template_repo.update_character_arc_template_status(self.template_id, TemplateStatusEnum.COMPLETED)
-        return abstract_arcs
     
-    async def abstract_plot_beats(self, plot_beats: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """Transform specific plot beats into a generalized narrative skeleton"""
+    async def abstract_plot_beats(self, plot_beats: List[Dict[str, Any]]):
+        import asyncio
+        
+        # Constants
+        MAX_CONCURRENT_TASKS = 15  # Limit concurrent API calls
+        
         model, temperature = self.model_settings.plot_beats_template()
         
         # Get character mappings from the already abstracted character arcs
@@ -199,53 +172,85 @@ class StoryAbstractor:
             if character_mappings:
                 logger.info(f"Found {len(character_mappings)} character mappings from DB")
 
+        # Prepare character mapping information if available
+        character_map_text = ""
+        if character_mappings:
+            character_map_text = "\nUse these character archetype mappings when replacing character names:\n"
+            for original, archetype in character_mappings.items():
+                character_map_text += f"- {original} → {archetype}\n"
+        logger.info(f"Character mapping text: {character_map_text}")
 
         self.template_repo.update_plot_beat_template_status(self.template_id, TemplateStatusEnum.IN_PROGRESS)
-        abstract_beats = []
         
-        for beat_data in plot_beats:
-            content = beat_data["content"]
-            system_prompt = PLOT_BEATS_SYSTEM_PROMPT
-            # Prepare character mapping information if available
-            character_map_text = ""
-            if character_mappings:
-                character_map_text = "\nUse these character archetype mappings when replacing character names:\n"
-                for original, archetype in character_mappings.items():
-                    character_map_text += f"- {original} → {archetype}\n"
-            user_prompt = PLOT_BEATS_USER_PROMPT_TEMPLATE.format(content=content, character_map_text=character_map_text)
-            logger.info(f"Abstracting plot beats")
-            try:
-                response = self.client.chat.completions.create(
-                    model=model,
-                    temperature=temperature,
-                    messages=[
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_prompt}
-                    ]
-                )
-                abstract_content = response.choices[0].message.content.strip()
-                
-                if self.template_id is not None:
-                    repo = PlotBeatRepository(self.db)
-                    repo.create(
-                        content=abstract_content,
-                        type="TEMPLATE",
-                        source_id=self.template_id
+        # Create a semaphore to limit concurrent API calls
+        semaphore = asyncio.Semaphore(MAX_CONCURRENT_TASKS)
+        
+        # Helper function to process a single plot beat with semaphore-controlled concurrency
+        async def process_beat(beat_index, beat_data):
+            async with semaphore:
+                content = beat_data["content"]
+                system_prompt = PLOT_BEATS_SYSTEM_PROMPT
+                user_prompt = PLOT_BEATS_USER_PROMPT_TEMPLATE.format(content=content, character_map_text=character_map_text)
+                logger.info(f"Abstracting plot beat {beat_index+1}/{len(plot_beats)} asynchronously")
+                try:
+                    # Note: OpenAI's API does not support true async in Python yet
+                    # We're using asyncio.to_thread to avoid blocking the event loop
+                    response = await asyncio.to_thread(
+                        self.client.chat.completions.create,
+                        model=model,
+                        temperature=temperature,
+                        messages=[
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": user_prompt}
+                        ]
                     )
-                abstract_beats.append({
-                    "abstract_content": abstract_content
-                })
+                    abstract_content = response.choices[0].message.content.strip()
+                    logger.info(f"Successfully abstracted plot beat {beat_index+1}/{len(plot_beats)}")
+                    return {
+                        "abstract_content": abstract_content,
+                        "success": True
+                    }
+                except Exception as e:
+                    logger.error(f"Error abstracting plot beat {beat_index+1}/{len(plot_beats)}: {str(e)}")
+                    error_content = f"# Narrative Skeleton\n\nCould not generate abstraction due to an error: {str(e)}"
+                    return {
+                        "abstract_content": error_content,
+                        "error": str(e),
+                        "success": False
+                    }
+        
+        # Process all beats concurrently while preserving order, but with limited concurrency
+        logger.info(f"Starting concurrent processing of {len(plot_beats)} plot beats with max {MAX_CONCURRENT_TASKS} concurrent tasks")
+        tasks = [process_beat(i, beat_data) for i, beat_data in enumerate(plot_beats)]
+        results = await asyncio.gather(*tasks)
+        
+        # Check if any processing failed
+        if any(not result.get("success", False) for result in results):
+            self.template_repo.update_plot_beat_template_status(self.template_id, TemplateStatusEnum.FAILED)
+        
+        # Save results to database in the original order using batch operation
+        abstract_beats = []
+        if self.template_id is not None:
+            repo = PlotBeatRepository(self.db)
+            # Prepare batch items
+            batch_items = [{
+                "content": result["abstract_content"],
+                "type": "TEMPLATE",
+                "source_id": self.template_id
+            } for result in results]
+            
+            try:
+                repo.batch_create(batch_items)
+                logger.info(f"Successfully batch created {len(batch_items)} plot beats")
             except Exception as e:
-                logger.error(f"Error abstracting plot beats: {str(e)}") 
-                
-                # Create an error message as the content
-                error_content = f"# Narrative Skeleton\n\nCould not generate abstraction due to an error: {str(e)}"
-                
-                abstract_beats.append({
-                    "abstract_content": error_content,
-                    "error": str(e)
-                })
+                logger.error(f"Error in batch creation of plot beats: {str(e)}")
                 self.template_repo.update_plot_beat_template_status(self.template_id, TemplateStatusEnum.FAILED)
+            
+            # Prepare return data
+            abstract_beats = [{"abstract_content": result["abstract_content"]} for result in results]
+        else:
+            abstract_beats = [{"abstract_content": result["abstract_content"]} for result in results]
+        
         self.template_repo.update_plot_beat_template_status(self.template_id, TemplateStatusEnum.COMPLETED)
         return abstract_beats
     
@@ -267,10 +272,10 @@ class StoryAbstractor:
         
         # Step 1: Character Arcs
         if character_arcs:
-            abstract_arcs = await self.abstract_all_character_arcs()
+            await self.abstract_all_character_arcs()
         
         # Step 2: Plot Beats
         if plot_beats:
-            abstract_beats = await self.abstract_plot_beats(plot_beats)
+            await self.abstract_plot_beats(plot_beats)
         
         logger.info("Abstraction process completed")

@@ -1,35 +1,26 @@
 #!/usr/bin/env python3
-import os
-import sys
+import asyncio
 import json
 import time
-import asyncio
 import traceback
-from pathlib import Path
-from typing import List, Dict, Any, Optional
+from math import ceil
+from typing import List, Dict, Any
 import logging
 
 from app.repository.template_repository import TemplateRepository
 from app.schemas.schemas import TemplateStatusEnum
-
-# Add the project root to the Python path so we can import app modules
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-
 from app.repository import chapter_repository
 from sqlalchemy.orm import Session
-from app.database import get_db
 from app.models.models import Book, Chapter
 from app.services.ai_service import get_openai_client
 from app.utils.model_settings import ModelSettings
-from app.utils.constants import SettingKeys
-from app.repository.base_repository import BaseRepository
 from app.repository.character_arcs_repository import CharacterArcsRepository
+from app.utils.story_extractor_utils import process_chapter_batch_for_character_arcs, consolidate_character_arcs, build_consolidated_characters, CHAPTER_BATCH_SIZE
 # Import prompt templates
-from prompts.story_extractor_prompts import (
+from app.prompts.story_extractor_prompts import (
     CHAPTER_SUMMARY_SYSTEM_PROMPT,
     CHAPTER_SUMMARY_USER_PROMPT_TEMPLATE,
     CHARACTER_ARC_EXTRACTION_SYSTEM_PROMPT,
-    CHARACTER_ARC_EXTRACTION_USER_PROMPT_TEMPLATE
 )
 
 # Set up logging
@@ -262,8 +253,9 @@ class StoryExtractor:
         return all_results
     
     async def extract_character_arcs(self) -> Dict[str, Any]:
-        """Extract character identities and their growth arcs in a single analysis pipeline"""
-        logger.info("Extracting character arcs from chapter summaries")
+        """Extract character identities and their growth arcs by processing chapters in batches"""
+        logger.info("Extracting character arcs from chapter summaries in batches")
+        
         # Step 1: Try to load character arcs from the database first
         character_arcs_repo = CharacterArcsRepository(self.db)
         db_character_arcs = character_arcs_repo.get_by_type_and_source_id('EXTRACTED', self.book_id)
@@ -273,82 +265,86 @@ class StoryExtractor:
             return db_character_arcs
         
         self.template_repo.update_character_arc_status(self.template_id, TemplateStatusEnum.IN_PROGRESS)
-        # Fallback: Load all chapter summaries from the chapters table (source_text column)
-        summaries = []
+        
+        # Step 2: Load all chapters with summaries
         chapter_repo = chapter_repository.ChapterRepository(self.db)
         chapters = chapter_repo.get_by_book_id(self.book_id)
         chapters = [ch for ch in chapters if ch.source_text]
         chapters.sort(key=lambda ch: ch.chapter_no)
-        for ch in chapters:
-            summaries.append({
-                "chapter_no": ch.chapter_no,
-                "title": ch.title,
-                "summary": ch.source_text
-            })
         
-        if not summaries:
+        if not chapters:
             logger.error("No chapter summaries found for character arc extraction")
+            self.template_repo.update_character_arc_status(self.template_id, TemplateStatusEnum.FAILED)
             return {"error": "No summaries available"}
         
-        logger.info(f"Loaded {len(summaries)} chapter summaries for character arc extraction")
+        logger.info(f"Loaded {len(chapters)} chapters with summaries for character arc extraction")
         
-        # Sort summaries by chapter number
-        summaries.sort(key=lambda x: x["chapter_no"])
-        
-        # Step 2: Combine summaries
-        combined_summary = ""
-        for summary in summaries:
-            combined_summary += f"\n\nCHAPTER {summary['chapter_no']}: {summary['title']}\n{summary['summary']}"
-        
-        # Step 3: Create prompts for character arc extraction
-        system_prompt = CHARACTER_ARC_EXTRACTION_SYSTEM_PROMPT
-        user_prompt = CHARACTER_ARC_EXTRACTION_USER_PROMPT_TEMPLATE.format(
-            book_title=self.book.title,
-            book_author=getattr(self.book, 'author', 'Unknown'),
-            combined_summary=combined_summary
-        )
+        # Step 3: Calculate number of batches needed
+        num_batches = ceil(len(chapters) / CHAPTER_BATCH_SIZE)
+        logger.info(f"Will process chapters in {num_batches} batches of {CHAPTER_BATCH_SIZE}")
         
         try:
-            # Get model and temperature from settings
-            model, temperature = self.model_settings.extracting_character_arcs()
-            logger.info(f"Making API call to extract character arcs using {model}")
-            response = self.client.chat.completions.create(
-                model=model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ],
-                temperature=temperature,
+            # Step 4: Process chapters in batches of CHAPTER_BATCH_SIZE with controlled concurrency
+            # Limit to 15 concurrent batch processing tasks
+            semaphore = asyncio.Semaphore(15)
+            
+            async def limited_batch_process(batch_num):
+                async with semaphore:
+                    logger.info(f"[START] Processing chapter batch {batch_num}/{num_batches}")
+                    start_time = time.time()
+                    result = await process_chapter_batch_for_character_arcs(
+                        chapters=chapters,
+                        batch_number=batch_num,
+                        model_settings=self.model_settings,
+                        client=self.client,
+                        system_prompt=CHARACTER_ARC_EXTRACTION_SYSTEM_PROMPT,
+                        template_book_title=self.book.title,
+                        template_author=getattr(self.book, 'author', 'Unknown')
+                    )
+                    elapsed = time.time() - start_time
+                    logger.info(f"[DONE] Chapter batch {batch_num}/{num_batches} processed in {elapsed:.2f}s")
+                    return result
+            
+            # Create tasks with controlled concurrency
+            batch_tasks = [limited_batch_process(batch_num) for batch_num in range(1, num_batches + 1)]
+            
+            # Wait for all batch processing to complete
+            logger.info("[BATCH] Starting concurrent processing of chapter batches...")
+            batch_start = time.time()
+            batch_results = await asyncio.gather(*batch_tasks)
+            batch_elapsed = time.time() - batch_start
+            logger.info(f"[BATCH] All chapter batches processed in {batch_elapsed:.2f}s")
+            logger.info(f"Completed processing {num_batches} batches of chapters")
+            
+            # Step 5: Hierarchical consolidation of character references
+            # First within mega-batches of 10 small batches (100 chapters), then across mega-batches
+            consolidated_characters = await consolidate_character_arcs(
+                character_batches=batch_results,
+                model_settings=self.model_settings,
+                client=self.client,
+                mega_batch_size=10  # Each mega-batch contains 10 small batches (100 chapters total)
             )
             
-            character_markdown_content = response.choices[0].message.content
-            print(f"character_markdown_content: {character_markdown_content}")
-            # Extract individual character files using regex pattern
-            import re
-            # Updated pattern to capture everything between FILE_START and FILE_END for each character
-            pattern = re.compile(
-                r"CHARACTER:\s*([^\n]+)\s*\n"        # name line
-                r"FILE_START\s*\n"                   # allow spaces before the newline
-                r"([\s\S]*?)"                        # block content (non-greedy)
-                r"\s*FILE_END",                      # optional spaces before FILE_END
-                re.DOTALL
-            )
+            if not consolidated_characters:
+                logger.error("No character arcs were successfully extracted")
+                self.template_repo.update_character_arc_status(self.template_id, TemplateStatusEnum.FAILED)
+                return {"error": "Failed to extract any character arcs"}
             
-            # Find all matches
-            matches = re.findall(pattern, character_markdown_content)
-            logger.info(f"Found {len(matches)} characters in the response")
-
-            # Save individual character arc in database
+            # Step 6: Save consolidated characters to the database
             character_arcs_repo = CharacterArcsRepository(self.db)
             character_arcs = []
-            role_pattern = r"## Role\n([^\n]+)"
-            for name, content in matches:
-                # Extract the role using a second regex
-                role_match = re.search(role_pattern, content)
-                role = role_match.group(1).strip() if role_match else ""
-                character_arc = character_arcs_repo.create(content=content.strip(), type='EXTRACTED', source_id=self.book_id, name=name.strip(), role=role)
-                logger.info(f"Saved character arc: {character_arc.name}")
+            
+            for char in consolidated_characters:
+                character_arc = character_arcs_repo.create(
+                    content_json=json.dumps([item.model_dump() for item in char.content_json]),  # Convert list to JSON string
+                    type='EXTRACTED', 
+                    source_id=self.book_id, 
+                    name=char.name, 
+                    role=char.role
+                )
+                logger.info(f"Saved consolidated character arc: {character_arc.name}")
                 character_arcs.append(character_arc)
+            
             self.template_repo.update_character_arc_status(self.template_id, TemplateStatusEnum.COMPLETED)
             return character_arcs
 

@@ -16,6 +16,7 @@ class TemplateService:
         # Check if a template already exists for this book_id
         existing = self.template_repo.get_by_book_id(book_id)
         if existing:
+            add_template_creation_task_to_bg_jobs(book_id, existing.id)
             return {"error": f"A template already exists for book_id {book_id}", "template_id": existing.id}
         template = self.template_repo.create(
             name=name,

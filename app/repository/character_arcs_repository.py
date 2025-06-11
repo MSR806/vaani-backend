@@ -10,9 +10,10 @@ class CharacterArcsRepository(BaseRepository[CharacterArc]):
         super().__init__(db)
 
     @rollback_on_exception
-    def create(self, content: str, type: str, source_id: int, name: str = None, role: str = None, archetype: str = None) -> CharacterArc:
+    def create(self, type: str, source_id: int, name: str = None, role: str = None, archetype: str = None, content_json: str = None) -> CharacterArc:
         arc = CharacterArc(
-            content=content,
+            content="",
+            content_json=content_json,
             type=type,
             source_id=source_id,
             name=name,
