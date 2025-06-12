@@ -50,7 +50,13 @@ class CharacterArcNameGroups(BaseModel):
     groups: List[CharacterArcNameGroup]
 
 
+# Content JSON Structure Schema
+class CharacterArcContentJSON(BaseModel):
+    chapter_range_content: List[CharacterArcContent]
+    blood_relations: Optional[str] = ""
+
+
 class CharacterArc(BaseModel):
     name: str
     role: Optional[str] = ""
-    content_json: List[CharacterArcContent]  # JSON string containing list of CharacterArcContent
+    content_json: CharacterArcContentJSON

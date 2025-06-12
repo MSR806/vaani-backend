@@ -15,7 +15,7 @@ from app.models.models import Book, Chapter
 from app.services.ai_service import get_openai_client
 from app.utils.model_settings import ModelSettings
 from app.repository.character_arcs_repository import CharacterArcsRepository
-from app.utils.story_extractor_utils import process_chapter_batch_for_character_arcs, consolidate_character_arcs, build_consolidated_characters, CHAPTER_BATCH_SIZE
+from app.utils.story_extractor_utils import process_chapter_batch_for_character_arcs, consolidate_character_arcs, CHAPTER_BATCH_SIZE
 # Import prompt templates
 from app.prompts.story_extractor_prompts import (
     CHAPTER_SUMMARY_SYSTEM_PROMPT,
@@ -335,8 +335,10 @@ class StoryExtractor:
             character_arcs = []
             
             for char in consolidated_characters:
+                logger.info(f"Saving consolidated character arc: {char.name} | {char.role}")
+                # Convert Pydantic model to dict before serializing to JSON
                 character_arc = character_arcs_repo.create(
-                    content_json=json.dumps([item.model_dump() for item in char.content_json]),  # Convert list to JSON string
+                    content_json=json.dumps(char.content_json.model_dump()),  # Convert Pydantic model to dict then JSON
                     type='EXTRACTED', 
                     source_id=self.book_id, 
                     name=char.name, 

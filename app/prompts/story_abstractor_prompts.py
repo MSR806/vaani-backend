@@ -9,6 +9,17 @@ CHARACTER_ARC_SYSTEM_PROMPT = (
     "BDSM roles/relations, and power dynamics."
 )
 
+# Blood Relations Abstraction Prompts
+BLOOD_RELATIONS_SYSTEM_PROMPT = (
+    "Replace character names with their abstract IDs in blood relations. Respond ONLY with the exact format requested and nothing else."
+)
+
+BLOOD_RELATIONS_USER_PROMPT = (
+    "Mappings:\n{character_mappings}\n\n"
+    "Blood Relations:\n{blood_relations}\n\n"
+    "Replace names with IDs. Format: 'RelationType: ID'. If none, return only 'None'. Return nothing else - no explanations or extra text."
+)
+
 CHARACTER_ARC_SINGLE_USER_PROMPT = (
     "Transform the following character analysis into a generalized character arc template.\n\n"
     "Character name mappings:\n{character_mappings}\n\n"

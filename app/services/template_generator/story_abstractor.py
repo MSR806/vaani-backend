@@ -16,7 +16,7 @@ from app.repository.character_arcs_repository import CharacterArcsRepository
 from app.repository.plot_beat_repository import PlotBeatRepository
 from app.repository.template_repository import TemplateRepository
 from app.utils.story_abstractor_utils import process_character_abstractions
-from app.schemas.character_arcs import CharacterArc, CharacterArcContent
+from app.schemas.character_arcs import CharacterArc, CharacterArcContentJSON
 from app.models.models import CharacterArc as CharacterArcModel
 
 # Set up logging
@@ -87,36 +87,33 @@ class StoryAbstractor:
         
         character_arc_objects = []
         for arc in character_arcs:
-            character_arc_objects.append(CharacterArc(name=arc.name, role=arc.role, content_json=[CharacterArcContent(**json.loads(item)) for item in arc.content_json]))
+            character_arc_objects.append(CharacterArc(name=arc.name, role=arc.role, content_json=CharacterArcContentJSON(**arc.content_json)))
             
         logger.info(f"Async abstracting {len(character_arcs)} character arcs")
         
         model, temperature = self.model_settings.character_arc_template()
         try:
             # Use the new process_character_abstractions utility function
-            abstraction_results = await process_character_abstractions(
+            character_abstractions = await process_character_abstractions(
                 character_arc_objects, 
                 self.client, 
                 model, 
                 temperature
             )
             
-            # Save the abstracted character arcs to the database
-            character_abstractions = abstraction_results
-            
             # Convert results to match the expected output format of this function
             results = {}
             for abstraction in character_abstractions:
                 # Convert content_json to string if it's not already
                 name = abstraction.get("name", "") # original_name of the character arc
-                content_json = abstraction.get("content_json", [])
+                content_json = abstraction.get("content_json", {})
                 archetype = abstraction.get("abstract_name", "") # abstract_name of the character arc
                 role = ""
 
                 # Extract role if available from the first segment
                 if content_json:
                     # Check the first segment for a role line
-                    first_segment = content_json[0]
+                    first_segment = content_json.get("chapter_range_content", [{}])[0]
                     content = first_segment.get("content", "")
                     lines = content.split("\n")
                     for line in lines:

@@ -136,3 +136,31 @@ For example:
 
 Only return the JSON object with the 'groups' field as shown above, nothing else.
 """
+
+# Blood Relations Consolidation Prompts
+BLOOD_RELATIONS_CONSOLIDATION_SYSTEM_PROMPT = (
+    "You are a literary assistant specializing in accurately consolidating family relationship information. "
+    "Your task is to analyze different blood relations descriptions for the same character and create a minimal "
+    "list of blood relations with no extra descriptions or explanations."
+)
+
+BLOOD_RELATIONS_CONSOLIDATION_PROMPT_TEMPLATE = """
+I need to consolidate blood relations information for a character named {character_name}.
+
+Below are different descriptions of this character's blood relations from different parts of the text:
+
+```
+{blood_relations_texts}
+```
+
+Please create an extremely minimal list of this character's blood relations. Follow these rules:
+1. Use the shortest possible description for each relation (e.g., "Father: James" not "Father: James, a tall businessman who...").
+2. Include only the relation type and name, separated by a colon (e.g., "Mother: Sarah").
+3. List each relation on its own line.
+4. Do not include any descriptive text, explanations, or anecdotal information.
+5. IMPORTANT: DO NOT include any relations where the name is unknown. Only include relations with actual names.
+6. If there are contradictions, choose the most likely correct name without noting the contradiction.
+7. If there's no blood relations information or all relations are unknown (empty or states 'None'), return 'None'.
+
+Return ONLY the minimal list of blood relations, nothing else.
+"""
