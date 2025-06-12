@@ -33,7 +33,7 @@ class CharacterArcRead(BaseModel):
 class CharacterArcContent(BaseModel):
     chapter_range: List[int]
     content: str
-    blood_relations: str
+    blood_relations: Optional[str] = ""
 
 
 class CharacterReference(BaseModel):
@@ -54,6 +54,8 @@ class CharacterArcNameGroups(BaseModel):
 class CharacterArcContentJSON(BaseModel):
     chapter_range_content: List[CharacterArcContent]
     blood_relations: Optional[str] = ""
+    gender_age: Optional[str] = ""
+    description: Optional[str] = ""
 
 
 class CharacterArc(BaseModel):

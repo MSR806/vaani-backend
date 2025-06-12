@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, LargeBinary, BigInteger, Enum, ARRAY
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, LargeBinary, BigInteger, Enum, ARRAY, JSON
 from sqlalchemy.orm import relationship
 from ..database import Base
 from .enums import StoryboardStatus, PromptSource
@@ -8,7 +8,7 @@ class CharacterArc(Base):
     __tablename__ = "character_arcs"
     id = Column(Integer, primary_key=True, autoincrement=True)
     content = Column(Text, nullable=False)  # Deprecated - Keeping for backward compatibility
-    content_json = Column('content_json', Text, nullable=True)  # JSON array of {chapter_range: [start, end], content: string}
+    content_json = Column('content_json', JSON, nullable=True)  # JSON array of {chapter_range: [start, end], content: string}
     type = Column(Text, nullable=False)
     source_id = Column(Integer, nullable=True)
     name = Column(Text, nullable=True)

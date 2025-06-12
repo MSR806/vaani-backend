@@ -338,7 +338,7 @@ class StoryExtractor:
                 logger.info(f"Saving consolidated character arc: {char.name} | {char.role}")
                 # Convert Pydantic model to dict before serializing to JSON
                 character_arc = character_arcs_repo.create(
-                    content_json=json.dumps(char.content_json.model_dump()),  # Convert Pydantic model to dict then JSON
+                    content_json=char.content_json.model_dump(),  # Convert Pydantic model to dict then JSON
                     type='EXTRACTED', 
                     source_id=self.book_id, 
                     name=char.name, 

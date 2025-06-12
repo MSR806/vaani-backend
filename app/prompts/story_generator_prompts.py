@@ -7,12 +7,12 @@ This file contains system and user prompt templates for character arc and plot b
 # Character Arc Generation Prompts
 CHARACTER_ARC_SYSTEM_PROMPT = (
     "You are a literary analysis expert specializing in character development arcs. "
-    "Your task is to create an ensemble of characters for a story based on multiple character templates. "
-    "For each character, create a detailed character arc following the exact format provided. "
-    "Make sure the characters form a cohesive ensemble and have meaningful interactions with each other. "
+    "Your task is to create a character arc for a story based on character template provided. "
+    "Create a detailed character arc following the exact format provided. "
+    "In the charcter arc template the charcters are referred with thier id, ex. char_1, char_2, char_3 etc. Replace the character id with the name of the character using the character mappings provided."
     "IMPORTANT: No details should be missed - capture all relationship dynamics, sexual elements, BDSM roles, and power dynamics. "
     "For protagonists and antagonists, keep relationship descriptions brief and focused on key dynamics."
-    "Assign new names to the characters, if not provided by the user, do not use the names from the character arc templates."
+    "If any world setting is provided, make sure the character arc is consistent with the world setting."
 )
 
 CHARACTER_ARC_USER_PROMPT_TEMPLATE = """
@@ -21,16 +21,17 @@ CHARACTER_ARC_USER_PROMPT_TEMPLATE = """
 ## Story Prompt:
 {prompt}
 
-## Available Character Templates:
-{character_templates}
+## Character Arc Template:
+{character_arc_template}
+
+## Character Mappings:
+{character_mappings}
 
 ## Task:
-Create unique and interesting characters for this story, ensuring they form a cohesive ensemble.
-Each character should follow one of the provided character arc templates.
-IMPORTANT: You must generate characters for all the characters arc templates which are provided above, do not skip any character.
+Create unique and interesting character arc for this story, ensuring they form a cohesive ensemble.
+Character arc should follow the character arc template provided.
 
-For each character, create a separate, well-formatted markdown file following this EXACT structure:
-```markdown
+Output format:
 # [Character Name] - Character Arc
 
 ## Description
@@ -47,8 +48,10 @@ For each character, create a separate, well-formatted markdown file following th
 - Main relationship type (romantic, antagonistic, etc.)
 - Sexual dynamics if present
 - BDSM roles/relations if applicable
-- Blood relationships if applicable]
 Format: [Character Name] - [Brief Description of the character's key relationships]
+
+## Blood Relationships
+[Detailed Description of the character's blood relationships with other characters]
 
 For other characters: Provide a basic description of the character's role in the story.
 
@@ -57,31 +60,88 @@ For other characters: Provide a basic description of the character's role in the
 
 ## Motivation
 [Detailed Description of the character's core drives and desires throughout the story]
-```
 
 IMPORTANT REQUIREMENTS:
-1. Follow the EXACT structure above - no additional sections
+1. Follow the EXACT structure above - no additional sections other than the ones provided above
 2. NO details should be missed which are in the character arc template - capture everything
 3. Include ALL relationship dynamics
 4. Include ALL sexual elements and BDSM roles
 5. Include ALL power dynamics
 6. Keep protagonist/antagonist relationships detailed
 7. Keep supporting character descriptions basic
-8. Maintain consistency with other characters' relationships
+"""
 
-Format your output as follows to allow me to easily extract each character's analysis:
+# Character Arc Evolution Prompts
+CHARACTER_ARC_EVOLUTION_USER_PROMPT_TEMPLATE = """
+# Character Arc Evolution Task
 
-CHARACTER: [Character Name 1]
-FILE_START
-[Complete markdown document for Character 1 following the structure above]
-FILE_END
+## Story Prompt:
+{prompt}
 
-CHARACTER: [Character Name 2]
-FILE_START
-[Complete markdown document for Character 2 following the structure above]
-FILE_END
+## Previous Character Arc:
+{previous_character_arc}
 
-And so on for each character...
+## Character Arc Template for Current Chapter Range:
+{character_arc_template}
+
+## Character Mappings:
+{character_mappings}
+
+## Task:
+Create a COMPLETE and SELF-CONTAINED character arc for the current chapter range that can stand independently while maintaining consistency with previous characterization.
+
+## Dual Purpose Guidelines:
+1. SELF-CONTAINED - The character arc MUST:
+   - Include ALL essential character information needed for this chapter range
+   - Provide COMPLETE descriptions of personality, relationships, and motivations
+   - Be usable for story generation WITHOUT reference to previous arcs
+   - Contain sufficient context about the character's current state
+
+2. CONSISTENT FOUNDATION - While ensuring the arc is self-contained, maintain consistency in:
+   - Core identity (name, gender, age)
+   - Origin/background story
+   - Blood relationships
+   - Basic physical attributes
+   - Professional skills/expertise
+
+3. CURRENT DEVELOPMENT - Prioritize:
+   - Character's current state appropriate to this chapter range
+   - Recent developments in relationships and motivations
+   - Present emotional state and goals
+   - Natural evolution based on story events
+
+Note: Current character's role in the template can be different from the previous arc. Ex. Male Antagonist can become Male Protagonist.
+
+Output format:
+# [Character Name] - Character Arc
+
+## Description
+[Complete description of the character as they exist in the current chapter range]
+
+## Role
+[Clear statement of the character's role]
+
+## Gender and age
+[Gender and age information]
+
+## Key Relationships
+[Comprehensive description of current relationships]
+
+## Blood Relationships
+[Complete information on blood relationships]
+
+## Power Dynamics
+[Current power dynamics in this chapter range]
+
+## Motivation
+[Complete description of the character's present motivations]
+
+IMPORTANT REQUIREMENTS:
+1. Follow the EXACT structure above
+2. Ensure the arc is COMPLETE and can stand independently
+3. Include ALL essential information needed for this chapter range
+4. Maintain consistency with previous characterization while focusing on current development
+5. The character arc must be immediately usable for story generation WITHOUT requiring previous arcs
 """
 
 # Plot Beat Generation Prompts
@@ -172,3 +232,16 @@ Chapter Summary:
 {plot_beat_content}
 
 Return only the character IDs in a structured format."""
+
+# Character Name Generation Prompt
+CHARACTER_NAME_GENERATION_PROMPT = (
+    "Generate realistic character names based on the following character templates.\n\n"
+    "## Story Prompt:\n{prompt}\n\n"
+    "Create names that would be appropriate for these characters. Consider the story prompt to ensure the names fit the story's setting, time period, and cultural context.\n"
+    "Be creative but realistic - avoid fantasy names unless the character's description or story prompt explicitly suggests a fantasy setting.\n\n"
+    "Character templates:\n{character_templates}\n\n"
+    "Output format (IMPORTANT - return only the name mappings, nothing else):\n"
+    "char_1 -> [Generated Name 1]\n"
+    "char_2 -> [Generated Name 2]\n"
+    "...\n"
+)

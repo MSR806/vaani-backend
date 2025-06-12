@@ -43,6 +43,7 @@ async def abstract_blood_relations_with_llm(
     """
     # Return None if there are no blood relations
     if not blood_relations or blood_relations == "None":
+        logger.info(f"No blood relations found for {original_name}")
         return "None"
     
     system_prompt = BLOOD_RELATIONS_SYSTEM_PROMPT
@@ -55,6 +56,7 @@ async def abstract_blood_relations_with_llm(
         character_mappings=character_mappings_text,
         blood_relations=blood_relations
     )
+    logger.info(f"User prompt for blood relations abstraction:\n{user_prompt}")
     
     try:
         # Make the API call

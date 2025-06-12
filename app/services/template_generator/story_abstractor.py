@@ -109,16 +109,55 @@ class StoryAbstractor:
                 content_json = abstraction.get("content_json", {})
                 archetype = abstraction.get("abstract_name", "") # abstract_name of the character arc
                 role = ""
+                gender_age = ""
+                description = ""
 
-                # Extract role if available from the first segment
+                # Extract role and gender/age if available from the first segment
                 if content_json:
-                    # Check the first segment for a role line
+                    # Check the first segment for required sections
                     first_segment = content_json.get("chapter_range_content", [{}])[0]
                     content = first_segment.get("content", "")
                     lines = content.split("\n")
+                    
+                    # Extract role from header
                     for line in lines:
                         if line.startswith("# ") and " - " in line:
                             role = line.split(" - ")[0][2:].strip()
+                            break
+                    
+                    # Extract gender and age
+                    for i, line in enumerate(lines):
+                        if line.strip() == "## Gender and age":
+                            # Get content from the next line if available
+                            if i + 1 < len(lines):
+                                gender_age = lines[i + 1].strip()
+                                # Update content_json with gender and age information
+                                if first_segment.get("gender_age") is None:
+                                    first_segment["gender_age"] = gender_age
+                                content_json["gender_age"] = gender_age
+                            break
+                    
+                    # Extract description
+                    for i, line in enumerate(lines):
+                        if line.strip() == "## Description":
+                            # Get content from the next line if available
+                            if i + 1 < len(lines):
+                                # Find the end of the description (next ## section or end of content)
+                                desc_start = i + 1
+                                desc_end = desc_start
+                                for j in range(desc_start + 1, len(lines)):
+                                    if lines[j].startswith("##"):
+                                        desc_end = j - 1
+                                        break
+                                    desc_end = j
+                                
+                                # Join all description lines
+                                description = "\n".join(lines[desc_start:desc_end + 1]).strip()
+                                
+                                # Update content_json with description information
+                                if first_segment.get("description") is None:
+                                    first_segment["description"] = description
+                                content_json["description"] = description
                             break
                 
                 # Save to database
@@ -126,7 +165,7 @@ class StoryAbstractor:
                     name=name,
                     type="TEMPLATE",
                     source_id=self.template_id,
-                    content_json=json.dumps(content_json),
+                    content_json=content_json,
                     role=role,
                     archetype=archetype
                 )

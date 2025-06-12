@@ -2,19 +2,22 @@
 import re
 import logging
 from sqlalchemy.orm import Session
+import traceback
+import json
+import asyncio
 
 # Import from app services
 from app.services.ai_service import get_openai_client
 from app.repository.storyboard_repository import StoryboardRepository
 from app.repository.character_arcs_repository import CharacterArcsRepository
 from app.utils.model_settings import ModelSettings
-from app.utils.constants import SettingKeys
 from app.models.enums import StoryboardStatus
+from app.schemas.character_arcs import CharacterArcContentJSON
+from app.utils.character_arc_utils import process_character_arcs
 
 # Import prompt templates
 from app.prompts.story_generator_prompts import (
-    CHARACTER_ARC_SYSTEM_PROMPT,
-    CHARACTER_ARC_USER_PROMPT_TEMPLATE
+    CHARACTER_NAME_GENERATION_PROMPT
 )
 
 logger = logging.getLogger(__name__)
@@ -44,76 +47,111 @@ class CharacterArcGenerator:
         if self.storyboard:
             self.character_arc_templates = self.character_arc_repo.get_by_type_and_source_id("TEMPLATE", self.storyboard.template_id)
     
-    def _extract_character_arcs_from_content(self, character_markdown_content: str) -> tuple:
-        # Extract individual character files using regex pattern
-        pattern = r"CHARACTER:\s*([^\n]+)\s*\nFILE_START\s*\n([\s\S]*?)\nFILE_END"
-        matches = re.findall(pattern, character_markdown_content)
-        
-        logger.info(f"Found {len(matches)} character matches in the generated content")
-        
-        # Process all character sections at once
-        character_arcs_data = []
-        
-        for name, content in matches:
-            character_name = name.strip()
-            character_content = content.strip()
-            
-            # Extract role from content
-            role_pattern = r"## Role\s*\n([^#]*?)\n##"
-            role_match = re.search(role_pattern, character_content)
-            character_role = role_match.group(1).strip() if role_match else "Unknown"
-            
-            # Remove markdown code block delimiters if present
-            character_content = re.sub(r'^```markdown\n', '', character_content)
-            character_content = re.sub(r'\n```$', '', character_content)
-            character_content = re.sub(r'^```\n', '', character_content)
-            character_content = character_content.strip()
-                
-            # Add to batch data
-            character_arcs_data.append({
-                'content': character_content,
-                'type': "STORYBOARD",
-                'source_id': self.storyboard_id,
-                'name': character_name,
-                'role': character_role
+    async def generate_character_names(self):
+        """Generate character names using the AI client"""
+        character_template_names = []
+        for character_arc in self.character_arc_templates:
+            logger.info(f"Processing character arc: {character_arc.archetype}")
+            content_json = CharacterArcContentJSON(**character_arc.content_json)
+            character_template_names.append({
+                "name": character_arc.archetype,
+                "role": character_arc.role,
+                "blood_relations": content_json.blood_relations,
+                "gender_age": content_json.gender_age,
+                "description": content_json.description
             })
             
-        return character_arcs_data
-    
+        if not character_template_names:
+            logger.warning("No character templates found")
+            return {}
+        
+        # Format the character templates for the prompt
+        template_strings = []
+        for char in character_template_names:
+            template_str = f"{char['name']}:\n"
+            template_str += f"Role: {char['role']}\n"
+            template_str += f"Gender and age: {char['gender_age']}\n"
+            template_str += f"Description: {char['description']}\n"
+            template_strings.append(template_str)
+        
+        # Get the story prompt from the storyboard
+        story_prompt = self.storyboard.prompt if hasattr(self, "storyboard") and self.storyboard else "Generate character names appropriate for a Billionare romance genre for web fiction."
+        
+        # Prepare the prompt with all character templates
+        prompt = CHARACTER_NAME_GENERATION_PROMPT.format(
+            character_templates="\n\n".join(template_strings),
+            prompt=story_prompt
+        )
+        
+        try:
+            model, temperature = self.model_settings.character_arc_generation()
+            client = get_openai_client(model)
+            
+            # Call the AI model in a separate thread to avoid blocking the event loop
+            response = await asyncio.to_thread(
+                client.chat.completions.create,
+                model=model,
+                messages=[{"role": "system", "content": "You are a creative writer's assistant who creates realistic character names based on character descriptions."},
+                         {"role": "user", "content": prompt}],
+                temperature=temperature
+            )
+            
+            name_mappings = response.choices[0].message.content.strip()
+            
+            logger.info(f"Generated character names: {name_mappings}")
+            return name_mappings
+            
+        except Exception as e:
+            logger.error(f"Error generating character names: {str(e)} {traceback.format_exc()}")
+            return {}
+        
     async def generate_character_arcs(self):
         """Generate character arcs using the AI client"""
         if not self.client:
             raise ValueError("AI client not initialized")
-        
-        character_templates_str = "\n\n".join([f"### Template {i}:\n{template.content}" for i, template in enumerate(self.character_arc_templates)])
         
         try:
             # Get model and temperature from settings
             model, temperature = self.model_settings.character_arc_generation()
             client = get_openai_client(model)
             
-            response = client.chat.completions.create(
+            # Get character name mappings as string
+            character_names_string = await self.generate_character_names()
+            
+            if not character_names_string:
+                logger.error("No character names generated")
+                return
+                
+            logger.info(f"Generated character names: {character_names_string}")
+            
+            # Process character arcs using the utility function - pass the raw string
+            character_arcs = await process_character_arcs(
+                character_templates=self.character_arc_templates,
+                character_mappings=character_names_string,  # Updated parameter name
+                story_prompt=self.storyboard.prompt,
+                client=client,
                 model=model,
-                messages=[
-                    {"role": "system", "content": CHARACTER_ARC_SYSTEM_PROMPT},
-                    {"role": "user", "content": CHARACTER_ARC_USER_PROMPT_TEMPLATE.format(prompt=self.storyboard.prompt, character_templates=character_templates_str)}
-                ],
-                temperature=temperature,
+                temperature=temperature
             )
             
-            # Extract and process character arcs from the generated content
-            character_arcs_data = self._extract_character_arcs_from_content(response.choices[0].message.content)
-            
-            # Save all character arcs to the database in a single transaction
-            if character_arcs_data:
+            # Save all character arcs to the database
+            if character_arcs:
+                # Convert CharacterArc objects to dictionaries for database storage
+                character_arcs_data = [{
+                    'name': arc.name,
+                    'role': arc.role,
+                    'type': 'STORYBOARD',
+                    'source_id': self.storyboard_id,
+                    'content_json': arc.content_json.model_dump()
+                } for arc in character_arcs]
+                
                 self.character_arc_repo.batch_create(character_arcs_data)
                 logger.info(f"Stored {len(character_arcs_data)} character arcs in batch operation")
             else:
                 logger.error("No character arcs generated")
                 
-            
         except Exception as e:
-            logger.error(f"Error generating character arcs: {str(e)}")
+            logger.error(f"Error generating character arcs: {str(e)} {traceback.format_exc()}")
                 
         logger.info("Character arc generation completed")
     
