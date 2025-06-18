@@ -36,7 +36,8 @@ class CharacterArcsRepository(BaseRepository[CharacterArc]):
                 type=arc_data['type'],
                 source_id=arc_data['source_id'],
                 name=arc_data['name'],
-                role=arc_data.get('role')
+                role=arc_data.get('role'),
+                archetype=arc_data.get('archetype')
             )
             self.db.add(arc)
             created_arcs.append(arc)

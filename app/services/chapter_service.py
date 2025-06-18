@@ -1,26 +1,26 @@
+import time
+import json
+from typing import List
+from fastapi.responses import StreamingResponse
+from bs4 import BeautifulSoup
 import logging
+
 from app.prompts.scenes import SCENE_GENERATION_SYSTEM_PROMPT_V1
 from app.prompts.chapters import CHAPTER_GENERATION_FROM_SCENE_SYSTEM_PROMPT_V1
 from app.services.character_arc_service import CharacterArcService
 from sqlalchemy.orm import Session
-from ..models.models import Chapter, Book, Scene
-from bs4 import BeautifulSoup
-import re
-from ..schemas.schemas import (
+from app.models.models import Chapter, Book, Scene
+from app.schemas.schemas import (
     ChapterCreate,
     ChapterUpdate,
-    ChapterOutlineResponse,
     ChapterGenerateRequest,
     SceneOutlineResponse,
 )
-from ..services.ai_service import get_openai_client
+from app.services.ai_service import get_openai_client
 from fastapi import HTTPException
-import json
-from typing import List
-from fastapi.responses import StreamingResponse
-from ..services.setting_service import get_setting_by_key
+from app.services.setting_service import get_setting_by_key
 from app.prompts import format_prompt
-import time
+from app.utils.story_generator_utils import get_character_arcs_content_by_chapter_id
 
 logger = logging.getLogger(__name__)
 
@@ -251,10 +251,13 @@ async def generate_chapter_outline(
         )
 
         character_arc_service = CharacterArcService(db)
-        character_arcs = character_arc_service.get_character_arcs_by_book_id(book_id)
-        character_arcs = [arc for arc in character_arcs if arc.id in chapter.character_ids]
+        character_arcs_models = character_arc_service.get_character_arcs_by_book_id(book_id)
+        logger.info(f"Found {len(character_arcs_models)} character arcs for book {book_id}")
+        character_arcs = get_character_arcs_content_by_chapter_id(character_arcs_models, chapter.chapter_no)
+        logger.info(f"Found {len(character_arcs)} character arcs for chapter {chapter.chapter_no}")
+        character_arcs = [(arc[0], arc[1]) for arc in character_arcs if arc[2] in chapter.character_ids]
         # log character names
-        logger.info(f"Considering only {len(character_arcs)} character arcs: {', '.join([arc.name for arc in character_arcs])}")
+        logger.info(f"Considering only {len(character_arcs)} character arcs: {', '.join([arc[0] for arc in character_arcs])}")
 
         print(system_prompt)
         
@@ -262,7 +265,7 @@ async def generate_chapter_outline(
         if character_arcs:
             character_arcs_content = "\n            -------- Character Arcs--------\n"
             for arc in character_arcs:
-                character_arcs_content += f"{arc.content}\n\n"
+                character_arcs_content += f"{arc[1]}\n\n"
         
         chapter_source_text = ""
         if chapter.source_text:
@@ -411,16 +414,17 @@ async def stream_chapter_content(
         )
     
     character_arc_service = CharacterArcService(db)
-    character_arcs = character_arc_service.get_character_arcs_by_book_id(book_id)
-    character_arcs = [arc for arc in character_arcs if arc.id in chapter.character_ids]
+    character_arcs_models = character_arc_service.get_character_arcs_by_book_id(book_id)
+    character_arcs = get_character_arcs_content_by_chapter_id(character_arcs_models, chapter.chapter_no)
+    character_arcs = [(arc[0], arc[1]) for arc in character_arcs if arc[2] in chapter.character_ids]
     # log character names
-    logger.info(f"Considering only {len(character_arcs)} character arcs: {', '.join([arc.name for arc in character_arcs])}")
+    logger.info(f"Considering only {len(character_arcs)} character arcs: {', '.join([arc[0] for arc in character_arcs])}")
     
     character_arcs_content = ""
     if character_arcs:
         character_arcs_content = "\n            -------- Character Arcs--------\n"
         for arc in character_arcs:
-            character_arcs_content += f"{arc.content}\n\n"
+            character_arcs_content += f"{arc[1]}\n\n"
 
     # Prepare the messages for GPT
     system_prompt = format_prompt(

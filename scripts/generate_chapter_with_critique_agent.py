@@ -16,10 +16,10 @@ headers = {
 }
 
 # Hardcoded book ID - update as needed
-BOOK_ID = 22
+BOOK_ID = 59
 
 # Chapters to process - update as needed
-CHAPTERS_TO_PROCESS = [x for x in range(17, 60 + 1)] 
+CHAPTERS_TO_PROCESS = [x for x in range(11, 20 + 1)] 
 
 # Whether to update the chapter content in the database
 UPDATE_DATABASE = True

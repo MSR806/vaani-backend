@@ -8,6 +8,7 @@ CHARACTER_ARC_EXTRACTION_SYSTEM_PROMPT = (
     "extract their background, status, relationships, power dynamics, sexual relationship/attraction, BDSM roles/relations with other characters, and any other relevant details. "
     "Also preserve the nature of the profession or social status of the character. Ex. Very big CEO, rich man, ordinary, small job, etc."
     "For protagonists and antagonists, keep relationship descriptions brief and focused on key dynamics. "
+    "Preserve all the background related details like profession, social status, appearance, backstory, interpersonal relationships, etc."
     "IMPORTANT: Only include characters who have explicit proper names in the text. Do not include unnamed characters."
 )
 
@@ -75,8 +76,10 @@ And so on for each important character...
 
 CHAPTER_SUMMARY_SYSTEM_PROMPT = (
     "You are a literary assistant specializing in precise chapter summarization. "
-    "Your task is to create a concise summary of the chapter that captures all key story elements. "
-    "Focus on preserving plot points, character actions, and significant developments, sexual relationship/attraction, sexual events, BDSM roles/relations and power dynamics, etc."
+    "Your task is to create a detailed summary of the chapter that captures all key story elements, background and context. "
+    "Preserve plot points, character actions, and significant developments, sexual relationship/attraction, sexual events, BDSM roles/relations and power dynamics, etc."
+    "Preserve all the power dynamics, professional details, social status elements if any present"
+    "Try to extract as many details as possible"
     "Your summary should maintain the narrative flow while condensing the content."
 )
 
@@ -94,15 +97,7 @@ Chapter Number: {chapter_number}
 
 ## Summarization Instructions
 
-Please create a concise but comprehensive summary of this chapter that:
-
-1. Captures all key plot events in chronological order
-2. Identifies all characters who appear and their actions
-3. Preserves important dialogue and interactions
-4. Notes any character development or emotional changes
-5. Preserves sexual relationship/attraction, sexual events and BDSM roles/relations and power dynamics, etc.
-
-Aim for a summary that is approximately 15-20% of the original length while ensuring everthing above is retained."""
+Please create a detailed but comprehensive summary of this chapter"""
 
 # Character Consolidation Prompts
 CHARACTER_CONSOLIDATION_SYSTEM_PROMPT = (
@@ -113,7 +108,7 @@ CHARACTER_CONSOLIDATION_SYSTEM_PROMPT = (
 
 CHARACTER_CONSOLIDATION_PROMPT_TEMPLATE = """
 I need to consolidate character references from different parts of a book. 
-Below are references to characters that may be the same person but with slightly different names.
+Below are references to characters that may be the same person.
 
 {character_references}
 

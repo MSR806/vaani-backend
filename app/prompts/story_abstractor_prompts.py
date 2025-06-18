@@ -6,7 +6,7 @@ CHARACTER_ARC_SYSTEM_PROMPT = (
     "Your task is to transform a specific character's details into a generalized, "
     "reusable template by abstracting away specific details while preserving the "
     "personality traits, relationships, and dynamics including sexual relationships, "
-    "BDSM roles/relations, and power dynamics."
+    "BDSM roles/relations, and power dynamics. Never abstract details like Father, Mother, Sister, Brother, husband, wife, son, daughter, grandmother, grandfather, etc."
 )
 
 # Blood Relations Abstraction Prompts
@@ -68,24 +68,23 @@ CHARACTER_ARC_SINGLE_USER_PROMPT = (
 # Plot Beats Abstraction Prompts
 PLOT_BEATS_SYSTEM_PROMPT = (
     "You are a narrative structure expert specializing in plot abstraction. "
-    "Your task is to transform chapter summaries into a generalized, "
-    "reusable narrative skeleton by abstracting away specific details while "
-    "preserving the narrative flow, emotional impact, and all relationship dynamics "
-    "including sexual content, BDSM elements, and power dynamics. "
-    "Abstract specific sensory or concrete details (e.g., objects, colors, brand names) into general terms, while preserving the emotional tone and core narrative events."
+    "Your task is to abstract world setting from chapter summaries if any, by preserving all other details. "
+    "Preserve the narrative flow, emotional impact, and all relationship dynamics "
+    "including sexual content, BDSM elements, and power dynamics, dramatic events, etc."
 )
 
 PLOT_BEATS_USER_PROMPT_TEMPLATE = (
-    "Transform the following chapter summaries into a generalized narrative skeleton:\n\n"
+    "Transform the following chapter summaries:\n\n"
     "{content}\n\n"
     "Follow these guidelines:\n"
     "1. Replace specific character names with the corresponding numbered identifiers (char_1, char_2, etc.)\n"
-    "2. Preserve the emotional trajectory and narrative momentum\n"
-    "3. Preserve the main genre as Romance, sub genre and trope. Ex: Billionare Romance, Mafia Romance, Contract Marriage, Slow burn Romance, etc.\n"
-    "4. Preserve ALL relationship dynamics including sexual relationships/attraction, sexual events, BDSM roles/relations, and power dynamics\n"
-    "5. Preserve any timeline related details like time of day, date, 3 weeks later, 6 months later, etc.\n"
-    "6. Always preserve any professional details like transformation, job, etc.\n"
-    "7. Create a cohesive narrative flow that maintains the original sequence of events\n\n"
+    "2. Remove any chapter numbers or chapter titles\n"
+    "3. Preserve the emotional trajectory and narrative momentum\n"
+    "4. Preserve the main genre as Romance, sub genre and trope. Ex: Billionare Romance, Mafia Romance, Contract Marriage, Slow burn Romance, etc.\n"
+    "5. Preserve ALL relationship dynamics including sexual relationships/attraction, sexual events, BDSM roles/relations, and power dynamics, dramatic events, etc.\n"
+    "6. Preserve any timeline related details like time of day, date, 3 weeks later, 6 months later, etc.\n"
+    "7. Always preserve any professional details like transformation, job, etc.\n"
+    "8. Create a cohesive narrative flow that maintains the original sequence of events\n\n"
     "{character_map_text}\n"
     "Format the output as a markdown document with paragraphs that follow the narrative flow.\n\n"
     "IMPORTANT: Do NOT wrap your response in markdown code blocks. Do not include ```markdown or ``` tags anywhere in your response."

@@ -61,4 +61,5 @@ class CharacterArcContentJSON(BaseModel):
 class CharacterArc(BaseModel):
     name: str
     role: Optional[str] = ""
+    archetype: Optional[str] = ""
     content_json: CharacterArcContentJSON

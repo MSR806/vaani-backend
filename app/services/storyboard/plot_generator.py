@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 import logging
+import asyncio
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Tuple
 from pydantic import BaseModel
 
 # Import from app services
@@ -11,9 +12,8 @@ from app.models.enums import StoryboardStatus
 from app.repository.storyboard_repository import StoryboardRepository
 from app.repository.character_arcs_repository import CharacterArcsRepository
 from app.repository.plot_beat_repository import PlotBeatRepository
-from app.services.setting_service import get_setting_by_key
-from app.utils.constants import SettingKeys
 from app.utils.model_settings import ModelSettings
+from app.utils.story_generator_utils import get_character_arcs_content_by_chapter_id
 # Import prompt templates
 from prompts.story_generator_prompts import (
     PLOT_BEAT_SYSTEM_PROMPT,
@@ -72,14 +72,16 @@ class PlotBeatGenerator:
             model, temperature = self.model_settings.character_identification()
             client = get_openai_client(model)
 
-            completion = client.beta.chat.completions.parse(
+            # Use asyncio.to_thread for this synchronous call as well
+            completion = await asyncio.to_thread(
+                client.beta.chat.completions.parse,
                 model=model,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
                 ],
                 temperature=temperature,
-                response_format=CharacterIdentificationResponse,
+                response_format=CharacterIdentificationResponse
             )
 
             return completion.choices[0].message.parsed.character_ids
@@ -87,63 +89,124 @@ class PlotBeatGenerator:
         except Exception as e:
             logger.error(f"Error identifying characters in plot beat: {e}")
             return []
+                
 
-    async def generate_plot_beat(self, plot_beat_template: PlotBeat):
+    async def generate_plot_beat(self, plot_beat_template: PlotBeat, chapter_id: int):
         """Generate a single plot beat by adapting the template to our story"""
+        import re
+        
+        # Extract character pattern references (char_x) from plot template
+        char_pattern = r'char_\d+'
+        mentioned_chars = set(re.findall(char_pattern, plot_beat_template.content))
+        logger.info(f"Characters mentioned in plot template: {mentioned_chars}")
+        
+        # Create mapping between char_x archetypes and character names and format for prompt
+        character_mapping_str = ""
+        
+        for character_arc in self.character_arcs:
+            if character_arc.archetype and character_arc.archetype in mentioned_chars:
+                character_mapping_str += f"{character_arc.archetype} = {character_arc.name}\n"
+        
+        logger.info(f"Character mappings: {character_mapping_str}")
+        
         # Build character content string
         character_content_str = ""
-        for character_arc in self.character_arcs:
-            character_content_str += f"### {character_arc.name}\n"
-            character_content_str += f"{character_arc.content}\n\n"
+        character_arcs_content = get_character_arcs_content_by_chapter_id(self.character_arcs, chapter_id, mentioned_chars)
+        logger.info(f"Plot beat chapter {chapter_id} character arcs content: {', '.join([character_arc[0] for character_arc in character_arcs_content])}")
+        for character_arc_name, character_arc_content, _ in character_arcs_content:
+            character_content_str += f"### {character_arc_name}\n"
+            character_content_str += f"{character_arc_content}\n\n"
 
         try:
             system_prompt = PLOT_BEAT_SYSTEM_PROMPT
             user_prompt = PLOT_BEAT_USER_PROMPT_TEMPLATE.format(
                 prompt=self.storyboard.prompt,
                 character_content=character_content_str,
-                plot_template=plot_beat_template.content
+                plot_template=plot_beat_template.content,
+                character_mappings=character_mapping_str
             )
             model, temperature = self.model_settings.plot_beat_generation()
             client = get_openai_client(model)
 
-            response = client.chat.completions.create(
+            # Run synchronous OpenAI call in a separate thread to avoid blocking the event loop
+            response = await asyncio.to_thread(
+                client.chat.completions.create,
                 model=model,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
                 ],
-                temperature=temperature,
+                temperature=temperature
             )
-
-            plot_beat = self.plot_beats_repo.create(response.choices[0].message.content, "STORYBOARD", self.storyboard_id)
             
-            # Identify characters in the plot beat
-            if plot_beat:
-                character_ids = await self.identify_characters_in_plot_beat(plot_beat)
-                # Update plot beat with character IDs
-                self.plot_beats_repo.update(plot_beat.id, {"character_ids": character_ids})
+            # Instead of saving to DB here, just return the content and metadata
+            content = response.choices[0].message.content
             
-            return plot_beat
+            # Get character IDs without creating a plot beat first
+            # We'll create a temporary plot beat object just for identification
+            temp_plot_beat = PlotBeat(content=content)
+            character_ids = await self.identify_characters_in_plot_beat(temp_plot_beat)
+            
+            # Return a dict with all the data needed to create the plot beat later
+            return {
+                "content": content,
+                "character_ids": character_ids,
+                "chapter_id": chapter_id
+            }
         
         except Exception as e:
-            logger.error(f"Error generating plot beat: {e}")
-            return None
+            error_message = f"Error generating plot beat: {e}"
+            logger.error(error_message)
+            # Return a dict with error information instead of None
+            return {
+                "content": f"Error generating plot beat: {e}",
+                "character_ids": [],
+                "chapter_id": chapter_id,
+                "error": True
+            }
     
     async def generate_all_plot_beats(self):
-        """Generate all plot beats by adapting each template"""
         self.plot_beats = []
+        semaphore = asyncio.Semaphore(15)  # Limit to 15 concurrent tasks
         
-        # Process each plot beat template
-        for i, plot_beat_template in enumerate(self.plot_beats_templates):
-            logger.info(f"Generating plot beat {i+1}/{len(self.plot_beats_templates)}")
-            
-            plot_beat = await self.generate_plot_beat(plot_beat_template)
-            
-            if plot_beat:
-                self.plot_beats.append(plot_beat)
-                logger.info(f"Successfully generated plot beat")
-            else:
-                logger.error(f"Failed to generate plot beat for template")
+        async def generate_with_semaphore(i, plot_beat_template):
+            async with semaphore:
+                logger.info(f"Generating plot beat {i+1}/{len(self.plot_beats_templates)}")
+                plot_beat_data = await self.generate_plot_beat(plot_beat_template, i+1)
+                logger.info(f"Completed plot beat {i+1}")
+                
+                # Return index along with data to maintain original order
+                return (i, plot_beat_data)
+        
+        # Create all tasks
+        tasks = [generate_with_semaphore(i, template) 
+                for i, template in enumerate(self.plot_beats_templates)]
+        
+        # Execute tasks concurrently with semaphore control
+        results = await asyncio.gather(*tasks)
+        
+        # Since we're no longer returning None, we can just sort all results by index
+        sorted_results = sorted(results, key=lambda x: x[0])
+        
+        # Prepare data for batch creation
+        logger.info(f"Preparing {len(results)} plot beats for batch creation...")
+        batch_items = []
+        
+        for _, plot_beat_data in sorted_results:
+            batch_items.append({
+                "content": plot_beat_data["content"],
+                "type": "STORYBOARD",
+                "source_id": self.storyboard_id,
+                "character_ids": plot_beat_data["character_ids"]
+            })
+        
+        # Save all plot beats in a single transaction
+        logger.info(f"Batch creating {len(batch_items)} plot beats...")
+        created_plot_beats = self.plot_beats_repo.batch_create(batch_items)
+        
+        self.plot_beats = created_plot_beats
+        
+        logger.info(f"Successfully saved {len(self.plot_beats)} plot beats in proper order")
     
     async def execute(self):
         """Execute the plot beat generation process"""

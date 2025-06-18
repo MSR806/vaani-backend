@@ -13,7 +13,7 @@ from app.repository.character_arcs_repository import CharacterArcsRepository
 from app.utils.model_settings import ModelSettings
 from app.models.enums import StoryboardStatus
 from app.schemas.character_arcs import CharacterArcContentJSON
-from app.utils.character_arc_utils import process_character_arcs
+from app.utils.story_generator_utils import process_character_arcs
 
 # Import prompt templates
 from app.prompts.story_generator_prompts import (
@@ -141,6 +141,7 @@ class CharacterArcGenerator:
                     'name': arc.name,
                     'role': arc.role,
                     'type': 'STORYBOARD',
+                    'archetype': arc.archetype,
                     'source_id': self.storyboard_id,
                     'content_json': arc.content_json.model_dump()
                 } for arc in character_arcs]

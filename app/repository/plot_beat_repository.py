@@ -27,7 +27,8 @@ class PlotBeatRepository(BaseRepository[PlotBeat]):
             plot_beat = PlotBeat(
                 content=item["content"],
                 type=item["type"],
-                source_id=item["source_id"]
+                source_id=item["source_id"],
+                character_ids=item.get("character_ids", [])  # Handle character_ids
             )
             plot_beats.append(plot_beat)
         

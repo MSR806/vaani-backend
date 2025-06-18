@@ -3,10 +3,11 @@ import asyncio
 import json
 import logging
 import re
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 
 from app.models.models import CharacterArc as CharacterArcModel
-from app.schemas.character_arcs import CharacterArc, CharacterArcContent, CharacterArcContentJSON
+from app.schemas.character_arcs import CharacterArc, CharacterArcContentJSON
+from app.models.models import CharacterArc as CharacterArcModel
 from app.prompts.story_generator_prompts import CHARACTER_ARC_SYSTEM_PROMPT, CHARACTER_ARC_USER_PROMPT_TEMPLATE, CHARACTER_ARC_EVOLUTION_USER_PROMPT_TEMPLATE
 
 # Set up logging
@@ -15,6 +16,20 @@ logger = logging.getLogger(__name__)
 
 # Maximum number of concurrent tasks for API calls
 MAX_CONCURRENT_TASKS = 5
+
+def get_character_arcs_content_by_chapter_id(character_arcs: List[CharacterArcModel], chapter_id: int, mentioned_archetypes: set = None) -> List[Tuple[str, str, int]]:
+    character_arcs_content = []
+    for character_arc in character_arcs:
+        # Skip characters not mentioned in the plot template if mentioned_archetypes is provided
+        if mentioned_archetypes is not None and character_arc.archetype not in mentioned_archetypes:
+            continue
+            
+        #chapter range = [start, end]
+        character_arc_json = CharacterArcContentJSON(**character_arc.content_json)
+        for chapter_range_content in character_arc_json.chapter_range_content:
+            if chapter_id >= chapter_range_content.chapter_range[0] and chapter_id <= chapter_range_content.chapter_range[1]:
+                character_arcs_content.append((character_arc.name, chapter_range_content.content, character_arc.id))
+    return character_arcs_content
 
 async def generate_character_arc_content(
     template_content: str,

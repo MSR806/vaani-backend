@@ -148,6 +148,7 @@ IMPORTANT REQUIREMENTS:
 PLOT_BEAT_SYSTEM_PROMPT = """You are a master storyteller specializing in adapting plot templates to specific stories.
 Your task is to take a single plot template and adapt it into a chapter summary for the given story world, setting, and characters.
 Your job is to generate a very crisp and concise 5-6 bullet points summary of the chapter.
+The template may contain abstract character references like 'char_1', 'char_2', etc. Use the provided character name mappings to replace these with actual character names in your output.
 Also include a section listing all **characters involved**."""
 
 PLOT_BEAT_USER_PROMPT_TEMPLATE = """# Chapter Summary Generation Task
@@ -167,13 +168,20 @@ PLOT_BEAT_USER_PROMPT_TEMPLATE = """# Chapter Summary Generation Task
 
 ---
 
+## Character Name Mappings:
+{character_mappings}
+
+---
+
 ## Instructions
 
 Your task is to adapt the summary template into the new world provided by the user and create a chapter summary for the story.
 
 ### You must do the following:
 
-1. Adapt the summary template to reflect:
+1. **IMPORTANT**: Replace all character references (char_1, char_2, etc.) with their actual names using the Character Name Mappings and Character Arcs above.
+
+2. Adapt the summary template to reflect:
    - The story's **world and setting**
    - The **characters** and their current relationships
    - **Sexual dynamics**, including **BDSM roles** (if any)
