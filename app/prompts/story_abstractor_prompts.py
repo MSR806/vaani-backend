@@ -10,9 +10,7 @@ CHARACTER_ARC_SYSTEM_PROMPT = (
 )
 
 # Blood Relations Abstraction Prompts
-BLOOD_RELATIONS_SYSTEM_PROMPT = (
-    "Replace character names with their abstract IDs in blood relations. Respond ONLY with the exact format requested and nothing else."
-)
+BLOOD_RELATIONS_SYSTEM_PROMPT = "Replace character names with their abstract IDs in blood relations. Respond ONLY with the exact format requested and nothing else."
 
 BLOOD_RELATIONS_USER_PROMPT = (
     "Mappings:\n{character_mappings}\n\n"

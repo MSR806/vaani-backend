@@ -21,10 +21,11 @@ def read_settings(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)
     settings = get_settings(db, skip=skip, limit=limit)
     return settings
 
+
 @router.put("/settings/batch", response_model=List[SettingResponse])
 def update_settings_batch(settings_batch: SettingBatchUpdate, db: Session = Depends(get_db)):
     """Update multiple settings in a single request
-    
+
     Each setting in the list must have at least a key and value.
     Other fields (title, section, description, type, options) are optional.
     """

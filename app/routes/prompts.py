@@ -22,7 +22,9 @@ def create_prompt_route(
 @router.get("/prompts", response_model=List[PromptResponse])
 def get_all_prompts_route(
     db: Session = Depends(get_db),
-    source: Optional[PromptSource] = Query(None, description="Filter prompts by source (CHAPTER or SCENE)"),
+    source: Optional[PromptSource] = Query(
+        None, description="Filter prompts by source (CHAPTER or SCENE)"
+    ),
 ):
     return get_all_prompts(db, source=source)
 

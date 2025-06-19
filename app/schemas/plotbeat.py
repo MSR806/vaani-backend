@@ -23,6 +23,6 @@ class PlotBeatUpdate(BaseModel):
 
 class PlotBeatRead(PlotBeatBase):
     id: int
-    
+
     class Config:
         from_attributes = True

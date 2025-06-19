@@ -134,6 +134,7 @@ class SceneReorderItem(BaseModel):
     id: int
     scene_number: int
 
+
 class SceneReorderRequest(BaseModel):
     scenes: List[SceneReorderItem]
 
@@ -166,6 +167,7 @@ class SceneOutlineRequest(BaseModel):
 
 class CharacterOutlineRequest(BaseModel):
     user_prompt: str
+
 
 # Outline schemas
 class OutlineRequest(BaseModel):
@@ -265,12 +267,14 @@ class ChaptersBulkUploadRequest(BaseModel):
     book_id: int
     html_content: str
 
+
 # Template schemas
 class TemplateStatusEnum(str, Enum):
     NOT_STARTED = "NOT_STARTED"
     IN_PROGRESS = "IN_PROGRESS"
     COMPLETED = "COMPLETED"
     FAILED = "FAILED"
+
 
 class TemplateBase(BaseModel):
     name: str
@@ -281,8 +285,10 @@ class TemplateBase(BaseModel):
     character_arc_template_status: Optional[TemplateStatusEnum] = None
     plot_beat_template_status: Optional[TemplateStatusEnum] = None
 
+
 class TemplateCreate(TemplateBase):
     pass
+
 
 class TemplateUpdate(BaseModel):
     name: str | None = None
@@ -293,8 +299,10 @@ class TemplateUpdate(BaseModel):
     character_arc_template_status: Optional[TemplateStatusEnum] = None
     plot_beat_template_status: Optional[TemplateStatusEnum] = None
 
+
 class TemplateRead(TemplateBase):
     id: int
     name: str
+
     class Config:
         orm_mode = True

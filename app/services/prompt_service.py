@@ -10,7 +10,7 @@ import time
 
 def create_prompt(db: Session, prompt_data: PromptCreate, user_id: str) -> Prompt:
     current_time = int(time.time())
-    
+
     prompt = Prompt(
         title=prompt_data.title,
         content=prompt_data.content,
@@ -18,9 +18,9 @@ def create_prompt(db: Session, prompt_data: PromptCreate, user_id: str) -> Promp
         created_at=current_time,
         updated_at=current_time,
         created_by=user_id,
-        updated_by=user_id
+        updated_by=user_id,
     )
-    
+
     repository = PromptRepository(db)
     return repository.create(prompt)
 
@@ -28,10 +28,10 @@ def create_prompt(db: Session, prompt_data: PromptCreate, user_id: str) -> Promp
 def get_prompt(db: Session, prompt_id: int) -> Prompt:
     repository = PromptRepository(db)
     prompt = repository.get_by_id(prompt_id)
-    
+
     if prompt is None:
         raise HTTPException(status_code=404, detail="Prompt not found")
-    
+
     return prompt
 
 
@@ -43,32 +43,32 @@ def get_all_prompts(db: Session, source: Optional[PromptSource] = None) -> List[
 def update_prompt(db: Session, prompt_id: int, prompt_data: PromptUpdate, user_id: str) -> Prompt:
     repository = PromptRepository(db)
     prompt = repository.get_by_id(prompt_id)
-    
+
     if prompt is None:
         raise HTTPException(status_code=404, detail="Prompt not found")
-    
+
     update_data = prompt_data.model_dump(exclude_unset=True)
     if not update_data:
         raise HTTPException(status_code=400, detail="No fields to update")
-    
+
     if "title" in update_data:
         prompt.title = update_data["title"]
     if "content" in update_data:
         prompt.content = update_data["content"]
     if "source" in update_data:
         prompt.source = update_data["source"]
-    
+
     prompt.updated_at = int(time.time())
     prompt.updated_by = user_id
-    
+
     return repository.update(prompt)
 
 
 def delete_prompt(db: Session, prompt_id: int) -> None:
     repository = PromptRepository(db)
     prompt = repository.get_by_id(prompt_id)
-    
+
     if prompt is None:
         raise HTTPException(status_code=404, detail="Prompt not found")
-    
+
     repository.delete(prompt)

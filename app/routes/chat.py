@@ -16,8 +16,7 @@ router = APIRouter(tags=["chat"])
 
 @router.post("/chat/stream")
 async def stream_chat_route(
-    request: ChatRequest,
-    current_user: dict = Depends(require_write_permission)
+    request: ChatRequest, current_user: dict = Depends(require_write_permission)
 ):
     try:
         return await stream_chat(request)
@@ -27,18 +26,18 @@ async def stream_chat_route(
 
 @router.post("/chat/character")
 async def chat_as_character_route(
-    request: ChatRequest, 
+    request: ChatRequest,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(require_write_permission)
+    current_user: dict = Depends(require_write_permission),
 ):
     return await chat_as_character(request, db)
 
 
 @router.post("/chat/character/stream")
 async def stream_chat_as_character_route(
-    request: ChatRequest, 
+    request: ChatRequest,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(require_write_permission)
+    current_user: dict = Depends(require_write_permission),
 ):
     try:
         return await stream_chat_as_character(request, db)
@@ -48,9 +47,9 @@ async def stream_chat_as_character_route(
 
 @router.post("/complete")
 async def stream_completion_route(
-    request: CompletionRequest, 
+    request: CompletionRequest,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(require_write_permission)
+    current_user: dict = Depends(require_write_permission),
 ):
     try:
         return await stream_completion(

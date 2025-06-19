@@ -24,6 +24,6 @@ class PromptResponse(PromptBase):
     updated_at: int
     created_by: str
     updated_by: str
-    
+
     class Config:
         from_attributes = True

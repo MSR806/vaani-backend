@@ -7,7 +7,9 @@ from sqlalchemy.orm import Session
 
 from app.models.models import Book, Chapter, Scene
 from app.prompts.rewrite_prompts import CHAPTER_REWRITE_PROMPT
-from app.prompts.chapters import CHAPTER_GENERATION_FROM_SCENE_SYSTEM_PROMPT_V1 as CHAPTER_GENERATION_SYSTEM_PROMPT
+from app.prompts.chapters import (
+    CHAPTER_GENERATION_FROM_SCENE_SYSTEM_PROMPT_V1 as CHAPTER_GENERATION_SYSTEM_PROMPT,
+)
 from app.services.chapter_service import get_context_chapters
 from app.services.evaluations.critique_agent.critique_service import generate_chapter_critique
 from app.services.setting_service import get_setting_by_key
@@ -21,11 +23,7 @@ async def stream_chapter_rewrite(db: Session, book_id: int, chapter_id: int):
     if not book:
         raise HTTPException(status_code=404, detail="Book not found")
 
-    chapter = (
-        db.query(Chapter)
-        .filter(Chapter.id == chapter_id, Chapter.book_id == book_id)
-        .first()
-    )
+    chapter = db.query(Chapter).filter(Chapter.id == chapter_id, Chapter.book_id == book_id).first()
     if not chapter:
         raise HTTPException(status_code=404, detail="Chapter not found")
     # Log the original chapter content before rewriting
@@ -36,7 +34,9 @@ async def stream_chapter_rewrite(db: Session, book_id: int, chapter_id: int):
     logging.info(f"Starting rewrite for chapter {chapter.chapter_no}: {chapter.title}")
     try:
         # Get context size setting for how many previous chapters to include
-        context_size = int(get_setting_by_key(db, "chapter_content_previous_chapters_context_size").value)
+        context_size = int(
+            get_setting_by_key(db, "chapter_content_previous_chapters_context_size").value
+        )
 
         # Get the specified number of previous chapters in order
         previous_chapters = (
@@ -64,8 +64,8 @@ async def stream_chapter_rewrite(db: Session, book_id: int, chapter_id: int):
         temperature = float(get_setting_by_key(db, "create_chapter_content_temperature").value)
 
         # Get previous chapters, last chapter, and next chapter context
-        previous_chapters_context, last_chapter_content, next_chapter_content = get_context_chapters(
-            db, book_id, chapter.chapter_no, context_size
+        previous_chapters_context, last_chapter_content, next_chapter_content = (
+            get_context_chapters(db, book_id, chapter.chapter_no, context_size)
         )
 
         # Get scenes if they exist
@@ -80,11 +80,7 @@ async def stream_chapter_rewrite(db: Session, book_id: int, chapter_id: int):
         scenes_context = ""
         if scenes:
             scenes_context = "\n\n".join(
-                [
-                    f"Scene {s.scene_number}: {s.title}\n"
-                    f"Content: {s.content}"
-                    for s in scenes
-                ]
+                [f"Scene {s.scene_number}: {s.title}\n" f"Content: {s.content}" for s in scenes]
             )
 
         # Prepare the messages for GPT - use same system prompt as original chapter generation
@@ -115,7 +111,7 @@ async def stream_chapter_rewrite(db: Session, book_id: int, chapter_id: int):
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_message},
             {"role": "assistant", "content": original_content},
-            {"role": "user", "content": rewrite_prompt}
+            {"role": "user", "content": rewrite_prompt},
         ]
 
         # Get OpenAI client
@@ -155,6 +151,7 @@ async def stream_chapter_rewrite(db: Session, book_id: int, chapter_id: int):
                 # Send error to client
                 error_json = json.dumps({"error": str(e)})
                 yield f"data: {error_json}\n\n"
+
         # Return the streaming response
         return StreamingResponse(generate(), media_type="text/event-stream")
     except Exception as e:

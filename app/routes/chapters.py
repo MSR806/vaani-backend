@@ -36,10 +36,10 @@ router = APIRouter(tags=["chapters"])
 
 @router.post("/books/{book_id}/chapters")
 def create_chapter_route(
-    book_id: int, 
-    chapter: ChapterCreate, 
+    book_id: int,
+    chapter: ChapterCreate,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(require_write_permission)
+    current_user: dict = Depends(require_write_permission),
 ):
     chapter = create_chapter(db, book_id, chapter, current_user["user_id"])
     if not chapter:
@@ -73,7 +73,7 @@ def update_chapter_route(
     chapter_id: int,
     chapter_update: ChapterUpdate,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(require_write_permission)
+    current_user: dict = Depends(require_write_permission),
 ):
     chapter = update_chapter(db, book_id, chapter_id, chapter_update, current_user["user_id"])
     if not chapter:
@@ -90,7 +90,11 @@ def delete_chapter_route(book_id: int, chapter_id: int, db: Session = Depends(ge
 
 
 @router.delete("/books/{book_id}/chapters")
-def delete_all_chapters_route(book_id: int, db: Session = Depends(get_db), current_user: dict = Depends(require_write_permission)):
+def delete_all_chapters_route(
+    book_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_write_permission),
+):
     """Delete all chapters for a book"""
     result = delete_all_chapters(db, book_id)
     return result
@@ -102,9 +106,11 @@ async def generate_chapter_outline_route(
     chapter_id: int,
     request: ChapterGenerateRequest,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(require_write_permission)
+    current_user: dict = Depends(require_write_permission),
 ):
-    return await generate_chapter_outline(db, book_id, chapter_id, request.user_prompt, current_user["user_id"])
+    return await generate_chapter_outline(
+        db, book_id, chapter_id, request.user_prompt, current_user["user_id"]
+    )
 
 
 @router.post("/books/{book_id}/chapters/{chapter_id}/generate-content")
@@ -113,7 +119,7 @@ async def generate_chapter_content_route(
     chapter_id: int,
     request: ChapterGenerateRequest,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(require_write_permission)
+    current_user: dict = Depends(require_write_permission),
 ):
     """
     Generate chapter content with streaming support.
@@ -123,37 +129,33 @@ async def generate_chapter_content_route(
 
 
 @router.get("/chapters/{chapter_id}/characters", deprecated=True)
-async def extract_chapter_characters_route(
-    chapter_id: int, db: Session = Depends(get_db)
-):
+async def extract_chapter_characters_route(chapter_id: int, db: Session = Depends(get_db)):
     return await extract_chapter_characters(db, chapter_id)
 
 
-@router.patch(
-    "/books/{book_id}/chapters/{chapter_id}/source-text", response_model=ChapterResponse
-)
+@router.patch("/books/{book_id}/chapters/{chapter_id}/source-text", response_model=ChapterResponse)
 def update_chapter_source_text(
     book_id: int,
     chapter_id: int,
     update: ChapterSourceTextUpdate,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(require_write_permission)
+    current_user: dict = Depends(require_write_permission),
 ):
-    chapter = patch_chapter_source_text(db, book_id, chapter_id, update.source_text, current_user["user_id"])
+    chapter = patch_chapter_source_text(
+        db, book_id, chapter_id, update.source_text, current_user["user_id"]
+    )
     if not chapter:
         raise HTTPException(status_code=404, detail="Chapter not found")
     return chapter
 
 
-@router.patch(
-    "/books/{book_id}/chapters/{chapter_id}/state", response_model=ChapterResponse
-)
+@router.patch("/books/{book_id}/chapters/{chapter_id}/state", response_model=ChapterResponse)
 def update_chapter_state(
     book_id: int,
     chapter_id: int,
     update: ChapterStateUpdate,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(require_write_permission)
+    current_user: dict = Depends(require_write_permission),
 ):
     chapter = patch_chapter_state(db, book_id, chapter_id, update.state, current_user["user_id"])
     if not chapter:
@@ -166,13 +168,15 @@ def bulk_upload_chapters_route(
     book_id: int,
     upload_request: ChaptersBulkUploadRequest,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(require_write_permission)
+    current_user: dict = Depends(require_write_permission),
 ):
     """
     Upload multiple chapters from a single HTML file.
     The HTML content will be processed to extract chapters which will be added to the specified book.
     """
-    chapters = bulk_upload_chapters(db, book_id, upload_request.html_content, current_user["user_id"])
+    chapters = bulk_upload_chapters(
+        db, book_id, upload_request.html_content, current_user["user_id"]
+    )
     if chapters is None:
         raise HTTPException(status_code=404, detail="Book not found")
     return chapters
@@ -183,7 +187,7 @@ async def rewrite_chapter_route(
     book_id: int,
     chapter_id: int,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(require_write_permission)
+    current_user: dict = Depends(require_write_permission),
 ):
     """
     Rewrite a chapter based on critique feedback.

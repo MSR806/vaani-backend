@@ -37,19 +37,17 @@ app.add_middleware(
 # Include routers
 app.include_router(router, prefix="/vaani/api/v1", dependencies=[Depends(get_current_user)])
 
+
 @app.get("/", tags=["public"])
 async def root():
     return {
         "message": "Welcome to Writers LLM API",
         "version": "1.0.0",
         "docs_url": "/docs",
-        "redoc_url": "/redoc"
+        "redoc_url": "/redoc",
     }
+
 
 @app.get("/vaani/health", tags=["public"])
 async def health_check():
-    return {
-        "status": "healthy",
-        "api": "Writers LLM API",
-        "version": "1.0.0"
-    }
+    return {"status": "healthy", "api": "Writers LLM API", "version": "1.0.0"}

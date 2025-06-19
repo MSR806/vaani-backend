@@ -24,7 +24,7 @@ class CharacterArcUpdate(BaseModel):
 
 class CharacterArcRead(BaseModel):
     id: int
-    
+
     class Config:
         orm_mode = True
 

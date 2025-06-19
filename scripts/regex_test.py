@@ -316,32 +316,34 @@ Unspecified; likely past acquaintance.
 FILE_END  
 """
 
+
 def test_character_extraction():
     import re
+
     # The regex pattern to test
     pattern = re.compile(
-        r"CHARACTER:\s*([^\n]+)\s*\n"        # name line
-        r"FILE_START\s*\n"                   # allow spaces before the newline
-        r"([\s\S]*?)"                        # block content (non-greedy)
-        r"\s*FILE_END",                      # optional spaces before FILE_END
-        re.DOTALL
+        r"CHARACTER:\s*([^\n]+)\s*\n"  # name line
+        r"FILE_START\s*\n"  # allow spaces before the newline
+        r"([\s\S]*?)"  # block content (non-greedy)
+        r"\s*FILE_END",  # optional spaces before FILE_END
+        re.DOTALL,
     )
-    
+
     # Find all matches
     matches = re.findall(pattern, markdown_content)
-    
+
     # Print results
     print(f"Found {len(matches)} characters")
-    
+
     # Print details for each match
     for i, (character_name, content) in enumerate(matches, 1):
         print(f"\nCharacter {i}:")
         print(f"Name: {character_name.strip()}")
         print(f"Content length: {len(content)} characters")
         print("First few lines of content:")
-        print(content.split('\n')[0:3])  # Print first 3 lines of content
+        print(content.split("\n")[0:3])  # Print first 3 lines of content
         print("-" * 50)
+
 
 if __name__ == "__main__":
     test_character_extraction()
-

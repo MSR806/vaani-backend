@@ -5,6 +5,7 @@ from app.models.models import Storyboard
 from .base_repository import BaseRepository
 from app.models.models import StoryboardStatus
 
+
 class StoryboardRepository(BaseRepository[Storyboard]):
     @rollback_on_exception
     def create(self, book_id: int, template_id: int, prompt: str, user_id: str) -> Storyboard:
@@ -16,13 +17,13 @@ class StoryboardRepository(BaseRepository[Storyboard]):
             updated_at=int(time.time()),
             created_by=user_id,
             updated_by=user_id,
-            status=StoryboardStatus.NOT_STARTED
+            status=StoryboardStatus.NOT_STARTED,
         )
         self.db.add(storyboard)
         self.db.commit()
         self.db.refresh(storyboard)
         return storyboard
-    
+
     @rollback_on_exception
     def update(self, storyboard_id: int, **kwargs) -> Storyboard:
         storyboard = self.db.query(Storyboard).filter(Storyboard.id == storyboard_id).first()
@@ -33,16 +34,15 @@ class StoryboardRepository(BaseRepository[Storyboard]):
         self.db.commit()
         self.db.refresh(storyboard)
         return storyboard
-    
+
     def get_by_id(self, storyboard_id: int) -> Storyboard:
         storyboard = self.db.query(Storyboard).filter(Storyboard.id == storyboard_id).first()
         if not storyboard:
             raise StoryboardNotFoundException(storyboard_id)
         return storyboard
-    
+
     def get_by_book_id(self, book_id: int) -> Storyboard:
         storyboard = self.db.query(Storyboard).filter(Storyboard.book_id == book_id).first()
         if not storyboard:
             raise StoryboardNotFoundException(book_id)
         return storyboard
-    

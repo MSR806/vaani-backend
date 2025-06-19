@@ -4,6 +4,7 @@ from app.models.models import Book
 from typing import List, Optional
 import time
 
+
 class BookRepository(BaseRepository[Book]):
 
     def get_by_id(self, book_id: int) -> Optional[Book]:
@@ -12,7 +13,9 @@ class BookRepository(BaseRepository[Book]):
     def get_all(self) -> List[Book]:
         return self.db.query(Book).all()
 
-    def create(self, title: str, author: str, author_id: str, cover_url: str = None, user_id: str = None) -> Book:
+    def create(
+        self, title: str, author: str, author_id: str, cover_url: str = None, user_id: str = None
+    ) -> Book:
         current_time = int(time.time())
         book = Book(
             title=title,
@@ -22,7 +25,7 @@ class BookRepository(BaseRepository[Book]):
             created_at=current_time,
             updated_at=current_time,
             created_by=user_id,
-            updated_by=user_id
+            updated_by=user_id,
         )
         self.db.add(book)
         self.db.commit()
@@ -47,4 +50,4 @@ class BookRepository(BaseRepository[Book]):
             return False
         self.db.delete(book)
         self.db.commit()
-        return True 
+        return True
