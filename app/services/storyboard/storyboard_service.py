@@ -1,19 +1,20 @@
 import logging
+
 from sqlalchemy.orm import Session
 
-from app.repository.storyboard_repository import StoryboardRepository
+from app.models.enums import StoryboardStatus
 from app.repository.plot_beat_repository import PlotBeatRepository
-from app.services.storyboard.summary_generatory import SummarizerGenerator
+from app.repository.storyboard_repository import StoryboardRepository
 from app.services.background_jobs.tasks import (
     add_generate_character_arcs_task_to_bg_jobs,
     add_generate_plot_beats_task_to_bg_jobs,
 )
-from app.models.enums import StoryboardStatus
+from app.services.storyboard.summary_generatory import SummarizerGenerator
 from app.utils.exceptions import (
-    StoryboardAlreadyExistsException,
-    StoryboardNotFoundException,
-    StoryboardCannotBeContinuedException,
     PlotBeatNotGeneratedException,
+    StoryboardAlreadyExistsException,
+    StoryboardCannotBeContinuedException,
+    StoryboardNotFoundException,
 )
 
 logger = logging.getLogger(__name__)

@@ -1,11 +1,12 @@
-import requests
-import json
-import time
-import os
-import sys
 import argparse
-import re
 import datetime
+import json
+import os
+import re
+import sys
+import time
+
+import requests
 from keys import ACCESS_TOKEN
 
 # Try to import BeautifulSoup, but provide fallback if not available

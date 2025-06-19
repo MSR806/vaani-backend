@@ -1,35 +1,37 @@
+from typing import List
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from typing import List
+
+from ..auth import require_write_permission
 from ..database import get_db
 from ..schemas.schemas import (
     ChapterCreate,
-    ChapterUpdate,
-    ChapterResponse,
     ChapterGenerateRequest,
+    ChapterResponse,
+    ChaptersBulkUploadRequest,
     ChapterSourceTextUpdate,
     ChapterStateUpdate,
-    ChaptersBulkUploadRequest,
+    ChapterUpdate,
 )
-from ..services.chapter_service import (
-    create_chapter,
-    update_chapter,
-    get_chapter,
-    generate_chapter_outline,
-    stream_chapter_content,
-    patch_chapter_source_text,
-    delete_chapter,
-    delete_all_chapters,
-    patch_chapter_state,
-    bulk_upload_chapters,
-)
-from ..services.chapter_rewrite_service import stream_chapter_rewrite
 from ..services.book_service import (
     get_book,
     get_book_chapters,
 )
+from ..services.chapter_rewrite_service import stream_chapter_rewrite
+from ..services.chapter_service import (
+    bulk_upload_chapters,
+    create_chapter,
+    delete_all_chapters,
+    delete_chapter,
+    generate_chapter_outline,
+    get_chapter,
+    patch_chapter_source_text,
+    patch_chapter_state,
+    stream_chapter_content,
+    update_chapter,
+)
 from ..services.character_service import extract_chapter_characters
-from ..auth import require_write_permission
 
 router = APIRouter(tags=["chapters"])
 

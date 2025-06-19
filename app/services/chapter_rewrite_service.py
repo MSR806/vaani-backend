@@ -1,20 +1,21 @@
-import logging
-import json
 import datetime
+import json
+import logging
+
 from fastapi import HTTPException
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.models.models import Book, Chapter, Scene
-from app.prompts.rewrite_prompts import CHAPTER_REWRITE_PROMPT
+from app.prompts import format_prompt
 from app.prompts.chapters import (
     CHAPTER_GENERATION_FROM_SCENE_SYSTEM_PROMPT_V1 as CHAPTER_GENERATION_SYSTEM_PROMPT,
 )
+from app.prompts.rewrite_prompts import CHAPTER_REWRITE_PROMPT
+from app.services.ai_service import get_openai_client
 from app.services.chapter_service import get_context_chapters
 from app.services.evaluations.critique_agent.critique_service import generate_chapter_critique
 from app.services.setting_service import get_setting_by_key
-from app.services.ai_service import get_openai_client
-from app.prompts import format_prompt
 
 
 async def stream_chapter_rewrite(db: Session, book_id: int, chapter_id: int):

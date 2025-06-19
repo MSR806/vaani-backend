@@ -1,31 +1,32 @@
 #!/usr/bin/env python3
 import asyncio
 import json
+import logging
 import time
 import traceback
 from math import ceil
-from typing import List, Dict, Any
-import logging
+from typing import Any, Dict, List
 
-from app.repository.template_repository import TemplateRepository
-from app.schemas.schemas import TemplateStatusEnum
-from app.repository import chapter_repository
 from sqlalchemy.orm import Session
+
 from app.models.models import Book, Chapter
-from app.services.ai_service import get_openai_client
-from app.utils.model_settings import ModelSettings
-from app.repository.character_arcs_repository import CharacterArcsRepository
-from app.utils.story_extractor_utils import (
-    process_chapter_batch_for_character_arcs,
-    consolidate_character_arcs,
-    CHAPTER_BATCH_SIZE,
-)
 
 # Import prompt templates
 from app.prompts.story_extractor_prompts import (
     CHAPTER_SUMMARY_SYSTEM_PROMPT,
     CHAPTER_SUMMARY_USER_PROMPT_TEMPLATE,
     CHARACTER_ARC_EXTRACTION_SYSTEM_PROMPT,
+)
+from app.repository import chapter_repository
+from app.repository.character_arcs_repository import CharacterArcsRepository
+from app.repository.template_repository import TemplateRepository
+from app.schemas.schemas import TemplateStatusEnum
+from app.services.ai_service import get_openai_client
+from app.utils.model_settings import ModelSettings
+from app.utils.story_extractor_utils import (
+    CHAPTER_BATCH_SIZE,
+    consolidate_character_arcs,
+    process_chapter_batch_for_character_arcs,
 )
 
 # Set up logging

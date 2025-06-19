@@ -1,20 +1,20 @@
-import sys
 import asyncio
 import logging
+import sys
 from pathlib import Path
 
 from app.schemas.schemas import TemplateStatusEnum
 from app.services.template_generator.story_abstractor import StoryAbstractor
 from app.services.template_generator.story_extractor import StoryExtractor
 
-
 # Add the project root to the Python path so we can import app modules
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from sqlalchemy.orm import Session
+
 from app.database import get_db
-from app.repository.template_repository import TemplateRepository
 from app.repository.base_repository import BaseRepository
+from app.repository.template_repository import TemplateRepository
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)

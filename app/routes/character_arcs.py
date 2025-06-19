@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, Path
+from sqlalchemy.orm import Session
 
+from app.database import get_db
+
+from ..schemas.character_arcs import CharacterArcUpdate
 from ..services.character_arc_service import CharacterArcService
 from ..utils.exceptions import CharacterArcNotFoundException
-from ..schemas.character_arcs import CharacterArcUpdate
-from sqlalchemy.orm import Session
-from app.database import get_db
 
 router = APIRouter()
 

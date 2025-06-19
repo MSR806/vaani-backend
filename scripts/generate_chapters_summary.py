@@ -1,7 +1,8 @@
-import requests
-import time
 import sys
+import time
 from typing import List
+
+import requests
 from keys import ACCESS_TOKEN
 
 # API Base URL - assuming local development

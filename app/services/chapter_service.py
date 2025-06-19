@@ -1,25 +1,26 @@
-import time
 import json
-from typing import List
-from fastapi.responses import StreamingResponse
-from bs4 import BeautifulSoup
 import logging
+import time
+from typing import List
 
-from app.prompts.scenes import SCENE_GENERATION_SYSTEM_PROMPT_V1
-from app.prompts.chapters import CHAPTER_GENERATION_FROM_SCENE_SYSTEM_PROMPT_V1
-from app.services.character_arc_service import CharacterArcService
+from bs4 import BeautifulSoup
+from fastapi import HTTPException
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
-from app.models.models import Chapter, Book, Scene
+
+from app.models.models import Book, Chapter, Scene
+from app.prompts import format_prompt
+from app.prompts.chapters import CHAPTER_GENERATION_FROM_SCENE_SYSTEM_PROMPT_V1
+from app.prompts.scenes import SCENE_GENERATION_SYSTEM_PROMPT_V1
 from app.schemas.schemas import (
     ChapterCreate,
-    ChapterUpdate,
     ChapterGenerateRequest,
+    ChapterUpdate,
     SceneOutlineResponse,
 )
 from app.services.ai_service import get_openai_client
-from fastapi import HTTPException
+from app.services.character_arc_service import CharacterArcService
 from app.services.setting_service import get_setting_by_key
-from app.prompts import format_prompt
 from app.utils.story_generator_utils import get_character_arcs_content_by_chapter_id
 
 logger = logging.getLogger(__name__)
@@ -126,7 +127,7 @@ def patch_chapter_state(
 def get_context_chapters(
     db: Session, book_id: int, current_chapter_no: int, context_size: int
 ) -> tuple[str, str, str]:  # Returns (previous_ctx, last_ctx, next_ctx)
-    from sqlalchemy import or_, and_
+    from sqlalchemy import and_, or_
 
     previous_chapters_lower_bound = current_chapter_no - context_size
 

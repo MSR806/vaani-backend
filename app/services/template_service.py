@@ -1,10 +1,12 @@
 from typing import List
-from app.schemas.schemas import TemplateStatusEnum, TemplateRead
-from app.repository.template_repository import TemplateRepository
+
+from sqlalchemy.orm import Session
+
 from app.repository.character_arcs_repository import CharacterArcsRepository
 from app.repository.plot_beat_repository import PlotBeatRepository
+from app.repository.template_repository import TemplateRepository
+from app.schemas.schemas import TemplateRead, TemplateStatusEnum
 from app.services.background_jobs.tasks import add_template_creation_task_to_bg_jobs
-from sqlalchemy.orm import Session
 
 
 class TemplateService:

@@ -1,10 +1,12 @@
+from typing import List
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from typing import List
+
+from ..auth import require_write_permission
 from ..database import get_db
 from ..schemas.schemas import TemplateRead
 from ..services.template_service import TemplateService
-from ..auth import require_write_permission
 
 router = APIRouter(tags=["templates"])
 

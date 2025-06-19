@@ -1,7 +1,8 @@
-from fastapi import HTTPException
 from functools import wraps
+from typing import Any, Callable, TypeVar
+
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
-from typing import Callable, TypeVar, Any
 
 F = TypeVar("F", bound=Callable[..., Any])
 

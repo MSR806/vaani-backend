@@ -4,17 +4,16 @@ import json
 import logging
 import re
 import traceback
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
 
-import json
 from app.models.models import CharacterArc as CharacterArcModel
-from app.schemas.character_arcs import CharacterArcContent, CharacterArc
 from app.prompts.story_abstractor_prompts import (
-    CHARACTER_ARC_SYSTEM_PROMPT,
-    CHARACTER_ARC_SINGLE_USER_PROMPT,
     BLOOD_RELATIONS_SYSTEM_PROMPT,
     BLOOD_RELATIONS_USER_PROMPT,
+    CHARACTER_ARC_SINGLE_USER_PROMPT,
+    CHARACTER_ARC_SYSTEM_PROMPT,
 )
+from app.schemas.character_arcs import CharacterArc, CharacterArcContent
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")

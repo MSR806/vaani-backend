@@ -1,11 +1,10 @@
+from database import get_db
 from fastapi import APIRouter, Depends, HTTPException, Path
 from requests import Session
 
-from database import get_db
-
+from ..schemas.plotbeat import PlotBeatUpdate
 from ..services.plot_beat_service import PlotBeatService
 from ..utils.exceptions import PlotBeatNotFoundException
-from ..schemas.plotbeat import PlotBeatUpdate
 
 router = APIRouter()
 

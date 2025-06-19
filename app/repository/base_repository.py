@@ -1,5 +1,6 @@
-from sqlalchemy.orm import Session
 from typing import Generic, TypeVar
+
+from sqlalchemy.orm import Session
 
 T = TypeVar("T")
 

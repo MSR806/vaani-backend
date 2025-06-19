@@ -1,6 +1,7 @@
 import logging
-from sqlalchemy.orm import Session
 from typing import Tuple
+
+from sqlalchemy.orm import Session
 
 from app.services.setting_service import get_setting_by_key
 from app.utils.constants import SettingKeys

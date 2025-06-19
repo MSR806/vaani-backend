@@ -1,10 +1,11 @@
-from fastapi import FastAPI, Depends
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer
-from app.routes import router
-from app.database import engine, Base, SessionLocal
+
 from app.auth import get_current_user
+from app.database import Base, SessionLocal, engine
 from app.repository.base_repository import BaseRepository
+from app.routes import router
 
 # Create database tables
 Base.metadata.create_all(bind=engine)

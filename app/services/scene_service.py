@@ -1,8 +1,11 @@
-from sqlalchemy.orm import Session, joinedload
-from ..models.models import Scene, Chapter
-from ..schemas.schemas import SceneCreate, SceneUpdate
 import time
+
+from sqlalchemy.orm import Session, joinedload
+
 from app.utils.exceptions import rollback_on_exception
+
+from ..models.models import Chapter, Scene
+from ..schemas.schemas import SceneCreate, SceneUpdate
 
 
 @rollback_on_exception

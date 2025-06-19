@@ -1,13 +1,14 @@
 from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+
+from ..database import get_db
 from ..schemas.storyboard import (
-    StoryboardCreate,
-    StoryboardResponse,
-    StoryboardGenerateChaptersSummaryRequest,
     BooleanResponse,
+    StoryboardCreate,
+    StoryboardGenerateChaptersSummaryRequest,
+    StoryboardResponse,
 )
 from ..services.storyboard.storyboard_service import StoryboardService
-from ..database import get_db
-from sqlalchemy.orm import Session
 
 router = APIRouter(
     tags=["storyboard"],

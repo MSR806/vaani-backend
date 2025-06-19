@@ -1,18 +1,19 @@
 from sqlalchemy import (
-    Column,
-    Integer,
-    String,
-    Text,
-    ForeignKey,
-    LargeBinary,
-    BigInteger,
-    Enum,
     ARRAY,
     JSON,
+    BigInteger,
+    Column,
+    Enum,
+    ForeignKey,
+    Integer,
+    LargeBinary,
+    String,
+    Text,
 )
 from sqlalchemy.orm import relationship
+
 from ..database import Base
-from .enums import StoryboardStatus, PromptSource
+from .enums import PromptSource, StoryboardStatus
 
 
 class CharacterArc(Base):

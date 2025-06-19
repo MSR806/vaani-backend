@@ -1,8 +1,11 @@
-from .base_repository import BaseRepository
+from typing import Any, Dict, List, Optional
+
 from sqlalchemy.orm import Session
+
 from app.models.models import PlotBeat
-from typing import List, Optional, Dict, Any
 from app.utils.exceptions import PlotBeatNotFoundException, rollback_on_exception
+
+from .base_repository import BaseRepository
 
 
 class PlotBeatRepository(BaseRepository[PlotBeat]):

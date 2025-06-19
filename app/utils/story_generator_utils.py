@@ -3,16 +3,15 @@ import asyncio
 import json
 import logging
 import re
-from typing import List, Dict, Any, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from app.models.models import CharacterArc as CharacterArcModel
-from app.schemas.character_arcs import CharacterArc, CharacterArcContentJSON
-from app.models.models import CharacterArc as CharacterArcModel
 from app.prompts.story_generator_prompts import (
+    CHARACTER_ARC_EVOLUTION_USER_PROMPT_TEMPLATE,
     CHARACTER_ARC_SYSTEM_PROMPT,
     CHARACTER_ARC_USER_PROMPT_TEMPLATE,
-    CHARACTER_ARC_EVOLUTION_USER_PROMPT_TEMPLATE,
 )
+from app.schemas.character_arcs import CharacterArc, CharacterArcContentJSON
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")

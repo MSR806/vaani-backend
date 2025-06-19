@@ -1,10 +1,11 @@
+import os
+import time
+
+from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-import os
-from dotenv import load_dotenv
-import time
-from sqlalchemy.exc import OperationalError
 
 # Load environment variables
 load_dotenv()

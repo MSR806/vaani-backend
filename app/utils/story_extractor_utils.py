@@ -4,24 +4,24 @@ import json
 import logging
 import re
 import traceback
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 from app.models.models import Chapter
-from app.services.ai_service import get_openai_client
 from app.prompts.story_extractor_prompts import (
-    CHARACTER_ARC_EXTRACTION_USER_PROMPT_TEMPLATE,
-    CHARACTER_CONSOLIDATION_SYSTEM_PROMPT,
-    CHARACTER_CONSOLIDATION_PROMPT_TEMPLATE,
     BLOOD_RELATIONS_CONSOLIDATION_PROMPT_TEMPLATE,
     BLOOD_RELATIONS_CONSOLIDATION_SYSTEM_PROMPT,
+    CHARACTER_ARC_EXTRACTION_USER_PROMPT_TEMPLATE,
+    CHARACTER_CONSOLIDATION_PROMPT_TEMPLATE,
+    CHARACTER_CONSOLIDATION_SYSTEM_PROMPT,
 )
 from app.schemas.character_arcs import (
-    CharacterReference,
-    CharacterArcNameGroups,
     CharacterArc,
     CharacterArcContent,
     CharacterArcContentJSON,
+    CharacterArcNameGroups,
+    CharacterReference,
 )
+from app.services.ai_service import get_openai_client
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")

@@ -1,11 +1,13 @@
+from typing import List, Optional
+
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
-from ..database import get_db
-from ..schemas.prompts import PromptCreate, PromptUpdate, PromptResponse
-from ..services.prompt_service import create_prompt, get_prompt, get_all_prompts, update_prompt
+
 from ..auth import require_write_permission
+from ..database import get_db
 from ..models.enums import PromptSource
-from typing import List, Optional
+from ..schemas.prompts import PromptCreate, PromptResponse, PromptUpdate
+from ..services.prompt_service import create_prompt, get_all_prompts, get_prompt, update_prompt
 
 router = APIRouter(tags=["prompts"])
 

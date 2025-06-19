@@ -1,7 +1,10 @@
-from .base_repository import BaseRepository
-from app.models.models import Template
-from sqlalchemy.orm import Session
 from typing import Optional
+
+from sqlalchemy.orm import Session
+
+from app.models.models import Template
+
+from .base_repository import BaseRepository
 
 
 class TemplateRepository(BaseRepository[Template]):

@@ -1,9 +1,11 @@
-from sqlalchemy.orm import Session
-from typing import List, Optional, Dict, Any
+from typing import Any, Dict, List, Optional
 
-from .base_repository import BaseRepository
+from sqlalchemy.orm import Session
+
 from app.models.models import CharacterArc, Storyboard
 from app.utils.exceptions import CharacterArcNotFoundException, rollback_on_exception
+
+from .base_repository import BaseRepository
 
 
 class CharacterArcsRepository(BaseRepository[CharacterArc]):

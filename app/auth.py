@@ -1,11 +1,13 @@
-import jwt
-from fastapi import Depends, HTTPException, Request, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from jwt.exceptions import InvalidTokenError, ExpiredSignatureError
-import requests
-from functools import lru_cache
-from .config import AUTH0_DOMAIN, AUTH0_API_AUDIENCE, AUTH0_ISSUER, AUTH0_ALGORITHMS
 import base64
+from functools import lru_cache
+
+import jwt
+import requests
+from fastapi import Depends, HTTPException, Request, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
+
+from .config import AUTH0_ALGORITHMS, AUTH0_API_AUDIENCE, AUTH0_DOMAIN, AUTH0_ISSUER
 
 # Security scheme for Swagger UI
 security = HTTPBearer()
@@ -34,8 +36,8 @@ def get_signing_key(token):
                 )
 
                 # Construct the RSA public key in PEM format
-                from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicNumbers
                 from cryptography.hazmat.primitives import serialization
+                from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicNumbers
 
                 numbers = RSAPublicNumbers(e, n)
                 public_key = numbers.public_key()

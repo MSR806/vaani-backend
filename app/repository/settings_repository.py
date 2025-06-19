@@ -1,7 +1,9 @@
-from .base_repository import BaseRepository
-from app.models.models import Setting
-from app.database import get_db
 from sqlalchemy.orm import Session
+
+from app.database import get_db
+from app.models.models import Setting
+
+from .base_repository import BaseRepository
 
 
 class SettingsRepository(BaseRepository[Setting]):

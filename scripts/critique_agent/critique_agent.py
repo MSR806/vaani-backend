@@ -1,12 +1,12 @@
-import traceback
-from typing import List, Optional
 import logging
+import traceback
 from pathlib import Path
-
-from app.services.ai_service import get_openai_client
-from app.models.models import Book, Chapter
+from typing import List, Optional
 
 from critique_prompts import CRITIQUE_AGENT_SYSTEM_PROMPT, CRITIQUE_AGENT_USER_PROMPT
+
+from app.models.models import Book, Chapter
+from app.services.ai_service import get_openai_client
 
 # Set up logging
 logger = logging.getLogger(__name__)

@@ -1,9 +1,9 @@
 import time
+
+from app.models.models import Storyboard, StoryboardStatus
 from app.utils.exceptions import StoryboardNotFoundException, rollback_on_exception
 
-from app.models.models import Storyboard
 from .base_repository import BaseRepository
-from app.models.models import StoryboardStatus
 
 
 class StoryboardRepository(BaseRepository[Storyboard]):

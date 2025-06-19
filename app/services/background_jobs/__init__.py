@@ -7,9 +7,10 @@ Services can directly use these functions to create background jobs without goin
 
 import logging
 import os
-from rq import Queue
+from typing import Any, Callable, Dict, List, Optional
+
 from redis import Redis
-from typing import Any, Dict, Optional, List, Callable
+from rq import Queue
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

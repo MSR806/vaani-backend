@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 import json
-from typing import List, Dict, Any
 import logging
+from typing import Any, Dict, List
 
-from app.schemas.schemas import TemplateStatusEnum
 from sqlalchemy.orm import Session
+
 from app.models.models import Book
-from app.services.ai_service import get_openai_client
-from app.utils.model_settings import ModelSettings
+from app.models.models import CharacterArc as CharacterArcModel
 from app.prompts.story_abstractor_prompts import (
     PLOT_BEATS_SYSTEM_PROMPT,
     PLOT_BEATS_USER_PROMPT_TEMPLATE,
@@ -15,9 +14,11 @@ from app.prompts.story_abstractor_prompts import (
 from app.repository.character_arcs_repository import CharacterArcsRepository
 from app.repository.plot_beat_repository import PlotBeatRepository
 from app.repository.template_repository import TemplateRepository
-from app.utils.story_abstractor_utils import process_character_abstractions
 from app.schemas.character_arcs import CharacterArc, CharacterArcContentJSON
-from app.models.models import CharacterArc as CharacterArcModel
+from app.schemas.schemas import TemplateStatusEnum
+from app.services.ai_service import get_openai_client
+from app.utils.model_settings import ModelSettings
+from app.utils.story_abstractor_utils import process_character_abstractions
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")

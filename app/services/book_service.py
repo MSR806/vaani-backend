@@ -1,18 +1,21 @@
-from sqlalchemy.orm import Session
-from sqlalchemy import func
-from ..models.models import Book, Chapter, Image
-from ..schemas.schemas import BookCreate, BookUpdate, ChapterGenerateRequest, BookBase
-from fastapi import HTTPException
-import openai
+import json
 import os
+import time
+
+import openai
 from dotenv import load_dotenv
+from fastapi import HTTPException
+from sqlalchemy import func
+from sqlalchemy.orm import Session
+
+from app.utils.exceptions import rollback_on_exception
+
+from ..config import OPENAI_MODEL
+from ..models.models import Book, Chapter, Image
+from ..schemas.schemas import BookBase, BookCreate, BookUpdate, ChapterGenerateRequest
+from .ai_service import get_openai_client
 from .image_service import store_image_from_url
 from .placeholder_image import generate_placeholder_image
-from .ai_service import get_openai_client
-from ..config import OPENAI_MODEL
-import json
-import time
-from app.utils.exceptions import rollback_on_exception
 
 # Load environment variables
 load_dotenv()

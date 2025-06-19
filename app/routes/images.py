@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
 from fastapi.responses import Response
+from sqlalchemy.orm import Session
+
 from ..database import get_db
 from ..services.image_service import get_image
 

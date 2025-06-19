@@ -2,9 +2,9 @@ import logging
 
 from app.database import get_db
 from app.services.background_jobs import enqueue_job
-from app.services.template_generator.template_manager import TemplateManager
 from app.services.storyboard.character_arc_generator import CharacterArcGenerator
 from app.services.storyboard.plot_generator import PlotBeatGenerator
+from app.services.template_generator.template_manager import TemplateManager
 
 logger = logging.getLogger(__name__)
 

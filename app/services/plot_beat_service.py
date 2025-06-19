@@ -1,6 +1,7 @@
-from typing import Dict, Any
+from typing import Any, Dict
 
 from requests import Session
+
 from app.repository.plot_beat_repository import PlotBeatRepository
 
 

@@ -1,27 +1,28 @@
 #!/usr/bin/env python3
-import logging
 import asyncio
-from sqlalchemy.orm import Session
+import logging
 from typing import List, Tuple
-from pydantic import BaseModel
-
-# Import from app services
-from app.services.ai_service import get_openai_client
-from app.models.models import PlotBeat
-from app.models.enums import StoryboardStatus
-from app.repository.storyboard_repository import StoryboardRepository
-from app.repository.character_arcs_repository import CharacterArcsRepository
-from app.repository.plot_beat_repository import PlotBeatRepository
-from app.utils.model_settings import ModelSettings
-from app.utils.story_generator_utils import get_character_arcs_content_by_chapter_id
 
 # Import prompt templates
 from prompts.story_generator_prompts import (
-    PLOT_BEAT_SYSTEM_PROMPT,
-    PLOT_BEAT_USER_PROMPT_TEMPLATE,
     CHARACTER_IDENTIFICATION_SYSTEM_PROMPT,
     CHARACTER_IDENTIFICATION_USER_PROMPT_TEMPLATE,
+    PLOT_BEAT_SYSTEM_PROMPT,
+    PLOT_BEAT_USER_PROMPT_TEMPLATE,
 )
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
+
+from app.models.enums import StoryboardStatus
+from app.models.models import PlotBeat
+from app.repository.character_arcs_repository import CharacterArcsRepository
+from app.repository.plot_beat_repository import PlotBeatRepository
+from app.repository.storyboard_repository import StoryboardRepository
+
+# Import from app services
+from app.services.ai_service import get_openai_client
+from app.utils.model_settings import ModelSettings
+from app.utils.story_generator_utils import get_character_arcs_content_by_chapter_id
 
 logger = logging.getLogger(__name__)
 

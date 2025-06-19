@@ -1,6 +1,8 @@
-from typing import Dict, Any
-from app.repository.character_arcs_repository import CharacterArcsRepository
+from typing import Any, Dict
+
 from sqlalchemy.orm import Session
+
+from app.repository.character_arcs_repository import CharacterArcsRepository
 
 
 class CharacterArcService:

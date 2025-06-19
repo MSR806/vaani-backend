@@ -1,11 +1,12 @@
 import logging
-from sqlalchemy.orm import Session
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
-from app.services.ai_service import get_openai_client
+from sqlalchemy.orm import Session
+
+from app.repository.chapter_repository import ChapterRepository
 from app.repository.plot_beat_repository import PlotBeatRepository
 from app.repository.storyboard_repository import StoryboardRepository
-from app.repository.chapter_repository import ChapterRepository
+from app.services.ai_service import get_openai_client
 
 logger = logging.getLogger(__name__)
 

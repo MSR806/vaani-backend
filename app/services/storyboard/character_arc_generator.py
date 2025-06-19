@@ -1,22 +1,24 @@
 #!/usr/bin/env python3
-import re
-import logging
-from sqlalchemy.orm import Session
-import traceback
-import json
 import asyncio
+import json
+import logging
+import re
+import traceback
 
-# Import from app services
-from app.services.ai_service import get_openai_client
-from app.repository.storyboard_repository import StoryboardRepository
-from app.repository.character_arcs_repository import CharacterArcsRepository
-from app.utils.model_settings import ModelSettings
+from sqlalchemy.orm import Session
+
 from app.models.enums import StoryboardStatus
-from app.schemas.character_arcs import CharacterArcContentJSON
-from app.utils.story_generator_utils import process_character_arcs
 
 # Import prompt templates
 from app.prompts.story_generator_prompts import CHARACTER_NAME_GENERATION_PROMPT
+from app.repository.character_arcs_repository import CharacterArcsRepository
+from app.repository.storyboard_repository import StoryboardRepository
+from app.schemas.character_arcs import CharacterArcContentJSON
+
+# Import from app services
+from app.services.ai_service import get_openai_client
+from app.utils.model_settings import ModelSettings
+from app.utils.story_generator_utils import process_character_arcs
 
 logger = logging.getLogger(__name__)
 

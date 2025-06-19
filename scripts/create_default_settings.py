@@ -4,19 +4,20 @@ Initialize default settings in Supabase database.
 This script creates the initial AI model settings needed by the application.
 """
 
-import sys
-import os
-import time
 import json
+import os
+import sys
+import time
 
 from app.utils.constants import SettingKeys
 
 # Add the parent directory to sys.path to import app modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from sqlalchemy.exc import IntegrityError
+
 from app.database import SessionLocal
 from app.models.models import Setting
-from sqlalchemy.exc import IntegrityError
 
 
 def create_default_settings():

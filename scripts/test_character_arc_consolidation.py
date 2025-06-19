@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 import asyncio
 import json
+import os
 import re
 import sys
-import os
 import time
 
 # Add the parent directory to the path so we can import from the app
@@ -12,15 +12,15 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.prompts.story_extractor_prompts import CHARACTER_ARC_EXTRACTION_SYSTEM_PROMPT
 from app.repository.book_repository import BookRepository
 from app.repository.chapter_repository import ChapterRepository
 from app.services.ai_service import get_openai_client
-from app.utils.story_extractor_utils import (
-    process_chapter_batch_for_character_arcs,
-    consolidate_character_arcs,
-)
 from app.utils.model_settings import ModelSettings
-from app.prompts.story_extractor_prompts import CHARACTER_ARC_EXTRACTION_SYSTEM_PROMPT
+from app.utils.story_extractor_utils import (
+    consolidate_character_arcs,
+    process_chapter_batch_for_character_arcs,
+)
 
 # Configuration variables
 BOOK_ID = 21  # Book to process

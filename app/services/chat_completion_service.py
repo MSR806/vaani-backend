@@ -1,11 +1,13 @@
-from fastapi import HTTPException
 import json
-from ..config import OPENAI_MODEL
+
+from fastapi import HTTPException
 from fastapi.responses import StreamingResponse
-from ..models.models import Chapter
 from sqlalchemy.orm import Session
-from ..services.setting_service import get_setting_by_key
+
+from ..config import OPENAI_MODEL
+from ..models.models import Chapter
 from ..services.ai_service import get_openai_client
+from ..services.setting_service import get_setting_by_key
 
 
 async def stream_completion(
