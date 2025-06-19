@@ -17,12 +17,12 @@ services:
       # API keys and auth
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - XAI_API_KEY=${XAI_API_KEY}
+      - PORTKEY_API_KEY=${PORTKEY_API_KEY}
       - AUTH0_DOMAIN=${AUTH0_DOMAIN}
       - AUTH0_API_AUDIENCE=${AUTH0_API_AUDIENCE}
       - AUTH0_ALGORITHMS=${AUTH0_ALGORITHMS}
       # Application settings
-      - APP_ENV=${APP_ENV}
-      - DEBUG=${DEBUG}
+      - ENV=${ENV}
       # Redis connection
       - REDIS_URL=redis://redis:6379/0
     depends_on:
@@ -55,12 +55,12 @@ services:
       # API keys and auth
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - XAI_API_KEY=${XAI_API_KEY}
+      - PORTKEY_API_KEY=${PORTKEY_API_KEY}
       - AUTH0_DOMAIN=${AUTH0_DOMAIN}
       - AUTH0_API_AUDIENCE=${AUTH0_API_AUDIENCE}
       - AUTH0_ALGORITHMS=${AUTH0_ALGORITHMS}
       # Application settings
-      - APP_ENV=${APP_ENV}
-      - DEBUG=${DEBUG}
+      - ENV=${ENV}
       # Redis connection
       - REDIS_URL=redis://redis:6379/0
     depends_on:

@@ -8,9 +8,9 @@ from keys import ACCESS_TOKEN
 API_BASE_URL = "http://localhost/vaani/api/v1"  # Update as needed
 
 # Configuration
-STORYBOARD_ID = 63  # Update this with your storyboard ID
-START_PLOT_BEAT = 1866  # Update this with your starting plot beat ID
-END_PLOT_BEAT = 1885    # Update this with your ending plot beat ID
+STORYBOARD_ID = 67  # Update this with your storyboard ID
+START_PLOT_BEAT = 2145  # Update this with your starting plot beat ID
+END_PLOT_BEAT = 2164    # Update this with your ending plot beat ID
 
 # Headers for API requests
 headers = {

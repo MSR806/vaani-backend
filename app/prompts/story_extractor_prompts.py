@@ -17,7 +17,6 @@ CHARACTER_ARC_EXTRACTION_USER_PROMPT_TEMPLATE = """
 
 ## Book Information
 Title: {book_title}
-Author: {book_author}
 
 ## Chapter Summaries
 ```
@@ -26,13 +25,15 @@ Author: {book_author}
 
 ## Analysis Instructions
 
-Create individual markdown files for each character in the story. Include all characters major and minor:
+Create individual markdown files for each character in the story. Include all named major and minor characters:
 
-1. IMPORTANT: Extract all characters major and minor
+1. IMPORTANT: Extract all named major and minor characters
 
-2. For each character, create a separate, well-formatted markdown file following this EXACT structure:
+2. Include last name only if explicitly mentioned in the text, or else use the common name
 
-# [Character Name] - Character Arc
+3. For each character, create a separate, well-formatted markdown file following this EXACT structure:
+
+# [Character Full Name (if exists or normal name) | common name (if exists)] - Character Arc
 
 ## Description
 [Detailed Description of the character, Include the character's personality, approx age, gender, appearance, setting, backstory, professional details and other relevant details]
@@ -102,7 +103,7 @@ Please create a detailed but comprehensive summary of this chapter"""
 # Character Consolidation Prompts
 CHARACTER_CONSOLIDATION_SYSTEM_PROMPT = (
     "You are a helpful assistant that identifies the same characters across different text sections. "
-    "Your task is to group character references that refer to the same individual, even when names vary slightly. "
+    "Your task is to group character references that refer to the same individual(Should have same spelling. Ex. Tessa is not Tessie). Last name might be missed sometimes try to group those characters as well. "
     "Respond only with the requested JSON format."
 )
 

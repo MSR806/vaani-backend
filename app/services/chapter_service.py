@@ -269,7 +269,7 @@ async def generate_chapter_outline(
         
         chapter_source_text = ""
         if chapter.source_text:
-            chapter_source_text = "\n\n-------- Summary of the chapter--------\n\n"
+            chapter_source_text = "\n\n-------- Summary of the current chapter--------\n\n"
             chapter_source_text += f"{chapter.source_text}\n\n"
         
 

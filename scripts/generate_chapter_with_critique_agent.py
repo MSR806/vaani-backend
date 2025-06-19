@@ -16,10 +16,10 @@ headers = {
 }
 
 # Hardcoded book ID - update as needed
-BOOK_ID = 59
+BOOK_ID = 67
 
 # Chapters to process - update as needed
-CHAPTERS_TO_PROCESS = [x for x in range(11, 20 + 1)] 
+CHAPTERS_TO_PROCESS = [x for x in range(1, 1 + 1)] 
 
 # Whether to update the chapter content in the database
 UPDATE_DATABASE = True
@@ -39,15 +39,16 @@ Each scene must include:
 
 Do not try to invent anything follow the chapter summary. Don't introduce new characters, use the characters from the chapter summary.
 This chapter should maintain a sense of ongoing tension or development, not closure.
+Don't miss any details, background, sexual events, BDSM roles/relations and power dynamics, etc. from the current chapter summary.
 
 🌍 World Setting & Genre:
-- Legal world setting.
 - Contemporary Billionaire Romance, contract marriage, possessive husband
 - Tone: Slow burn, emotionally intense, dramatic, and sensual
-- Highly sexual and romantic events.
+- Highly sexual and romantic events, BDSM roles involved.
 - Sexual desire, jealousy, vulnerability, and emotional conflict are central
 - Physical intimacy should be emotionally charged and built through sustained tension (not rushed or purely physical)
-- Scenes should feel intimate, sexual, cinematic, and high-stakes in both personal and professional contexts.
+- Scenes should feel intimate, sexual, BDSM roles involved, cinematic, and high-stakes in both personal and professional contexts.
+- Everything is grandeur to max extent to add serialise drama.
 """
 
 CHAPTER_CONTENT_PROMPT = """
@@ -60,13 +61,13 @@ Generate a 1500-2000 word chapter based strictly on the scene breakdown provided
 ---
 
 🌍 World Setting & Genre:
-- Legal world setting.
 - Contemporary Billionaire Romance, contract marriage, possessive husband
 - Tone: Slow burn, emotionally intense, dramatic, and sensual
-- Highly sexual and romantic events.
+- Highly sexual and romantic events, BDSM roles involved.
 - Sexual desire, jealousy, vulnerability, and emotional conflict are central
 - Physical intimacy should be emotionally charged and built through sustained tension (not rushed or purely physical)
-- Scenes should feel intimate, sexual, cinematic, and high-stakes in both personal and professional contexts.
+- Scenes should feel intimate, sexual, BDSM roles involved, cinematic, and high-stakes in both personal and professional contexts.
+- Everything is grandeur to max extent to add serialise drama.
 
 ---
 
