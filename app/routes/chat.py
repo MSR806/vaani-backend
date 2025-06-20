@@ -1,23 +1,18 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from ..database import get_db
-from ..schemas.schemas import ChatRequest, CompletionRequest
-from ..services.chat_service import (
-    stream_chat,
-    chat_as_character,
-    stream_chat_as_character,
-)
-from ..services.chat_completion_service import stream_completion
-from ..services.ai_service import get_openai_client
-from ..auth import require_write_permission
+
+from app.auth import require_write_permission
+from app.database import get_db
+from app.schemas.schemas import ChatRequest, CompletionRequest
+from app.services.chat_completion_service import stream_completion
+from app.services.chat_service import chat_as_character, stream_chat, stream_chat_as_character
 
 router = APIRouter(tags=["chat"])
 
 
 @router.post("/chat/stream")
 async def stream_chat_route(
-    request: ChatRequest,
-    current_user: dict = Depends(require_write_permission)
+    request: ChatRequest, current_user: dict = Depends(require_write_permission)
 ):
     try:
         return await stream_chat(request)
@@ -27,18 +22,18 @@ async def stream_chat_route(
 
 @router.post("/chat/character")
 async def chat_as_character_route(
-    request: ChatRequest, 
+    request: ChatRequest,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(require_write_permission)
+    current_user: dict = Depends(require_write_permission),
 ):
     return await chat_as_character(request, db)
 
 
 @router.post("/chat/character/stream")
 async def stream_chat_as_character_route(
-    request: ChatRequest, 
+    request: ChatRequest,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(require_write_permission)
+    current_user: dict = Depends(require_write_permission),
 ):
     try:
         return await stream_chat_as_character(request, db)
@@ -48,9 +43,9 @@ async def stream_chat_as_character_route(
 
 @router.post("/complete")
 async def stream_completion_route(
-    request: CompletionRequest, 
+    request: CompletionRequest,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(require_write_permission)
+    current_user: dict = Depends(require_write_permission),
 ):
     try:
         return await stream_completion(

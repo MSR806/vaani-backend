@@ -4,7 +4,7 @@ services:
   web:
     build: .
     ports:
-      - "80:8000"
+      - "80:80"
     volumes:
       - .:/app
     environment:
@@ -17,18 +17,18 @@ services:
       # API keys and auth
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - XAI_API_KEY=${XAI_API_KEY}
+      - PORTKEY_API_KEY=${PORTKEY_API_KEY}
       - AUTH0_DOMAIN=${AUTH0_DOMAIN}
       - AUTH0_API_AUDIENCE=${AUTH0_API_AUDIENCE}
       - AUTH0_ALGORITHMS=${AUTH0_ALGORITHMS}
       # Application settings
-      - APP_ENV=${APP_ENV}
-      - DEBUG=${DEBUG}
+      - ENV=${ENV}
       # Redis connection
       - REDIS_URL=redis://redis:6379/0
     depends_on:
       - redis
     networks:
-      - writers-llm-network
+      - ecs-vaani-network
 
   redis:
     image: redis:7-alpine
@@ -38,7 +38,7 @@ services:
       - redis-data:/data
     restart: unless-stopped
     networks:
-      - writers-llm-network
+      - ecs-vaani-network
 
   rq-worker:
     build: .
@@ -55,23 +55,23 @@ services:
       # API keys and auth
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - XAI_API_KEY=${XAI_API_KEY}
+      - PORTKEY_API_KEY=${PORTKEY_API_KEY}
       - AUTH0_DOMAIN=${AUTH0_DOMAIN}
       - AUTH0_API_AUDIENCE=${AUTH0_API_AUDIENCE}
       - AUTH0_ALGORITHMS=${AUTH0_ALGORITHMS}
       # Application settings
-      - APP_ENV=${APP_ENV}
-      - DEBUG=${DEBUG}
+      - ENV=${ENV}
       # Redis connection
       - REDIS_URL=redis://redis:6379/0
     depends_on:
       - redis
     restart: unless-stopped
     networks:
-      - writers-llm-network
+      - ecs-vaani-network
 
 volumes:
   redis-data:
 
 networks:
-  writers-llm-network:
+  ecs-vaani-network:
     driver: bridge

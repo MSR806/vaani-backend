@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
 from fastapi.responses import Response
-from ..database import get_db
-from ..services.image_service import get_image
+from sqlalchemy.orm import Session
+
+from app.database import get_db
+from app.services.image_service import get_image
 
 router = APIRouter(tags=["images"])
 

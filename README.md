@@ -1,4 +1,4 @@
-# Writers LLM Backend
+# Vaani Backend
 
 A FastAPI-based backend service for book authors' text autocomplete functionality.
 
@@ -163,7 +163,7 @@ Error responses include a detail message:
 
 ## Development
 
-This is a basic setup for the Writers LLM backend. Future development will include:
+This is a basic setup for the Vaani backend. Future development will include:
 
 - User authentication
 - Rate limiting

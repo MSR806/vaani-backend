@@ -1,13 +1,17 @@
 import os
+
 from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
 
+ENV = os.getenv("ENV", "local")
+
 # Constants
 OPENAI_MODEL = "gpt-4o-mini"
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 XAI_API_KEY = os.getenv("XAI_API_KEY")
+PORTKEY_API_KEY = os.getenv("PORTKEY_API_KEY")
 
 # Auth0 Configuration
 AUTH0_DOMAIN = os.getenv("AUTH0_DOMAIN")

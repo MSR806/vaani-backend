@@ -1,11 +1,13 @@
-from fastapi import HTTPException
 import json
-from ..config import OPENAI_MODEL
+
+from fastapi import HTTPException
 from fastapi.responses import StreamingResponse
-from ..models.models import Chapter
 from sqlalchemy.orm import Session
-from ..services.setting_service import get_setting_by_key
-from ..services.ai_service import get_openai_client
+
+from app.config import OPENAI_MODEL
+from app.models.models import Chapter
+from app.services.ai_service import get_openai_client
+from app.services.setting_service import get_setting_by_key
 
 
 async def stream_completion(
@@ -27,7 +29,9 @@ async def stream_completion(
             )
             if chapter and chapter.source_text:
                 # Append source text to the prompt
-                user_prompt = f"Source Content: {chapter.source_text}\n\nUser Request: {user_prompt}"
+                user_prompt = (
+                    f"Source Content: {chapter.source_text}\n\nUser Request: {user_prompt}"
+                )
 
         # Prepare the messages for GPT
         messages = [
@@ -48,14 +52,16 @@ async def stream_completion(
                 if db:
                     # Get AI model and temperature settings
                     model = get_setting_by_key(db, "chapter_select_and_replace_ai_model").value
-                    temperature = float(get_setting_by_key(db, "chapter_select_and_replace_temperature").value)
+                    temperature = float(
+                        get_setting_by_key(db, "chapter_select_and_replace_temperature").value
+                    )
                 else:
                     # Use provided model if available, otherwise use default
                     model = OPENAI_MODEL
                     temperature = 0.7
 
                 client = get_openai_client(model)
-                
+
                 stream = client.chat.completions.create(
                     model=model, messages=messages, stream=True, temperature=temperature
                 )

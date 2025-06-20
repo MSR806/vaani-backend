@@ -4,9 +4,12 @@
 # Character Arc Extraction Prompts
 CHARACTER_ARC_EXTRACTION_SYSTEM_PROMPT = (
     "You are a literary analysis expert specializing in character identification and development arcs. "
-    "First, identify the main characters in the story. Then, for each significant character, "
-    "analyze their complete journey throughout the narrative, tracking their growth, changes, and "
-    "development from beginning to end."
+    "First, identify the main and supporting characters in the story who have proper names. Then, for each named character, "
+    "extract their background, status, relationships, power dynamics, sexual relationship/attraction, BDSM roles/relations with other characters, and any other relevant details. "
+    "Also preserve the nature of the profession or social status of the character. Ex. Very big CEO, rich man, ordinary, small job, etc."
+    "For protagonists and antagonists, keep relationship descriptions brief and focused on key dynamics. "
+    "Preserve all the background related details like profession, social status, appearance, backstory, interpersonal relationships, etc."
+    "IMPORTANT: Only include characters who have explicit proper names in the text. Do not include unnamed characters."
 )
 
 CHARACTER_ARC_EXTRACTION_USER_PROMPT_TEMPLATE = """
@@ -14,7 +17,6 @@ CHARACTER_ARC_EXTRACTION_USER_PROMPT_TEMPLATE = """
 
 ## Book Information
 Title: {book_title}
-Author: {book_author}
 
 ## Chapter Summaries
 ```
@@ -23,38 +25,43 @@ Author: {book_author}
 
 ## Analysis Instructions
 
-Create individual markdown files for each IMPORTANT character in the story:
+Create individual markdown files for each character in the story. Include all named major and minor characters:
 
-1. Include ONLY the most significant characters (those that drive the plot or undergo meaningful development)
+1. IMPORTANT: Extract all named major and minor characters
 
-2. For each character, create a separate, well-formatted markdown file following this EXACT structure:
-```markdown
-# [Character Name] - Character Arc Analysis
+2. Include last name only if explicitly mentioned in the text, or else use the common name
+
+3. For each character, create a separate, well-formatted markdown file following this EXACT structure:
+
+# [Character Full Name (if exists or normal name) | common name (if exists)] - Character Arc
 
 ## Description
-[Include the character's personality, appearance, setting, backstory, and other relevant details]
+[Detailed Description of the character, Include the character's personality, approx age, gender, appearance, setting, backstory, professional details and other relevant details]
 
 ## Role
 [Specify the character's role in the story (Female & Male Protagonist, Antagonist, etc.), IMPORTANT: DONOT generate a description of the character, just generate a two word phrase about the character]
 
 ## Key Relationships
-[Describe the character's significant relationships with other characters in the story]
+[Detailed Description of the character's key relationships with other characters. For main characters like protagonists and antagonists: Provide a detailed description of key relationships, focusing on:
+- Main relationship type (romantic, antagonistic, etc.)
+- Sexual dynamics if present
+- BDSM roles/relations if applicable]
+Format: [Character Name] - [Brief Description of the character's key relationships]
+
+For other characters: Provide a basic description of the character's role in the story, you can skip the non important characters.
+
+## Blood Relations
+[List all blood relatives of the character (parents, siblings, children, etc.), specifying their names and relationship to the character. If none, write 'None'.]
+
+## Power Dynamics
+[Detailed Description of the character's power dynamics with main characters, if any]
 
 ## Motivation
-[Explain the character's core drives and desires throughout the story]
-
-## Starting State
-[Describe the character's initial condition, mindset, and relationships at the beginning]
-
-## Transformation
-[Identify the key moments and catalysts that change the character throughout the story]
-
-## Ending State
-[Describe the character's final state and how they've changed from their starting point]
-```
+[Detailed Description of the character's core drives and desires throughout the story]
 
 3. Format your output as follows to allow me to easily extract each character's analysis:
 
+Format your output as follows (see example):
 CHARACTER: [Character Name 1]
 FILE_START
 [Complete markdown document for Character 1 following the structure above]
@@ -66,49 +73,14 @@ FILE_START
 FILE_END
 
 And so on for each important character...
-
-Be thorough but concise in your analysis. Focus on quality over quantity, and include only characters with significant development or importance to the story.
-"""
-
-# Plot Beat Analysis Prompts
-PLOT_BEAT_ANALYSIS_SYSTEM_PROMPT = (
-    "You are a literary analysis assistant specializing in identifying plot beats and narrative structure. "
-    "Your task is to analyze the provided chapter summaries and extract key plot events, "
-    "turning points, and narrative progression. Analyze how the narrative develops across "
-    "these consecutive chapters, identifying key events and their significance to the overall story."
-)
-
-PLOT_BEAT_ANALYSIS_USER_PROMPT_TEMPLATE = """
-# Plot Beat Analysis Task
-
-## Story Section Information
-Analyzing Story Section: Chapters {start_chapter} to {end_chapter}
-
-## Chapter Summaries
-```
-{combined_summaries}
-```
-
-## Analysis Instructions
-
-1. Identify 5-7 major plot beats across this entire story section (NOT organized by individual chapters)
-2. For EACH plot beat, provide:
-   - A descriptive title for the plot development
-   - Preserve emotional and physical relationship dynamics between the male protagonist and female protagonist
-
-3. Identify any major turning points in the story
-4. Analyze how this section advances the overall narrative arc
-5. Extract key themes and character developments
-6. Identify any foreshadowing or setup for future events
-
-Format your response as a cohesive narrative analysis with plot beats that span across chapters.
-Do NOT organize by chapter numbers - treat this as a continuous story section.
 """
 
 CHAPTER_SUMMARY_SYSTEM_PROMPT = (
     "You are a literary assistant specializing in precise chapter summarization. "
-    "Your task is to create a concise summary of the chapter that captures all key story elements. "
-    "Focus on preserving plot points, character actions, and significant developments. "
+    "Your task is to create a detailed summary of the chapter that captures all key story elements, background and context. "
+    "Preserve plot points, character actions, and significant developments, sexual relationship/attraction, sexual events, BDSM roles/relations and power dynamics, etc."
+    "Preserve all the power dynamics, professional details, social status elements if any present"
+    "Try to extract as many details as possible"
     "Your summary should maintain the narrative flow while condensing the content."
 )
 
@@ -126,14 +98,65 @@ Chapter Number: {chapter_number}
 
 ## Summarization Instructions
 
-Please create a concise but comprehensive summary of this chapter that:
+Please create a detailed but comprehensive summary of this chapter"""
 
-1. Captures all key plot events in chronological order
-2. Identifies all characters who appear and their actions
-3. Preserves important dialogue and interactions
-4. Notes any character development or emotional changes
-5. Highlights setting changes or important locations
-6. Includes any foreshadowing or thematic elements
+# Character Consolidation Prompts
+CHARACTER_CONSOLIDATION_SYSTEM_PROMPT = (
+    "You are a helpful assistant that identifies the same characters across different text sections. "
+    "Your task is to group character references that refer to the same individual(Should have same spelling. Ex. Tessa is not Tessie). Last name might be missed sometimes try to group those characters as well. "
+    "Respond only with the requested JSON format."
+)
 
-Aim for a summary that is approximately 15-20% of the original length while ensuring no important story elements are lost.
+CHARACTER_CONSOLIDATION_PROMPT_TEMPLATE = """
+I need to consolidate character references from different parts of a book.
+Below are references to characters that may be the same person.
+
+{character_references}
+
+Group these character references by matching the same characters together.
+For each group, also provide the most complete and accurate name to use for that character.
+
+Return a JSON object with the following structure:
+1. "groups": an array of objects where each object has:
+   - "indices": an array of indices from the original list that refer to the same character
+   - "canonical_name": the most appropriate name to use for this character (prefer more complete names)
+
+For example:
+{{
+  "groups": [
+    {{"indices": [0, 2, 5], "canonical_name": "John Smith"}},
+    {{"indices": [1, 4], "canonical_name": "Mary Johnson"}},
+    {{"indices": [3], "canonical_name": "Robert Wilson"}}
+  ]
+}}
+
+Only return the JSON object with the 'groups' field as shown above, nothing else.
+"""
+
+# Blood Relations Consolidation Prompts
+BLOOD_RELATIONS_CONSOLIDATION_SYSTEM_PROMPT = (
+    "You are a literary assistant specializing in accurately consolidating family relationship information. "
+    "Your task is to analyze different blood relations descriptions for the same character and create a minimal "
+    "list of blood relations with no extra descriptions or explanations."
+)
+
+BLOOD_RELATIONS_CONSOLIDATION_PROMPT_TEMPLATE = """
+I need to consolidate blood relations information for a character named {character_name}.
+
+Below are different descriptions of this character's blood relations from different parts of the text:
+
+```
+{blood_relations_texts}
+```
+
+Please create an extremely minimal list of this character's blood relations. Follow these rules:
+1. Use the shortest possible description for each relation (e.g., "Father: James" not "Father: James, a tall businessman who...").
+2. Include only the relation type and name, separated by a colon (e.g., "Mother: Sarah").
+3. List each relation on its own line.
+4. Do not include any descriptive text, explanations, or anecdotal information.
+5. IMPORTANT: DO NOT include any relations where the name is unknown. Only include relations with actual names.
+6. If there are contradictions, choose the most likely correct name without noting the contradiction.
+7. If there's no blood relations information or all relations are unknown (empty or states 'None'), return 'None'.
+
+Return ONLY the minimal list of blood relations, nothing else.
 """

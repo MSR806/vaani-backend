@@ -1,14 +1,28 @@
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, Table, LargeBinary, BigInteger, Enum
+from sqlalchemy import (
+    ARRAY,
+    JSON,
+    BigInteger,
+    Column,
+    Enum,
+    ForeignKey,
+    Integer,
+    LargeBinary,
+    String,
+    Text,
+)
 from sqlalchemy.orm import relationship
-from sqlalchemy.ext.declarative import declarative_base
-from ..database import Base
-from .enums import StoryboardStatus, PromptSource
+
+from app.database import Base
+from app.models.enums import PromptSource, StoryboardStatus
 
 
 class CharacterArc(Base):
     __tablename__ = "character_arcs"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    content = Column(Text, nullable=False)
+    content = Column(Text, nullable=False)  # Deprecated - Keeping for backward compatibility
+    content_json = Column(
+        "content_json", JSON, nullable=True
+    )  # JSON array of {chapter_range: [start, end], content: string}
     type = Column(Text, nullable=False)
     source_id = Column(Integer, nullable=True)
     name = Column(Text, nullable=True)
@@ -54,6 +68,7 @@ class Chapter(Base):
     chapter_no = Column(Integer, nullable=False)
     content = Column(Text, nullable=False)
     source_text = Column(Text, nullable=True)
+    character_ids = Column(ARRAY(Integer), nullable=True, default=[])
     state = Column(String, default="DRAFT", nullable=False)
     created_at = Column(BigInteger, nullable=False)  # Unix timestamp
     updated_at = Column(BigInteger, nullable=False)  # Unix timestamp
@@ -110,6 +125,7 @@ class PlotBeat(Base):
     content = Column(Text, nullable=False)
     type = Column(Text, nullable=False)
     source_id = Column(Integer, nullable=True)
+    character_ids = Column(ARRAY(Integer), nullable=True, default=[])
 
 
 class Template(Base):
@@ -122,6 +138,7 @@ class Template(Base):
     plot_beats_status = Column(Text, nullable=True)
     character_arc_template_status = Column(Text, nullable=True)
     plot_beat_template_status = Column(Text, nullable=True)
+
 
 class Storyboard(Base):
     __tablename__ = "storyboards"

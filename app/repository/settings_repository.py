@@ -1,7 +1,10 @@
-from .base_repository import BaseRepository
-from app.models.models import Setting
-from app.database import get_db
 from sqlalchemy.orm import Session
+
+from app.database import get_db
+from app.models.models import Setting
+
+from .base_repository import BaseRepository
+
 
 class SettingsRepository(BaseRepository[Setting]):
     def __init__(self, db: Session):
@@ -12,4 +15,6 @@ class SettingsRepository(BaseRepository[Setting]):
         if not setting:
             raise ValueError(f"Setting with key {key} not found")
         return setting
+
+
 settings_repo = SettingsRepository(get_db())

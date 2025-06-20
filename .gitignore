@@ -55,6 +55,9 @@ htmlcov/
 .coverage.*
 .cache
 coverage.xml
-*.cover 
+*.cover
 
-# scripts/content-generator/output/
+scripts/critique_agent/output/
+scripts/pacing_analysis/outputs/
+scripts/pacing_analysis/generated/
+scripts/pacing_analysis/templates/

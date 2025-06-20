@@ -13,3 +13,10 @@ beautifulsoup4>=4.12.2
 rq==1.15.1
 redis>=4.5.1
 gunicorn==23.0.0
+portkey-ai>=1.14.0
+flake8>=7.2.0
+black>=24.0.0
+isort>=5.13.2
+autoflake>=2.2.1
+pre-commit>=4.2.0
+asgi-correlation-id>=4.3.4
