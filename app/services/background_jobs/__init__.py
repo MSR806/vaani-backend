@@ -1,13 +1,6 @@
-"""
-Background Job Service
-
-This module provides functions to enqueue and manage background jobs using Redis Queue (RQ).
-Services can directly use these functions to create background jobs without going through APIs.
-"""
-
 import logging
 import os
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, Optional
 
 from redis import Redis
 from rq import Queue
@@ -36,20 +29,6 @@ def enqueue_job(
     result_ttl: int = 86400,
     **kwargs: Any,
 ):
-    """
-    Enqueue a background job with specified priority
-
-    Args:
-        func: The function to run in the background
-        *args: Arguments to pass to the function
-        priority: Priority level ("high", "default", or "low")
-        job_timeout: Maximum runtime allowed for the job in seconds
-        result_ttl: How long to keep the job result in Redis (seconds)
-        **kwargs: Keyword arguments to pass to the function
-
-    Returns:
-        The job object
-    """
     logger.info(f"Enqueueing job: {func.__name__} with priority {priority}")
 
     if priority == "high":
@@ -67,15 +46,6 @@ def enqueue_job(
 
 
 def get_job(job_id: str):
-    """
-    Get a job by its ID
-
-    Args:
-        job_id: The job ID
-
-    Returns:
-        The job object or None if not found
-    """
     from rq.job import Job
 
     try:
@@ -86,15 +56,6 @@ def get_job(job_id: str):
 
 
 def get_job_status(job_id: str) -> Optional[Dict[str, Any]]:
-    """
-    Get the status of a job
-
-    Args:
-        job_id: ID of the job
-
-    Returns:
-        Job status information dictionary or None if job not found
-    """
     job = get_job(job_id)
     if not job:
         return None
@@ -116,15 +77,6 @@ def get_job_status(job_id: str) -> Optional[Dict[str, Any]]:
 
 
 def cancel_job(job_id: str) -> bool:
-    """
-    Cancel a job by its ID if it hasn't started yet
-
-    Args:
-        job_id: The job ID
-
-    Returns:
-        True if job was cancelled, False otherwise
-    """
     job = get_job(job_id)
     if not job:
         return False
@@ -137,15 +89,6 @@ def cancel_job(job_id: str) -> bool:
 
 
 def get_queue_length(queue_name: str = "default") -> int:
-    """
-    Get the number of jobs in a queue
-
-    Args:
-        queue_name: Name of the queue ("high", "default", "low")
-
-    Returns:
-        Number of jobs in the queue
-    """
     if queue_name == "high":
         return len(high_queue)
     elif queue_name == "low":

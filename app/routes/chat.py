@@ -4,13 +4,8 @@ from sqlalchemy.orm import Session
 from ..auth import require_write_permission
 from ..database import get_db
 from ..schemas.schemas import ChatRequest, CompletionRequest
-from ..services.ai_service import get_openai_client
 from ..services.chat_completion_service import stream_completion
-from ..services.chat_service import (
-    chat_as_character,
-    stream_chat,
-    stream_chat_as_character,
-)
+from ..services.chat_service import chat_as_character, stream_chat, stream_chat_as_character
 
 router = APIRouter(tags=["chat"])
 

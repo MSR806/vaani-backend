@@ -14,9 +14,6 @@ from app.database import Base, engine
 
 
 def setup_database():
-    """
-    Create all tables defined in SQLAlchemy models.
-    """
     print("Creating database schema in Supabase...")
 
     # Create all tables

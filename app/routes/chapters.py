@@ -14,10 +14,7 @@ from ..schemas.schemas import (
     ChapterStateUpdate,
     ChapterUpdate,
 )
-from ..services.book_service import (
-    get_book,
-    get_book_chapters,
-)
+from ..services.book_service import get_book, get_book_chapters
 from ..services.chapter_rewrite_service import stream_chapter_rewrite
 from ..services.chapter_service import (
     bulk_upload_chapters,
@@ -97,7 +94,6 @@ def delete_all_chapters_route(
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_write_permission),
 ):
-    """Delete all chapters for a book"""
     result = delete_all_chapters(db, book_id)
     return result
 
@@ -123,10 +119,6 @@ async def generate_chapter_content_route(
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_write_permission),
 ):
-    """
-    Generate chapter content with streaming support.
-    The response is streamed as Server-Sent Events (SSE), and the final content is saved to the database.
-    """
     return await stream_chapter_content(db, book_id, chapter_id, request)
 
 
@@ -172,10 +164,6 @@ def bulk_upload_chapters_route(
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_write_permission),
 ):
-    """
-    Upload multiple chapters from a single HTML file.
-    The HTML content will be processed to extract chapters which will be added to the specified book.
-    """
     chapters = bulk_upload_chapters(
         db, book_id, upload_request.html_content, current_user["user_id"]
     )
@@ -191,8 +179,4 @@ async def rewrite_chapter_route(
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_write_permission),
 ):
-    """
-    Rewrite a chapter based on critique feedback.
-    The response is streamed as Server-Sent Events (SSE), and the rewritten content replaces the original in the database.
-    """
     return await stream_chapter_rewrite(db, book_id, chapter_id)

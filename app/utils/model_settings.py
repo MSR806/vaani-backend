@@ -63,7 +63,6 @@ class ModelSettings:
 
     # Chapter summary methods
     def chapter_summary_from_storyboard(self) -> Tuple[str, float]:
-        """For generating chapter summaries from storyboard"""
         return self.get_model_and_temperature(
             (
                 SettingKeys.CHAPTER_SUMMARY_GENERATION_FROM_STORYBOARD_MODEL.value,
@@ -113,7 +112,6 @@ class ModelSettings:
         )
 
     def character_identification(self) -> Tuple[str, float]:
-        """For identifying characters in plot beats"""
         return self.get_model_and_temperature(
             (
                 SettingKeys.CHARACTER_IDENTIFICATION_MODEL.value,

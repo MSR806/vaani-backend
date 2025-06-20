@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import asyncio
-import json
 import logging
 import re
 from typing import Any, Dict, List, Optional, Tuple
@@ -181,10 +180,6 @@ async def process_character_arcs(
     model: str,
     temperature: float,
 ) -> List[CharacterArc]:
-    """
-    Process character arcs for multiple characters in parallel.
-    For each character, chapter ranges are processed sequentially to maintain consistency.
-    """
     logger.info(f"Processing {len(character_templates)} character arcs")
     generation_tasks = {}
     results = []

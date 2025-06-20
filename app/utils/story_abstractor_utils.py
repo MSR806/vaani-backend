@@ -2,11 +2,8 @@
 import asyncio
 import json
 import logging
-import re
-import traceback
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
-from app.models.models import CharacterArc as CharacterArcModel
 from app.prompts.story_abstractor_prompts import (
     BLOOD_RELATIONS_SYSTEM_PROMPT,
     BLOOD_RELATIONS_USER_PROMPT,
@@ -39,9 +36,6 @@ async def abstract_blood_relations_with_llm(
     model: str,
     temperature: float,
 ) -> str:
-    """
-    Abstract blood relations text using LLM to replace specific names with abstract identifiers.
-    """
     # Return None if there are no blood relations
     if not blood_relations or blood_relations == "None":
         logger.info(f"No blood relations found for {original_name}")
@@ -335,5 +329,5 @@ async def process_character_abstractions(
             }
         )
 
-    logger.info(f"Completed all character abstractions including blood relations")
+    logger.info("Completed all character abstractions including blood relations")
     return character_abstractions

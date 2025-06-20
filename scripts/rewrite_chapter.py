@@ -181,7 +181,7 @@ def rewrite_chapter(book_id, chapter_id, chapter_no, chapter_title, original_con
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chapter {chapter_no}: {chapter_title}</title>
     <style>
-        body {{  
+        body {{
             font-family: 'Georgia', serif;
             line-height: 1.6;
             margin: 0;
@@ -191,13 +191,13 @@ def rewrite_chapter(book_id, chapter_id, chapter_no, chapter_title, original_con
             background-color: #f9f9f9;
             color: #333;
         }}
-        h1, h2 {{  
+        h1, h2 {{
             text-align: center;
             border-bottom: 2px solid #ddd;
             padding-bottom: 10px;
             margin-top: 30px;
         }}
-        .content {{  
+        .content {{
             background-color: white;
             padding: 30px;
             border-radius: 5px;
@@ -205,12 +205,12 @@ def rewrite_chapter(book_id, chapter_id, chapter_no, chapter_title, original_con
             margin-bottom: 30px;
             white-space: pre-wrap;
         }}
-        .divider {{  
+        .divider {{
             text-align: center;
             margin: 40px 0;
             color: #888;
         }}
-        .timestamp {{  
+        .timestamp {{
             text-align: right;
             font-size: 0.8em;
             color: #888;
@@ -220,19 +220,19 @@ def rewrite_chapter(book_id, chapter_id, chapter_no, chapter_title, original_con
 </head>
 <body>
     <h1>Chapter {chapter_no}: {html.escape(chapter_title)}</h1>
-    
+
     <h2>Original Version</h2>
     <div class="content">
 {original_content}
     </div>
-    
+
     <div class="divider">* * * * *</div>
-    
+
     <h2>Rewritten Version</h2>
     <div class="content">
 {full_content}
     </div>
-    
+
     <div class="timestamp">Generated on: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</div>
 </body>
 </html>

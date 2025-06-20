@@ -3,8 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer
 
 from app.auth import get_current_user
-from app.database import Base, SessionLocal, engine
-from app.repository.base_repository import BaseRepository
+from app.database import Base, engine
 from app.routes import router
 
 # Create database tables

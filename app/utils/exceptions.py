@@ -20,7 +20,7 @@ def rollback_on_exception(func: F) -> F:
 
         try:
             return func(*args, **kwargs)
-        except Exception as e:
+        except Exception:
             db.rollback()
             raise
 
@@ -66,7 +66,7 @@ class PlotBeatNotGeneratedException(HTTPException):
             status_code=400,
             detail={
                 "type": "PLOT_BEAT_NOT_GENERATED",
-                "message": f"Plot beat not generated, first generate plot beats",
+                "message": "Plot beat not generated, first generate plot beats",
             },
         )
 

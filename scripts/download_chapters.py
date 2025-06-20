@@ -1,9 +1,7 @@
 import argparse
 import datetime
-import json
 import os
 import re
-import sys
 import time
 
 import requests
@@ -170,7 +168,7 @@ def download_book_chapters(book_id, output_format="text"):
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{book_title}</title>
     <style>
-        body {{  
+        body {{
             font-family: 'Georgia', serif;
             line-height: 1.6;
             margin: 0;
@@ -180,13 +178,13 @@ def download_book_chapters(book_id, output_format="text"):
             background-color: #f9f9f9;
             color: #333;
         }}
-        h1, h2 {{  
+        h1, h2 {{
             text-align: center;
             border-bottom: 2px solid #ddd;
             padding-bottom: 10px;
             margin-top: 30px;
         }}
-        .content {{  
+        .content {{
             background-color: white;
             padding: 30px;
             border-radius: 5px;
@@ -194,12 +192,12 @@ def download_book_chapters(book_id, output_format="text"):
             margin-bottom: 30px;
             white-space: pre-wrap;
         }}
-        .chapter-divider {{  
+        .chapter-divider {{
             text-align: center;
             margin: 40px 0;
             color: #888;
         }}
-        .timestamp {{  
+        .timestamp {{
             text-align: right;
             font-size: 0.8em;
             color: #888;
@@ -255,7 +253,7 @@ def download_book_chapters(book_id, output_format="text"):
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chapter {chapter_no}: {chapter_title}</title>
     <style>
-        body {{  
+        body {{
             font-family: 'Georgia', serif;
             line-height: 1.6;
             margin: 0;
@@ -265,13 +263,13 @@ def download_book_chapters(book_id, output_format="text"):
             background-color: #f9f9f9;
             color: #333;
         }}
-        h1, h2 {{  
+        h1, h2 {{
             text-align: center;
             border-bottom: 2px solid #ddd;
             padding-bottom: 10px;
             margin-top: 30px;
         }}
-        .content {{  
+        .content {{
             background-color: white;
             padding: 30px;
             border-radius: 5px;
@@ -279,7 +277,7 @@ def download_book_chapters(book_id, output_format="text"):
             margin-bottom: 30px;
             white-space: pre-wrap;
         }}
-        .timestamp {{  
+        .timestamp {{
             text-align: right;
             font-size: 0.8em;
             color: #888;
@@ -289,11 +287,11 @@ def download_book_chapters(book_id, output_format="text"):
 </head>
 <body>
     <h1>Chapter {chapter_no}: {chapter_title}</h1>
-    
+
     <div class="content">
 {content}
     </div>
-    
+
     <div class="timestamp">Downloaded on: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</div>
 </body>
 </html>"""

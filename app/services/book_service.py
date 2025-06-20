@@ -11,9 +11,8 @@ from sqlalchemy.orm import Session
 from app.utils.exceptions import rollback_on_exception
 
 from ..config import OPENAI_MODEL
-from ..models.models import Book, Chapter, Image
-from ..schemas.schemas import BookBase, BookCreate, BookUpdate, ChapterGenerateRequest
-from .ai_service import get_openai_client
+from ..models.models import Book, Chapter
+from ..schemas.schemas import BookBase, BookUpdate, ChapterGenerateRequest
 from .image_service import store_image_from_url
 from .placeholder_image import generate_placeholder_image
 
@@ -143,14 +142,14 @@ async def generate_chapter_outline(
             "content": """You are a creative writing assistant specialized in creating chapter outlines.
             Based on the previous chapters and the user's prompt,
             create a structured outline for the next chapter.
-            
+
             Your outline should:
             1. Break down the chapter into logical sections
             2. Include key plot points and character interactions
             3. Maintain consistency with the story's style and narrative
             4. Follow any specific requirements provided in the user's prompt
             5. Set up future plot developments
-            
+
             IMPORTANT: Your response must be a valid JSON object with the following structure:
             {
                 "sections": [
@@ -160,7 +159,7 @@ async def generate_chapter_outline(
                     }
                 ]
             }
-            
+
             Do not include any text before or after the JSON object.""",
         },
         {
@@ -229,7 +228,7 @@ async def generate_chapter_content(
             "content": """You are a creative writing assistant specialized in writing novel chapters.
             Based on the previous chapters and the provided context,
             write a complete, engaging chapter that maintains consistency with the story's style and narrative.
-            
+
             Your chapter should:
             1. Be well-structured with natural flow between scenes
             2. Maintain consistent character voices and personalities
@@ -237,7 +236,7 @@ async def generate_chapter_content(
             4. Follow any outline or specific requirements provided in the user's prompt
             5. Advance the plot while maintaining suspense
             6. End in a way that hooks readers for the next chapter
-            
+
             Start your response with a suitable chapter title in the format: TITLE: Your Chapter Title
             Then continue with the chapter content.""",
         },
@@ -356,7 +355,7 @@ async def generate_book_cover(db: Session, book_id: int, user_id: str):
         messages = [
             {
                 "role": "system",
-                "content": """You are an expert movie poster designer. Based on the book information provided, 
+                "content": """You are an expert movie poster designer. Based on the book information provided,
                 create a detailed prompt for DALL-E to generate a MOVIE-STYLE POSTER for this story.
                 Your prompt should capture the essence, themes, mood, and key elements of the book.
                 Format your response as a single paragraph that can be directly used as a DALL-E prompt.

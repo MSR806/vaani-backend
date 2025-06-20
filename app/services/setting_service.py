@@ -7,7 +7,6 @@ from ..models.models import Setting
 
 
 def get_setting_by_key(db: Session, key: str):
-    """Get a setting by its key"""
     setting = db.query(Setting).filter(Setting.key == key).first()
     if not setting:
         raise HTTPException(status_code=404, detail=f"Setting with key '{key}' not found")
@@ -15,12 +14,10 @@ def get_setting_by_key(db: Session, key: str):
 
 
 def get_settings(db: Session, skip: int = 0, limit: int = 100):
-    """Get all settings with pagination"""
     return db.query(Setting).offset(skip).limit(limit).all()
 
 
 def get_setting_by_id(db: Session, setting_id: int):
-    """Get a setting by its ID"""
     setting = db.query(Setting).filter(Setting.id == setting_id).first()
     if not setting:
         raise HTTPException(status_code=404, detail="Setting not found")
@@ -29,7 +26,6 @@ def get_setting_by_id(db: Session, setting_id: int):
 
 @rollback_on_exception
 def batch_update_settings(db: Session, settings_data: list):
-    """Update multiple settings in a batch operation"""
     updated_settings = []
 
     # Start a transaction to ensure atomicity

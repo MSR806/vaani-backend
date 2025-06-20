@@ -3,11 +3,7 @@ from sqlalchemy.orm import Session
 
 from ..auth import require_delete_permission, require_write_permission
 from ..database import get_db
-from ..schemas.schemas import (
-    SceneCreate,
-    SceneReorderRequest,
-    SceneUpdate,
-)
+from ..schemas.schemas import SceneCreate, SceneReorderRequest, SceneUpdate
 from ..services.scene_service import (
     create_scene,
     delete_scene,

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import json
 import logging
 from typing import Any, Dict, List
 
@@ -27,7 +26,6 @@ logger = logging.getLogger(__name__)
 
 class StoryAbstractor:
     def __init__(self, book_id: int, db: Session = None, template_id: int = None):
-        """Initialize the abstractor with a book ID and optional database session"""
         self.book_id = book_id
         self.db = db
         self.book = None
@@ -39,9 +37,6 @@ class StoryAbstractor:
         self.client = get_openai_client()
 
     async def initialize(self):
-        """Validate input directories and load book info if database session provided"""
-
-        # If database session provided, load book info
         if self.db:
             self.book = self.db.query(Book).filter(Book.id == self.book_id).first()
             if not self.book:
@@ -60,13 +55,11 @@ class StoryAbstractor:
     # Method removed and replaced with direct ModelSettings usage
 
     async def read_character_arcs(self) -> List[CharacterArcModel]:
-        """Read all character arcs from the database and return their contents"""
         repo = CharacterArcsRepository(self.db)
         arcs = repo.get_by_type_and_source_id("EXTRACTED", self.book_id)
         return arcs
 
     async def read_plot_beats(self) -> List[Dict[str, Any]]:
-        """Read all plot beats from the database and return their contents"""
         plot_beats = []
         repo = PlotBeatRepository(self.db)
         beats = repo.get_by_source_id_and_type(self.book_id, "EXTRACTED")
@@ -178,7 +171,7 @@ class StoryAbstractor:
             logger.error(f"Error abstracting character arcs: {str(e)}")
             # Return error for all arcs
             results = {}
-            for name in arcs_to_abstract:
+            for name in character_abstractions:
                 results[name] = {
                     "original_character": name,
                     "abstract_arc": f"# Character Arc Template\n\nCould not generate abstraction due to an error: {str(e)}",
@@ -319,7 +312,6 @@ class StoryAbstractor:
         return abstract_beats
 
     async def run_abstraction(self) -> Dict[str, Any]:
-        """Run the full abstraction pipeline"""
         logger.info(f"Starting abstraction process for book {self.book_id}")
         await self.initialize()
 

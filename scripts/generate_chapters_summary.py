@@ -1,6 +1,5 @@
 import sys
 import time
-from typing import List
 
 import requests
 from keys import ACCESS_TOKEN

@@ -1,11 +1,10 @@
 import logging
 import traceback
-from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from app.models.models import Book, Chapter
+from app.models.models import Chapter
 from app.prompts.critique_prompts import CRITIQUE_AGENT_SYSTEM_PROMPT, CRITIQUE_AGENT_USER_PROMPT
 from app.services.ai_service import get_openai_client
 from app.services.chapter_service import get_context_chapters

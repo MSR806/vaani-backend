@@ -1,7 +1,5 @@
 from pydantic import BaseModel
 
-from .utils import BooleanResponse
-
 
 class StoryboardCreate(BaseModel):
     book_id: int

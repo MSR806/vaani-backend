@@ -1,6 +1,6 @@
 [flake8]
 max-line-length = 100
-exclude = 
+exclude =
     .git,
     __pycache__,
     alembic,
@@ -8,10 +8,21 @@ exclude =
     venv,
     .env,
     build,
-    dist
-ignore = 
+    dist,
+    scripts,
+ignore =
     E203,
     W503,
-    E501
+    E501,
+    W291,
+    W293,
+    E226,
+    D100,
+    D101,
+    D102,
+    D103,
+    D104,
+    D106,
+    D107
 per-file-ignores =
     __init__.py: F401

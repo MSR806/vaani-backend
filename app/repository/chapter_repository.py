@@ -2,8 +2,6 @@ import logging
 import time
 from typing import Any, Dict, List, Optional
 
-from sqlalchemy.orm import Session
-
 from app.models.models import Chapter
 from app.utils.exceptions import rollback_on_exception
 

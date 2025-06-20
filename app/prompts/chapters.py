@@ -55,13 +55,13 @@ Each paragraph must be wrapped in this tag:
 
 🚫 What to Avoid:
 
-❌ "Amelia felt sad and hurt."  
+❌ "Amelia felt sad and hurt."
 ✅ "You let her touch you," she said. "That hurt me."
 
-❌ "He gave her a cold look."  
+❌ "He gave her a cold look."
 ✅ He turned away without saying anything.
 
-❌ "She thought about the past."  
+❌ "She thought about the past."
 ✅ "You used to hold me," she said quietly.
 
 ---

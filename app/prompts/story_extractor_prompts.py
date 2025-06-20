@@ -108,7 +108,7 @@ CHARACTER_CONSOLIDATION_SYSTEM_PROMPT = (
 )
 
 CHARACTER_CONSOLIDATION_PROMPT_TEMPLATE = """
-I need to consolidate character references from different parts of a book. 
+I need to consolidate character references from different parts of a book.
 Below are references to characters that may be the same person.
 
 {character_references}

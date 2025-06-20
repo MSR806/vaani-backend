@@ -1,6 +1,6 @@
 import time
 
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session
 
 from app.utils.exceptions import rollback_on_exception
 

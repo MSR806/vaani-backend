@@ -518,7 +518,6 @@ def delete_chapter(db: Session, book_id: int, chapter_id: int):
 
 
 def delete_all_chapters(db: Session, book_id: int):
-    """Delete all chapters for a book"""
     # Get all chapter IDs for this book
     chapter_ids = db.query(Chapter.id).filter(Chapter.book_id == book_id).all()
     chapter_ids = [c.id for c in chapter_ids]

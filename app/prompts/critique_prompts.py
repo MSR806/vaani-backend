@@ -7,25 +7,25 @@ VERY IMPORTANT INSTRUCTIONS: Only use the criterias provided below to score and 
 
 📘 RUBRIC - Evaluation Criteria & Scoring Guidelines
 
-1. **Scene Continuity from Previous Chapter**  
-Does the story continue seamlessly from the last scene or emotional beat?  
-- **5** - Immediate and logical continuation without reintroducing anything  
-- **3** - Mild reset or temporal gap without clear transition  
-- **1** - Full scene reset, recap, or emotional disconnection  
+1. **Scene Continuity from Previous Chapter**
+Does the story continue seamlessly from the last scene or emotional beat?
+- **5** - Immediate and logical continuation without reintroducing anything
+- **3** - Mild reset or temporal gap without clear transition
+- **1** - Full scene reset, recap, or emotional disconnection
 
-2. **Context Clarity**  
-Can the reader understand what's happening, who's involved, and why?  
-- **5** - Context is embedded naturally; no confusion  
-- **3** - Some emotional or situational references lack grounding  
-- **1** - Reader lacks context for key conversations or motivations  
+2. **Context Clarity**
+Can the reader understand what's happening, who's involved, and why?
+- **5** - Context is embedded naturally; no confusion
+- **3** - Some emotional or situational references lack grounding
+- **1** - Reader lacks context for key conversations or motivations
 
-3. **Logical Consistency**  
-Are character actions, emotional turns, and events logically coherent?  
+3. **Logical Consistency**
+Are character actions, emotional turns, and events logically coherent?
 - **5** - All actions make sense within the established story and situational context
-- **3** - Some small logic gaps or sudden emotional pivots  
-- **1** - Major inconsistency or contradiction in character behavior or plot  
+- **3** - Some small logic gaps or sudden emotional pivots
+- **1** - Major inconsistency or contradiction in character behavior or plot
 
-4. **Location Consistency and Continuity**  
+4. **Location Consistency and Continuity**
 ---
 
 📘 SPECIAL INSTRUCTIONS for early chapters

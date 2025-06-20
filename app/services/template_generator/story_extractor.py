@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import asyncio
-import json
 import logging
 import time
 import traceback
@@ -36,7 +35,6 @@ logger = logging.getLogger(__name__)
 
 class StoryExtractor:
     def __init__(self, book_id: int, db: Session, template_id: int):
-        """Initialize the analyzer with a book ID and database session"""
         self.book_id = book_id
         self.db = db
         self.book = None
@@ -49,7 +47,6 @@ class StoryExtractor:
         self.model_settings = None
 
     async def initialize(self):
-        """Load book and chapters from database"""
         # Load book data
         self.book = self.db.query(Book).filter(Book.id == self.book_id).first()
         if not self.book:
@@ -81,8 +78,6 @@ class StoryExtractor:
     # Method removed and replaced with direct ModelSettings usage
 
     async def summarize_chapter(self, chapter: Chapter) -> Dict[str, Any]:
-        """Summarize a single chapter while preserving key metadata and story elements"""
-        # If a summary already exists in the database, use it directly
         if chapter.source_text:
             summary_text = chapter.source_text
             result = {
@@ -95,7 +90,7 @@ class StoryExtractor:
                 "compression_ratio": len(summary_text) / (len(chapter.content) or 1),
                 "timestamp": int(time.time()),
             }
-            logger.info(f"Summary loaded from source_text")
+            logger.info("Summary loaded from source_text")
             return result
 
         logger.info(f"Summarizing Chapter {chapter.chapter_no}: {chapter.title}")
@@ -144,7 +139,7 @@ class StoryExtractor:
             chapter.source_text = summary_text
             chapter_repo = chapter_repository.ChapterRepository(self.db)
             chapter_repo.update(chapter)
-            logger.info(f"Summary saved to database")
+            logger.info("Summary saved to database")
 
             return result
         except Exception as e:
@@ -159,12 +154,10 @@ class StoryExtractor:
             }
 
     async def summarize_all_chapters(self) -> List[Dict[str, Any]]:
-        """Summarize all chapters in the book"""
         import time as _time
 
         self.template_repo.update_summary_status(self.template_id, TemplateStatusEnum.IN_PROGRESS)
 
-        # Filter out chapters that already have summaries
         chapters_to_process = [chapter for chapter in self.chapters if not chapter.source_text]
         logger.info(
             f"Found {len(chapters_to_process)} chapters that need summarization out of {len(self.chapters)} total chapters"
@@ -203,7 +196,6 @@ class StoryExtractor:
     # The extract_characters_from_summaries method has been removed as it's now part of extract_character_arcs
 
     async def analyze_all_plot_beats(self) -> List[Dict[str, Any]]:
-        """Create plot beats directly from chapter summaries"""
         logger.info("Creating plot beats from chapter summaries")
 
         # Check for existing plot beats in the database
@@ -277,7 +269,6 @@ class StoryExtractor:
         return all_results
 
     async def extract_character_arcs(self) -> Dict[str, Any]:
-        """Extract character identities and their growth arcs by processing chapters in batches"""
         logger.info("Extracting character arcs from chapter summaries in batches")
 
         # Step 1: Try to load character arcs from the database first
@@ -400,7 +391,6 @@ class StoryExtractor:
             return {"error": error_message}
 
     async def run_analysis(self) -> Dict[str, Any]:
-        """Run the full analysis pipeline"""
         logger.info(f"Starting analysis for book ID: {self.book_id}")
 
         await self.summarize_all_chapters()

@@ -1,6 +1,6 @@
 markdown_content = """
-CHARACTER: Raegan Hayes  
-FILE_START  
+CHARACTER: Raegan Hayes
+FILE_START
 # Raegan Hayes - Character Arc
 
 ## Description
@@ -10,25 +10,25 @@ Raegan Hayes is a mid-twenties woman, slender, soft-featured, and usually dresse
 Female Protagonist
 
 ## Key Relationships
-• Mitchel Dixon – secret husband and boss; romantically and sexually entangled. Mitchel generally dominates their intimacy (light power-play, no explicit BDSM label) while Raegan is emotionally submissive.  
-• Lauren Murray – Mitchel’s ex and chief rival; antagonistic, emotional war focused on Mitchel’s affection.  
-• Kyler Dixon – affectionate grandfather-in-law who sees her as a granddaughter.  
-• Luciana Dixon – protective mother-in-law who favors Raegan and scorns Lauren.  
-• Nicole – loyal best friend and confidante.  
-• Tessa Dixon – bullying cousin-in-law; workplace and social antagonist.  
-• Luis – Mitchel’s friend; source of painful gossip for Raegan.  
-• Henley – caring former classmate/doctor; quiet potential ally.  
-• Kieran – Nicole’s boyfriend who sexually harasses Raegan.  
+• Mitchel Dixon – secret husband and boss; romantically and sexually entangled. Mitchel generally dominates their intimacy (light power-play, no explicit BDSM label) while Raegan is emotionally submissive.
+• Lauren Murray – Mitchel’s ex and chief rival; antagonistic, emotional war focused on Mitchel’s affection.
+• Kyler Dixon – affectionate grandfather-in-law who sees her as a granddaughter.
+• Luciana Dixon – protective mother-in-law who favors Raegan and scorns Lauren.
+• Nicole – loyal best friend and confidante.
+• Tessa Dixon – bullying cousin-in-law; workplace and social antagonist.
+• Luis – Mitchel’s friend; source of painful gossip for Raegan.
+• Henley – caring former classmate/doctor; quiet potential ally.
+• Kieran – Nicole’s boyfriend who sexually harasses Raegan.
 
 ## Power Dynamics
 Professionally and matrimonially Raegan is subordinate to Mitchel—he is her employer, wealthier, and physically stronger. Socially she is outgunned by Lauren’s status as “first love” and by Tessa’s family name, yet Raegan occasionally seizes moral high ground (e.g., slapping Tessa, refusing apologetic humiliation). Her pregnancy and secret marriage give her hidden leverage that she rarely uses.
 
 ## Motivation
 Raegan’s core drive is to gain genuine, exclusive love from Mitchel while preserving her self-respect. Pregnancy intensifies her desire for stability and protection of her unborn child. Betrayal gradually shifts her goal toward self-preservation: divorcing with dignity, shielding her baby, and rebuilding her identity outside Mitchel’s shadow.
-FILE_END  
+FILE_END
 
-CHARACTER: Mitchel Dixon  
-FILE_START  
+CHARACTER: Mitchel Dixon
+FILE_START
 # Mitchel Dixon - Character Arc
 
 ## Description
@@ -38,22 +38,22 @@ Mitchel Dixon, around 30, is the charismatic, impeccably tailored CEO of Dixon G
 Male Protagonist
 
 ## Key Relationships
-• Raegan Hayes – secret wife/employee; sexually dominant partner who oscillates between caring protector and emotionally distant boss.  
-• Lauren Murray – ex-girlfriend; emotionally enmeshed, feels indebted, manipulated by her illness; periodic sexual tension but holds back due to marriage vows.  
-• Kyler Dixon – beloved grandfather whose wishes Mitchel tries to honor.  
-• Luciana – strong-willed mother who scolds him, sides with Raegan.  
-• Luis – best friend/adviser who urges divorce.  
-• Tessa & Kenia – troublesome cousin and aunt; family politics.  
+• Raegan Hayes – secret wife/employee; sexually dominant partner who oscillates between caring protector and emotionally distant boss.
+• Lauren Murray – ex-girlfriend; emotionally enmeshed, feels indebted, manipulated by her illness; periodic sexual tension but holds back due to marriage vows.
+• Kyler Dixon – beloved grandfather whose wishes Mitchel tries to honor.
+• Luciana – strong-willed mother who scolds him, sides with Raegan.
+• Luis – best friend/adviser who urges divorce.
+• Tessa & Kenia – troublesome cousin and aunt; family politics.
 
 ## Power Dynamics
 Mitchel wields corporate and financial power over most characters. With Raegan he exerts occupational authority and physical dominance in intimate scenes, yet her pregnancy and moral stance gradually erode his control. Lauren manipulates him through illness and guilt, neutralizing some of his autonomy. Mother Luciana and grandfather Kyler can override him via filial piety.
 
 ## Motivation
 Initially driven by duty—to family, to Lauren’s medical needs, to corporate image—Mitchel seeks to compartmentalize marriage and first love. As conflicts intensify, self-interest collides with awakened affection for Raegan, forcing him to decide between obligation and authentic desire.
-FILE_END  
+FILE_END
 
-CHARACTER: Lauren Murray  
-FILE_START  
+CHARACTER: Lauren Murray
+FILE_START
 # Lauren Murray - Character Arc
 
 ## Description
@@ -63,9 +63,9 @@ Lauren Murray is a late-twenties socialite with delicate beauty marred by chroni
 Female Antagonist
 
 ## Key Relationships
-• Mitchel Dixon – obsessive romantic fixation; leverages illness and sexual appeals to secure marriage.  
-• Raegan Hayes – rival; antagonistic, uses manipulation, framing, and bribery to displace her.  
-• Jocelyn – loyal caretaker/accomplice who shields Lauren’s schemes.  
+• Mitchel Dixon – obsessive romantic fixation; leverages illness and sexual appeals to secure marriage.
+• Raegan Hayes – rival; antagonistic, uses manipulation, framing, and bribery to displace her.
+• Jocelyn – loyal caretaker/accomplice who shields Lauren’s schemes.
 • Tessa Dixon – occasional pawn in Lauren’s plots.
 
 ## Power Dynamics
@@ -73,10 +73,10 @@ Though physically weak, Lauren wields emotional blackmail over Mitchel—suicide
 
 ## Motivation
 Lauren’s singular goal is to marry Mitchel and ensure lifelong security. Fear of mortality and jealousy of Raegan propel her to increasingly ruthless tactics, culminating in plots against Raegan’s pregnancy.
-FILE_END  
+FILE_END
 
-CHARACTER: Luis  
-FILE_START  
+CHARACTER: Luis
+FILE_START
 # Luis - Character Arc
 
 ## Description
@@ -93,10 +93,10 @@ Holds informal influence over Mitchel through friendship but no direct authority
 
 ## Motivation
 Wants Mitchel unentangled and focused on business; sees Raegan as an obstacle, Lauren as sentimental distraction but easier to explain socially.
-FILE_END  
+FILE_END
 
-CHARACTER: Tessa Dixon  
-FILE_START  
+CHARACTER: Tessa Dixon
+FILE_START
 # Tessa Dixon - Character Arc
 
 ## Description
@@ -113,10 +113,10 @@ Relies on family name for authority inside Dixon Group; easily overridden by Mit
 
 ## Motivation
 Seeks validation and elevation within the family by aligning with Lauren and belittling Raegan.
-FILE_END  
+FILE_END
 
-CHARACTER: Kenia  
-FILE_START  
+CHARACTER: Kenia
+FILE_START
 # Kenia - Character Arc
 
 ## Description
@@ -133,10 +133,10 @@ Minor social leverage through familial ties.
 
 ## Motivation
 Protect family prestige, ensure daughter’s standing.
-FILE_END  
+FILE_END
 
-CHARACTER: Kyler Dixon  
-FILE_START  
+CHARACTER: Kyler Dixon
+FILE_START
 # Kyler Dixon - Character Arc
 
 ## Description
@@ -153,10 +153,10 @@ Moral authority over entire family; his approval or disappointment shapes Mitche
 
 ## Motivation
 Wishes to see lineage secured and loved ones harmonious before his health fails.
-FILE_END  
+FILE_END
 
-CHARACTER: Luciana Dixon  
-FILE_START  
+CHARACTER: Luciana Dixon
+FILE_START
 # Luciana Dixon - Character Arc
 
 ## Description
@@ -173,10 +173,10 @@ Leverages maternal authority and social influence to defend Raegan, intimidating
 
 ## Motivation
 Prioritizes son’s honor and chooses Raegan as preferable partner; determined to curb scandals that could tarnish family name.
-FILE_END  
+FILE_END
 
-CHARACTER: Nicole  
-FILE_START  
+CHARACTER: Nicole
+FILE_START
 # Nicole - Character Arc
 
 ## Description
@@ -193,10 +193,10 @@ Limited; provides moral support rather than authority.
 
 ## Motivation
 Protect friend’s wellbeing, navigate her own rocky love life while remaining staunchly on Raegan’s side.
-FILE_END  
+FILE_END
 
-CHARACTER: Kieran  
-FILE_START  
+CHARACTER: Kieran
+FILE_START
 # Kieran - Character Arc
 
 ## Description
@@ -213,10 +213,10 @@ Relies on intimidation and sexual harassment—quickly neutralized by Nicole and
 
 ## Motivation
 Self-gratification and conquest; loses interest once exposed.
-FILE_END  
+FILE_END
 
-CHARACTER: Henley  
-FILE_START  
+CHARACTER: Henley
+FILE_START
 # Henley - Character Arc
 
 ## Description
@@ -233,10 +233,10 @@ Possesses medical authority; otherwise peripheral.
 
 ## Motivation
 Altruistic desire to help old friend and protect her pregnancy.
-FILE_END  
+FILE_END
 
-CHARACTER: Jarrod  
-FILE_START  
+CHARACTER: Jarrod
+FILE_START
 # Jarrod - Character Arc
 
 ## Description
@@ -253,10 +253,10 @@ Social equal within male friend group.
 
 ## Motivation
 Reintegrate into friend circle, possibly rekindle with Nicole.
-FILE_END  
+FILE_END
 
-CHARACTER: Jocelyn  
-FILE_START  
+CHARACTER: Jocelyn
+FILE_START
 # Jocelyn - Character Arc
 
 ## Description
@@ -273,10 +273,10 @@ Subordinate but indispensable to Lauren’s schemes.
 
 ## Motivation
 Safeguard employer’s health and secrets.
-FILE_END  
+FILE_END
 
-CHARACTER: Kyle  
-FILE_START  
+CHARACTER: Kyle
+FILE_START
 # Kyle - Character Arc
 
 ## Description
@@ -293,10 +293,10 @@ None significant.
 
 ## Motivation
 Perform job duties efficiently.
-FILE_END  
+FILE_END
 
-CHARACTER: Matteo  
-FILE_START  
+CHARACTER: Matteo
+FILE_START
 # Matteo - Character Arc
 
 ## Description
@@ -313,7 +313,7 @@ None observable.
 
 ## Motivation
 Unspecified; likely past acquaintance.
-FILE_END  
+FILE_END
 """
 
 

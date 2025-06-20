@@ -1,8 +1,3 @@
-"""
-Initialization module for prompts package with helper functions.
-"""
-
-
 def format_prompt(template: str, **kwargs) -> str:
     """
     Format a prompt template by replacing double curly braces with provided values.
@@ -22,6 +17,6 @@ def format_prompt(template: str, **kwargs) -> str:
     """
     result = template
     for key, value in kwargs.items():
-        placeholder = f"{{{{%s}}}}" % key
+        placeholder = "{{{{%s}}}}" % key
         result = result.replace(placeholder, str(value))
     return result

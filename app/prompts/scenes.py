@@ -29,7 +29,7 @@ Content of the second scene goes here. Remain descriptive yet brief.
 
 …and so on for additional scenes.
 
-📌 CONTINUATION RULE (skip for the very first chapter):  
+📌 CONTINUATION RULE (skip for the very first chapter):
 Begin exactly where the previous chapter ended. **Do not** start a new timeline, skip time, or re-introduce characters. Flow directly from the final narrative or emotional beat of the last paragraph in {{chapter_n_minus_1_full}}.
 
 If n=1 then there won't be any previous or last chapter.

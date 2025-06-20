@@ -7,65 +7,65 @@ Provide your evaluation in a clear, organized format. Do not rewrite or paraphra
 
 📘 RUBRIC - Evaluation Criteria & Scoring Guidelines
 
-1. **Dialogue-to-Narration Ratio**  
-How much of the chapter is told through spoken interaction vs. narration?  
-- **5** - ≥60% of chapter is dialogue; narration is minimal and used only for gesture or setting  
-- **3** - Dialogue and narration are balanced; narration occasionally dominates  
-- **1** - Chapter is narration-heavy with sparse or utility-only dialogue  
+1. **Dialogue-to-Narration Ratio**
+How much of the chapter is told through spoken interaction vs. narration?
+- **5** - ≥60% of chapter is dialogue; narration is minimal and used only for gesture or setting
+- **3** - Dialogue and narration are balanced; narration occasionally dominates
+- **1** - Chapter is narration-heavy with sparse or utility-only dialogue
 
-2. **Paragraph Structure & Length**  
-Are paragraphs short, clean, and easy to read (≤3 lines)?  
-- **5** - All paragraphs are concise; dialogue and narration are well-separated  
-- **3** - Mostly clean, but some long or dense paragraphs exist  
-- **1** - Frequent long, blocky paragraphs or mixed dialogue-narration chunks  
+2. **Paragraph Structure & Length**
+Are paragraphs short, clean, and easy to read (≤3 lines)?
+- **5** - All paragraphs are concise; dialogue and narration are well-separated
+- **3** - Mostly clean, but some long or dense paragraphs exist
+- **1** - Frequent long, blocky paragraphs or mixed dialogue-narration chunks
 
-3. **POV & Tense Consistency**  
-Is the chapter written in third-person limited, past tense throughout?  
-- **5** - Consistently maintains correct POV and tense  
-- **3** - Mostly consistent; minor slips in tense or perspective  
-- **1** - Frequent POV shifts, head-hopping, or tense inconsistency  
+3. **POV & Tense Consistency**
+Is the chapter written in third-person limited, past tense throughout?
+- **5** - Consistently maintains correct POV and tense
+- **3** - Mostly consistent; minor slips in tense or perspective
+- **1** - Frequent POV shifts, head-hopping, or tense inconsistency
 
-4. **Scene Continuity from Previous Chapter**  
-Does the story continue seamlessly from the last scene or emotional beat?  
-- **5** - Immediate and logical continuation without reintroducing anything  
-- **3** - Mild reset or temporal gap without clear transition  
-- **1** - Full scene reset, recap, or emotional disconnection  
+4. **Scene Continuity from Previous Chapter**
+Does the story continue seamlessly from the last scene or emotional beat?
+- **5** - Immediate and logical continuation without reintroducing anything
+- **3** - Mild reset or temporal gap without clear transition
+- **1** - Full scene reset, recap, or emotional disconnection
 
-5. **Use of Subtext, Interruptions, and Silence**  
-Are emotion and conflict conveyed through indirect means (glances, pauses, half-finished lines)?  
-- **5** - Frequent use of subtext and silence to build tension  
-- **3** - Some effective subtext, but often too direct  
-- **1** - Dialogue is flat, literal, or emotionally explicit without nuance  
+5. **Use of Subtext, Interruptions, and Silence**
+Are emotion and conflict conveyed through indirect means (glances, pauses, half-finished lines)?
+- **5** - Frequent use of subtext and silence to build tension
+- **3** - Some effective subtext, but often too direct
+- **1** - Dialogue is flat, literal, or emotionally explicit without nuance
 
-6. **Pacing of Conversations**  
-Does the dialogue feel emotionally natural, with rhythm and variance?  
-- **5** - Dialogue flows smoothly with tension, pauses, and emotional rhythm  
-- **3** - Dialogue is functional but mechanical or repetitive  
-- **1** - Conversations feel stiff, info-dumpy, or emotionless  
+6. **Pacing of Conversations**
+Does the dialogue feel emotionally natural, with rhythm and variance?
+- **5** - Dialogue flows smoothly with tension, pauses, and emotional rhythm
+- **3** - Dialogue is functional but mechanical or repetitive
+- **1** - Conversations feel stiff, info-dumpy, or emotionless
 
-7. **Avoids Inner Monologue / Reflection**  
-Is emotion shown through action and speech, not internal narration?  
-- **5** - No inner thoughts or reflections; everything is shown  
-- **3** - A few brief internal moments, but mostly interaction-driven  
-- **1** - Frequent introspection or internal commentary present  
+7. **Avoids Inner Monologue / Reflection**
+Is emotion shown through action and speech, not internal narration?
+- **5** - No inner thoughts or reflections; everything is shown
+- **3** - A few brief internal moments, but mostly interaction-driven
+- **1** - Frequent introspection or internal commentary present
 
-8. **No Poetic or Abstract Prose**  
-Is the writing clear, direct, and cinematic?  
-- **5** - Prose is grounded, modern, and immersive  
-- **3** - A few instances of overly poetic language  
-- **1** - Frequent metaphorical or abstract descriptions (e.g. "she was a storm")  
+8. **No Poetic or Abstract Prose**
+Is the writing clear, direct, and cinematic?
+- **5** - Prose is grounded, modern, and immersive
+- **3** - A few instances of overly poetic language
+- **1** - Frequent metaphorical or abstract descriptions (e.g. "she was a storm")
 
-9. **Context Clarity**  
-Can the reader understand what's happening, who's involved, and why?  
-- **5** - Context is embedded naturally; no confusion  
-- **3** - Some emotional or situational references lack grounding  
-- **1** - Reader lacks context for key conversations or motivations  
+9. **Context Clarity**
+Can the reader understand what's happening, who's involved, and why?
+- **5** - Context is embedded naturally; no confusion
+- **3** - Some emotional or situational references lack grounding
+- **1** - Reader lacks context for key conversations or motivations
 
-10. **Logical Consistency**  
-Are character actions, emotional turns, and events logically coherent?  
-- **5** - All actions make sense within the established story  
-- **3** - Some small logic gaps or sudden emotional pivots  
-- **1** - Major inconsistency or contradiction in character behavior or plot  
+10. **Logical Consistency**
+Are character actions, emotional turns, and events logically coherent?
+- **5** - All actions make sense within the established story
+- **3** - Some small logic gaps or sudden emotional pivots
+- **1** - Major inconsistency or contradiction in character behavior or plot
 
 ---
 

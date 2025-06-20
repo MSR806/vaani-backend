@@ -77,7 +77,7 @@ async def chat_as_character(request: ChatRequest, db: Session):
                 "content": f"""Chapter Title: {chapter.title}
                 Chapter Content:
                 {chapter.content}
-                
+
                 Now, respond to this message as {request.character_name}:
                 {last_user_message}""",
             },
@@ -94,10 +94,6 @@ async def chat_as_character(request: ChatRequest, db: Session):
 
 
 async def create_streaming_response(stream):
-    """
-    Creates a properly formatted streaming response from an OpenAI stream.
-    """
-
     async def generate():
         try:
             for chunk in stream:
@@ -158,7 +154,7 @@ async def stream_chat_as_character(request: ChatRequest, db: Session):
                 "content": f"""Chapter Title: {chapter.title}
                 Chapter Content:
                 {chapter.content}
-                
+
                 Now, respond to this message as {request.character_name}:
                 {last_user_message}""",
             },

@@ -4,7 +4,7 @@ import json
 import logging
 import re
 import traceback
-from typing import Any, Dict, List
+from typing import Dict, List
 
 from app.models.models import Chapter
 from app.prompts.story_extractor_prompts import (
@@ -21,7 +21,6 @@ from app.schemas.character_arcs import (
     CharacterArcNameGroups,
     CharacterReference,
 )
-from app.services.ai_service import get_openai_client
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -179,7 +178,7 @@ async def get_consolidated_character_groups(
         # Run the structured call in a thread
         completion = await asyncio.to_thread(blocking_structured_call)
         response = completion.choices[0].message.parsed
-        logger.info(f"Used structured output parsing for consolidation")
+        logger.info("Used structured output parsing for consolidation")
         logger.info(f"Identified {len(response.groups)} unique characters across batches")
         return response
     except Exception as e:
@@ -357,9 +356,6 @@ async def consolidate_character_arcs(
 async def consolidate_blood_relations_for_all_characters(
     final_characters: List[CharacterArc], model_settings, client
 ) -> List[CharacterArc]:
-    """
-    Consolidate blood relations for all characters in the final consolidated list.
-    """
     result_characters = []
     logger.info(f"Processing blood relations for {len(final_characters)} characters")
 
@@ -395,16 +391,13 @@ async def consolidate_blood_relations_for_all_characters(
 
         result_characters.append(character)
 
-    logger.info(f"Blood relations consolidation completed for all characters")
+    logger.info("Blood relations consolidation completed for all characters")
     return result_characters
 
 
 async def consolidate_blood_relations_text(
     character_name: str, blood_relations_texts: List[str], model_settings, client
 ) -> str:
-    """
-    Consolidate multiple blood relation descriptions for a character into a single comprehensive description.
-    """
     if not blood_relations_texts:
         return ""
 

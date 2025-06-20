@@ -1,9 +1,3 @@
-#!/usr/bin/env python3
-"""
-Prompts for story generation in the writer's tool AI backend.
-This file contains system and user prompt templates for character arc and plot beat generation.
-"""
-
 # Character Arc Generation Prompts
 CHARACTER_ARC_SYSTEM_PROMPT = (
     "You are a literary analysis expert specializing in character development arcs. "
@@ -187,7 +181,7 @@ Your task is to adapt the summary template into the new world provided by the us
    - **Sexual dynamics**, including **BDSM roles** (if any)
    - **Power dynamics** between characters
 
-2. Write a **very crisp and concise chapter summary** in **5-6 bullet points**.  
+2. Write a **very crisp and concise chapter summary** in **5-6 bullet points**.
 Each bullet must:
 - Describe one **key plot event** that occurs in the chapter.
 - **Explicitly mention sexual or intimate events** (e.g., kissing, touching, sex) if they happen, using direct and bold language.
@@ -227,7 +221,7 @@ This section is essential for informing full chapter generation later. It must i
 """
 
 # Character Identification Prompts
-CHARACTER_IDENTIFICATION_SYSTEM_PROMPT = """You are an AI assistant that identifies characters in plot beats. 
+CHARACTER_IDENTIFICATION_SYSTEM_PROMPT = """You are an AI assistant that identifies characters in plot beats.
 Your task is to analyze the plot beat content and identify which characters are involved.
 Return only the character IDs in a structured format."""
 

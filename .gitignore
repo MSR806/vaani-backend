@@ -55,7 +55,7 @@ htmlcov/
 .coverage.*
 .cache
 coverage.xml
-*.cover 
+*.cover
 
 scripts/critique_agent/output/
 scripts/pacing_analysis/outputs/

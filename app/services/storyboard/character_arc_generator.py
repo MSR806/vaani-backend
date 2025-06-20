@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 import asyncio
-import json
 import logging
-import re
 import traceback
 
 from sqlalchemy.orm import Session
@@ -25,7 +23,6 @@ logger = logging.getLogger(__name__)
 
 class CharacterArcGenerator:
     def __init__(self, db: Session, storyboard_id: int):
-        """Initialize the character arc generator with a book ID"""
         self.db = db
         self.storyboard_id = storyboard_id
         self.character_arc_repo = CharacterArcsRepository(self.db)
@@ -40,8 +37,6 @@ class CharacterArcGenerator:
             self.client = None
 
     async def initialize(self):
-        """Initialize templates and directories"""
-        # Verify book template directory exists
         if self.storyboard_id:
             self.storyboard = self.storyboard_repo.get_by_id(self.storyboard_id)
 
@@ -51,7 +46,6 @@ class CharacterArcGenerator:
             )
 
     async def generate_character_names(self):
-        """Generate character names using the AI client"""
         character_template_names = []
         for character_arc in self.character_arc_templates:
             logger.info(f"Processing character arc: {character_arc.archetype}")
@@ -119,7 +113,6 @@ class CharacterArcGenerator:
             return {}
 
     async def generate_character_arcs(self):
-        """Generate character arcs using the AI client"""
         if not self.client:
             raise ValueError("AI client not initialized")
 
@@ -185,4 +178,4 @@ class CharacterArcGenerator:
             self.storyboard_id, status=StoryboardStatus.CHARACTER_ARC_GENERATION_COMPLETED
         )
 
-        logger.info(f"Character arc generation completed.")
+        logger.info("Character arc generation completed.")

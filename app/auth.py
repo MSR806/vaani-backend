@@ -1,9 +1,8 @@
 import base64
-from functools import lru_cache
 
 import jwt
 import requests
-from fastapi import Depends, HTTPException, Request, status
+from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 
@@ -14,14 +13,12 @@ security = HTTPBearer()
 
 
 def get_auth0_jwks():
-    """Cache and return Auth0 JSON Web Key Set for verifying tokens"""
     jwks_url = f"https://{AUTH0_DOMAIN}/.well-known/jwks.json"
     response = requests.get(jwks_url)
     return response.json()
 
 
 def get_signing_key(token):
-    """Get the signing key used to sign the token"""
     try:
         jwks = get_auth0_jwks()
         unverified_header = jwt.get_unverified_header(token)
@@ -59,7 +56,6 @@ def get_signing_key(token):
 
 
 def verify_token(token: str):
-    """Verify an Auth0 JWT token"""
     try:
         key = get_signing_key(token)
         payload = jwt.decode(
@@ -88,7 +84,6 @@ def verify_token(token: str):
 
 
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    """Dependency to enforce authentication and extract user details"""
     token = credentials.credentials
     payload = verify_token(token)
 
@@ -113,7 +108,6 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
 
 
 async def get_auth0_user_details(access_token: str) -> dict:
-    """Get user details from Auth0 UserInfo endpoint"""
     try:
         # Make request to Auth0 UserInfo endpoint
         headers = {"Authorization": f"Bearer {access_token}", "Accept": "application/json"}
@@ -140,7 +134,6 @@ async def get_auth0_user_details(access_token: str) -> dict:
 
 
 async def require_write_permission(current_user: dict = Depends(get_current_user)):
-    """Dependency to check for write:books permission"""
     if "book:write" not in current_user.get("permissions", []):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -150,7 +143,6 @@ async def require_write_permission(current_user: dict = Depends(get_current_user
 
 
 async def require_delete_permission(current_user: dict = Depends(get_current_user)):
-    """Dependency to check for delete:books permission"""
     if "book:delete" not in current_user.get("permissions", []):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

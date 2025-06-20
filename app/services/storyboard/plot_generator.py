@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import asyncio
 import logging
-from typing import List, Tuple
+from typing import List
 
 # Import prompt templates
 from prompts.story_generator_prompts import (
@@ -48,7 +48,6 @@ class PlotBeatGenerator:
             self.client = None
 
     async def initialize(self):
-        """Initialize templates and directories"""
         if self.storyboard_id:
             self.storyboard = self.storyboard_repo.get_by_id(self.storyboard_id)
 
@@ -65,7 +64,6 @@ class PlotBeatGenerator:
             logger.info(f"Got {len(self.plot_beats_templates)} plot beat templates")
 
     async def identify_characters_in_plot_beat(self, plot_beat: PlotBeat) -> List[int]:
-        """Identify characters involved in a plot beat"""
         try:
             # Build character list with IDs
             character_list = ""
@@ -98,7 +96,6 @@ class PlotBeatGenerator:
             return []
 
     async def generate_plot_beat(self, plot_beat_template: PlotBeat, chapter_id: int):
-        """Generate a single plot beat by adapting the template to our story"""
         import re
 
         # Extract character pattern references (char_x) from plot template
@@ -219,7 +216,6 @@ class PlotBeatGenerator:
         logger.info(f"Successfully saved {len(self.plot_beats)} plot beats in proper order")
 
     async def execute(self):
-        """Execute the plot beat generation process"""
         await self.initialize()
 
         self.storyboard_repo.update(
