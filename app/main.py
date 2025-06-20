@@ -5,12 +5,10 @@ from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.auth import get_current_user
-from app.database import Base, engine
 from app.logging_config import configure_logging
 from app.middleware.logger import RequestResponseLoggerMiddleware
 from app.routes import router
 
-Base.metadata.create_all(bind=engine)
 app = FastAPI(
     title="Vaani API",
     description="An API for managing books, chapters, scenes, and characters with AI assistance",

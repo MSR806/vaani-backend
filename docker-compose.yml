@@ -1,6 +1,24 @@
-version: '3.8'
+# Note: This docker-compose.yml is for local development
 
 services:
+  mysql:
+    image: mysql:8.4.4
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DB_NAME}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    restart: unless-stopped
+    networks:
+      - ecs-vaani-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   server:
     build: .
     ports:
@@ -8,12 +26,12 @@ services:
     volumes:
       - .:/app
     environment:
-      # Supabase connection pooler settings
-      - SUPABASE_DB_USER=${SUPABASE_DB_USER}
-      - SUPABASE_DB_PASSWORD=${SUPABASE_DB_PASSWORD}
-      - SUPABASE_DB_HOST=${SUPABASE_DB_HOST}
-      - SUPABASE_DB_PORT=${SUPABASE_DB_PORT}
-      - SUPABASE_DB_NAME=${SUPABASE_DB_NAME}
+      # MySQL connection settings
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=${MYSQL_PORT}
+      - MYSQL_DB_NAME=${MYSQL_DB_NAME}
       # API keys and auth
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - XAI_API_KEY=${XAI_API_KEY}
@@ -26,7 +44,10 @@ services:
       # Redis connection
       - REDIS_URL=redis://redis:6379/0
     depends_on:
-      - redis
+      redis:
+        condition: service_started
+      mysql:
+        condition: service_healthy
     networks:
       - ecs-vaani-network
 
@@ -46,12 +67,12 @@ services:
     volumes:
       - .:/app
     environment:
-      # Supabase connection pooler settings
-      - SUPABASE_DB_USER=${SUPABASE_DB_USER}
-      - SUPABASE_DB_PASSWORD=${SUPABASE_DB_PASSWORD}
-      - SUPABASE_DB_HOST=${SUPABASE_DB_HOST}
-      - SUPABASE_DB_PORT=${SUPABASE_DB_PORT}
-      - SUPABASE_DB_NAME=${SUPABASE_DB_NAME}
+      # MySQL connection settings
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=${MYSQL_PORT}
+      - MYSQL_DB_NAME=${MYSQL_DB_NAME}
       # API keys and auth
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - XAI_API_KEY=${XAI_API_KEY}
@@ -64,13 +85,17 @@ services:
       # Redis connection
       - REDIS_URL=redis://redis:6379/0
     depends_on:
-      - redis
+      redis:
+        condition: service_started
+      mysql:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - ecs-vaani-network
 
 volumes:
   redis-data:
+  mysql-data:
 
 networks:
   ecs-vaani-network:

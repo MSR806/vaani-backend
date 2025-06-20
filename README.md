@@ -4,169 +4,59 @@ A FastAPI-based backend service for book authors' text autocomplete functionalit
 
 ## Setup
 
-1. Create a `.env` file in the root directory with your OpenAI API key:
+1. Create a `.env` file based on `.env.example`:
 
 ```bash
-OPENAI_API_KEY=your_openai_api_key_here
+cp .env.example .env
+# Edit .env with your values
 ```
 
-2. Build and run the application using Docker Compose:
+2. Build and run with Docker Compose:
 
 ```bash
 docker-compose up --build
 ```
 
-The API will be available at `http://localhost:8000`
+3. Apply database migrations:
+
+```bash
+# Inside the container
+docker-compose exec server alembic upgrade head
+
+# Or locally (with .venv active)
+alembic upgrade head
+```
+
+The API will be available at `http://localhost:80` or simply `http://localhost`
+
+## Database Migrations
+
+```bash
+# Create new migration after schema changes
+alembic revision --autogenerate -m "description"
+
+# Apply pending migrations
+alembic upgrade head
+
+# Rollback migration
+alembic downgrade -1
+```
+
+## Default Settings
+
+After setting up the database, initialize the application's default settings:
+
+```bash
+# Inside the container
+docker-compose exec server python scripts/create_default_settings.py
+
+# Or locally (with .venv active)
+python scripts/create_default_settings.py
+```
+
+This script creates the necessary AI model settings with default values for scene generation, chapter content, and other features.
 
 ## API Documentation
 
-Once the server is running, you can access:
-
-- Interactive API docs (Swagger UI): `http://localhost:8000/docs`
-- Alternative API docs (ReDoc): `http://localhost:8000/redoc`
-
-## Available Endpoints
-
-### Books
-
-#### Get All Books
-
-```bash
-curl -X GET "http://localhost:8000/books"
-```
-
-#### Get Book by ID
-
-```bash
-curl -X GET "http://localhost:8000/books/{book_id}"
-```
-
-#### Create New Book
-
-```bash
-curl -X POST "http://localhost:8000/books" \
--H "Content-Type: application/json" \
--d '{
-    "title": "The Great Gatsby",
-    "author": "F. Scott Fitzgerald"
-}'
-```
-
-### Chapters
-
-#### Get All Chapters for a Book
-
-```bash
-curl -X GET "http://localhost:8000/books/{book_id}/chapters"
-```
-
-#### Get Chapter by ID
-
-```bash
-curl -X GET "http://localhost:8000/books/{book_id}/chapters/{chapter_id}"
-```
-
-#### Create New Chapter
-
-```bash
-curl -X POST "http://localhost:8000/books/{book_id}/chapters" \
--H "Content-Type: application/json" \
--d '{
-    "title": "Chapter 1",
-    "chapter_no": 1,
-    "content": "In my younger and more vulnerable years..."
-}'
-```
-
-#### Update Chapter Content
-
-```bash
-curl -X PUT "http://localhost:8000/books/{book_id}/chapters/{chapter_id}" \
--H "Content-Type: application/json" \
--d '{
-    "content": "Updated chapter content..."
-}'
-```
-
-### Story Completion
-
-#### Stream Story Completion
-
-```bash
-curl -N -X POST "http://localhost:8000/complete" \
--H "Content-Type: application/json" \
--d '{
-    "context": "The sun was setting over the mountains, casting long shadows across the valley. Sarah stood at the edge of the cliff, her heart pounding with anticipation.",
-    "user_prompt": "Continue the story with Sarah making a decision"
-}'
-```
-
-Note: The `-N` flag in curl prevents buffering, which is important for streaming responses.
-
-### Testing
-
-#### Test Database Connection
-
-```bash
-curl -X GET "http://localhost:8000/books/test"
-```
-
-## Response Formats
-
-### Book Response
-
-```json
-{
-  "id": 1,
-  "title": "The Great Gatsby",
-  "author": "F. Scott Fitzgerald"
-}
-```
-
-### Chapter Response
-
-```json
-{
-  "id": 1,
-  "book_id": 1,
-  "title": "Chapter 1",
-  "chapter_no": 1,
-  "content": "Chapter content..."
-}
-```
-
-### Completion Stream Response
-
-```
-data: {"content": "generated text chunk"}
-data: {"content": "next chunk"}
-...
-data: [DONE]
-```
-
-## Error Handling
-
-The API returns appropriate HTTP status codes:
-
-- 200: Success
-- 400: Bad Request
-- 404: Not Found
-- 500: Internal Server Error
-
-Error responses include a detail message:
-
-```json
-{
-  "detail": "Error message description"
-}
-```
-
-## Development
-
-This is a basic setup for the Vaani backend. Future development will include:
-
-- User authentication
-- Rate limiting
-- Advanced text processing and analysis
-- Book metadata management
-- User preferences and settings
+- Interactive API docs (Swagger UI): `http://localhost/docs`
+- Alternative API docs (ReDoc): `http://localhost/redoc`
