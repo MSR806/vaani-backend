@@ -8,13 +8,12 @@ from fastapi import HTTPException
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from app.config import OPENAI_MODEL
+from app.models.models import Book, Chapter
+from app.schemas.schemas import BookBase, BookUpdate, ChapterGenerateRequest
+from app.services.image_service import store_image_from_url
+from app.services.placeholder_image import generate_placeholder_image
 from app.utils.exceptions import rollback_on_exception
-
-from ..config import OPENAI_MODEL
-from ..models.models import Book, Chapter
-from ..schemas.schemas import BookBase, BookUpdate, ChapterGenerateRequest
-from .image_service import store_image_from_url
-from .placeholder_image import generate_placeholder_image
 
 # Load environment variables
 load_dotenv()

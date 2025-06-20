@@ -4,9 +4,8 @@ import requests
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
+from app.models.models import Image
 from app.utils.exceptions import rollback_on_exception
-
-from ..models.models import Image
 
 
 async def store_image_from_url(

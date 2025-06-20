@@ -1,10 +1,10 @@
-from database import get_db
 from fastapi import APIRouter, Depends, HTTPException, Path
 from requests import Session
 
-from ..schemas.plotbeat import PlotBeatUpdate
-from ..services.plot_beat_service import PlotBeatService
-from ..utils.exceptions import PlotBeatNotFoundException
+from app.database import get_db
+from app.schemas.plotbeat import PlotBeatUpdate
+from app.services.plot_beat_service import PlotBeatService
+from app.utils.exceptions import PlotBeatNotFoundException
 
 router = APIRouter()
 
@@ -23,7 +23,7 @@ def update_plot_beat(
     service = PlotBeatService(db)
     try:
         # Convert Pydantic model to dict, excluding None values
-        update_dict = {k: v for k, v in update_data.dict().items() if v is not None}
+        update_dict = {k: v for k, v in update_data.model_dump().items() if v is not None}
 
         # Don't proceed if there's nothing to update
         if not update_dict:

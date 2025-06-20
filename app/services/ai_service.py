@@ -3,7 +3,7 @@ from typing import Optional, Tuple
 from openai import OpenAI
 from portkey_ai import PORTKEY_GATEWAY_URL, createHeaders
 
-from ..config import ENV, OPENAI_API_KEY, PORTKEY_API_KEY, XAI_API_KEY
+from app.config import ENV, OPENAI_API_KEY, PORTKEY_API_KEY, XAI_API_KEY
 
 
 def get_headers(model: str | None = None) -> Tuple[str, Optional[str]]:

@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from ..models.enums import PromptSource
+from app.models.enums import PromptSource
 
 
 class PromptBase(BaseModel):

@@ -3,9 +3,9 @@ from typing import List
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from ..database import get_db
-from ..schemas.schemas import SettingBatchUpdate, SettingResponse
-from ..services.setting_service import batch_update_settings, get_settings
+from app.database import get_db
+from app.schemas.schemas import SettingBatchUpdate, SettingResponse
+from app.services.setting_service import batch_update_settings, get_settings
 
 router = APIRouter(
     tags=["settings"],

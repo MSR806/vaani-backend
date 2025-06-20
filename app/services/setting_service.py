@@ -1,9 +1,8 @@
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
+from app.models.models import Setting
 from app.utils.exceptions import rollback_on_exception
-
-from ..models.models import Setting
 
 
 def get_setting_by_key(db: Session, key: str):

@@ -28,7 +28,7 @@ services:
     depends_on:
       - redis
     networks:
-      - writers-llm-network
+      - ecs-vaani-network
 
   redis:
     image: redis:7-alpine
@@ -38,7 +38,7 @@ services:
       - redis-data:/data
     restart: unless-stopped
     networks:
-      - writers-llm-network
+      - ecs-vaani-network
 
   rq-worker:
     build: .
@@ -67,11 +67,11 @@ services:
       - redis
     restart: unless-stopped
     networks:
-      - writers-llm-network
+      - ecs-vaani-network
 
 volumes:
   redis-data:
 
 networks:
-  writers-llm-network:
+  ecs-vaani-network:
     driver: bridge

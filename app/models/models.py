@@ -12,8 +12,8 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 
-from ..database import Base
-from .enums import PromptSource, StoryboardStatus
+from app.database import Base
+from app.models.enums import PromptSource, StoryboardStatus
 
 
 class CharacterArc(Base):

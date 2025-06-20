@@ -2,15 +2,15 @@ import json
 
 from sqlalchemy.orm import Session
 
-from ..config import OPENAI_MODEL
-from ..models.models import Book, Chapter, Character
-from ..schemas.schemas import (
+from app.config import OPENAI_MODEL
+from app.models.models import Book, Chapter, Character
+from app.schemas.schemas import (
     ChapterCharactersResponse,
     CharacterCreate,
     CharacterOutlineRequest,
     CharacterUpdate,
 )
-from ..services.ai_service import get_openai_client
+from app.services.ai_service import get_openai_client
 
 
 def create_character(db: Session, character: CharacterCreate):

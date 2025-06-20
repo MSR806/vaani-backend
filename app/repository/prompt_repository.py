@@ -2,8 +2,8 @@ from typing import List, Optional
 
 from sqlalchemy.orm import Session
 
-from ..models.enums import PromptSource
-from ..models.models import Prompt
+from app.models.enums import PromptSource
+from app.models.models import Prompt
 
 
 class PromptRepository:

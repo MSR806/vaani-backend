@@ -9,8 +9,6 @@ from typing import Any, Dict, List
 from sqlalchemy.orm import Session
 
 from app.models.models import Book, Chapter
-
-# Import prompt templates
 from app.prompts.story_extractor_prompts import (
     CHAPTER_SUMMARY_SYSTEM_PROMPT,
     CHAPTER_SUMMARY_USER_PROMPT_TEMPLATE,

@@ -9,13 +9,19 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 RUN apt-get update && apt-get install -y \
     build-essential \
     libpq-dev \
+    nginx \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Configure nginx
+RUN rm -f /etc/nginx/sites-enabled/default
+COPY service.nginx /etc/nginx/sites-enabled/ecs-vaani
+RUN mkdir -p /run/gunicorn
+
 COPY . .
 
-EXPOSE 8000
+EXPOSE 80
 
-CMD ["gunicorn", "app.main:app", "-k", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000", "-w", "4", "--timeout", "300"]
+CMD ["/bin/bash", "init.sh"]

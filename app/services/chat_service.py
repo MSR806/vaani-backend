@@ -1,10 +1,10 @@
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
-from ..config import OPENAI_MODEL
-from ..models.models import Chapter
-from ..schemas.schemas import ChatRequest, ChatResponse
-from ..services.ai_service import get_openai_client
+from app.config import OPENAI_MODEL
+from app.models.models import Chapter
+from app.schemas.schemas import ChatRequest, ChatResponse
+from app.services.ai_service import get_openai_client
 
 
 async def stream_chat(request: ChatRequest):

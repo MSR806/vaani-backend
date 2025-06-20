@@ -4,10 +4,10 @@ from fastapi import HTTPException
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
-from ..config import OPENAI_MODEL
-from ..models.models import Chapter
-from ..services.ai_service import get_openai_client
-from ..services.setting_service import get_setting_by_key
+from app.config import OPENAI_MODEL
+from app.models.models import Chapter
+from app.services.ai_service import get_openai_client
+from app.services.setting_service import get_setting_by_key
 
 
 async def stream_completion(

@@ -3,11 +3,11 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
-from ..auth import require_write_permission
-from ..database import get_db
-from ..models.enums import PromptSource
-from ..schemas.prompts import PromptCreate, PromptResponse, PromptUpdate
-from ..services.prompt_service import create_prompt, get_all_prompts, get_prompt, update_prompt
+from app.auth import require_write_permission
+from app.database import get_db
+from app.models.enums import PromptSource
+from app.schemas.prompts import PromptCreate, PromptResponse, PromptUpdate
+from app.services.prompt_service import create_prompt, get_all_prompts, get_prompt, update_prompt
 
 router = APIRouter(tags=["prompts"])
 

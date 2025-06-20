@@ -3,9 +3,9 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from ..auth import require_write_permission
-from ..database import get_db
-from ..schemas.schemas import (
+from app.auth import require_write_permission
+from app.database import get_db
+from app.schemas.schemas import (
     ChapterCreate,
     ChapterGenerateRequest,
     ChapterResponse,
@@ -14,9 +14,9 @@ from ..schemas.schemas import (
     ChapterStateUpdate,
     ChapterUpdate,
 )
-from ..services.book_service import get_book, get_book_chapters
-from ..services.chapter_rewrite_service import stream_chapter_rewrite
-from ..services.chapter_service import (
+from app.services.book_service import get_book, get_book_chapters
+from app.services.chapter_rewrite_service import stream_chapter_rewrite
+from app.services.chapter_service import (
     bulk_upload_chapters,
     create_chapter,
     delete_all_chapters,
@@ -28,7 +28,7 @@ from ..services.chapter_service import (
     stream_chapter_content,
     update_chapter,
 )
-from ..services.character_service import extract_chapter_characters
+from app.services.character_service import extract_chapter_characters
 
 router = APIRouter(tags=["chapters"])
 

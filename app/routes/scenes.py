@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from ..auth import require_delete_permission, require_write_permission
-from ..database import get_db
-from ..schemas.schemas import SceneCreate, SceneReorderRequest, SceneUpdate
-from ..services.scene_service import (
+from app.auth import require_delete_permission, require_write_permission
+from app.database import get_db
+from app.schemas.schemas import SceneCreate, SceneReorderRequest, SceneUpdate
+from app.services.scene_service import (
     create_scene,
     delete_scene,
     get_scenes,

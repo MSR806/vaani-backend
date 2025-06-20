@@ -2,10 +2,9 @@ import time
 
 from sqlalchemy.orm import Session
 
+from app.models.models import Chapter, Scene
+from app.schemas.schemas import SceneCreate, SceneUpdate
 from app.utils.exceptions import rollback_on_exception
-
-from ..models.models import Chapter, Scene
-from ..schemas.schemas import SceneCreate, SceneUpdate
 
 
 @rollback_on_exception

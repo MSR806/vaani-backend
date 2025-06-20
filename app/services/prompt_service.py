@@ -4,10 +4,10 @@ from typing import List, Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from ..models.enums import PromptSource
-from ..models.models import Prompt
-from ..repository.prompt_repository import PromptRepository
-from ..schemas.prompts import PromptCreate, PromptUpdate
+from app.models.enums import PromptSource
+from app.models.models import Prompt
+from app.repository.prompt_repository import PromptRepository
+from app.schemas.prompts import PromptCreate, PromptUpdate
 
 
 def create_prompt(db: Session, prompt_data: PromptCreate, user_id: str) -> Prompt:

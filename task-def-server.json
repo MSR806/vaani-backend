@@ -1,0 +1,16 @@
+{
+    "command": [
+        "/bin/bash",
+        "init.sh"
+    ],
+    "cpu": 1024,
+    "memoryReservation": 4096,
+    "memory": 4096,
+    "logConfiguration": {
+      "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "ecs-vaani",
+          "awslogs-region": "ap-south-1"
+        }
+    }
+}

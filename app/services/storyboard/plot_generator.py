@@ -3,18 +3,19 @@ import asyncio
 import logging
 from typing import List
 
-# Import prompt templates
-from prompts.story_generator_prompts import (
-    CHARACTER_IDENTIFICATION_SYSTEM_PROMPT,
-    CHARACTER_IDENTIFICATION_USER_PROMPT_TEMPLATE,
-    PLOT_BEAT_SYSTEM_PROMPT,
-    PLOT_BEAT_USER_PROMPT_TEMPLATE,
-)
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.models.enums import StoryboardStatus
 from app.models.models import PlotBeat
+
+# Import prompt templates
+from app.prompts.story_generator_prompts import (
+    CHARACTER_IDENTIFICATION_SYSTEM_PROMPT,
+    CHARACTER_IDENTIFICATION_USER_PROMPT_TEMPLATE,
+    PLOT_BEAT_SYSTEM_PROMPT,
+    PLOT_BEAT_USER_PROMPT_TEMPLATE,
+)
 from app.repository.character_arcs_repository import CharacterArcsRepository
 from app.repository.plot_beat_repository import PlotBeatRepository
 from app.repository.storyboard_repository import StoryboardRepository

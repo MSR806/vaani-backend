@@ -13,7 +13,7 @@ Base.metadata.create_all(bind=engine)
 security = HTTPBearer()
 
 app = FastAPI(
-    title="Writers LLM API",
+    title="Vaani API",
     description="An API for managing books, chapters, scenes, and characters with AI assistance",
     version="1.0.0",
     # Configure OpenAPI to include authorization
@@ -41,7 +41,7 @@ app.include_router(router, prefix="/vaani/api/v1", dependencies=[Depends(get_cur
 @app.get("/", tags=["public"])
 async def root():
     return {
-        "message": "Welcome to Writers LLM API",
+        "message": "Welcome to Vaani API",
         "version": "1.0.0",
         "docs_url": "/docs",
         "redoc_url": "/redoc",
@@ -50,4 +50,4 @@ async def root():
 
 @app.get("/vaani/health", tags=["public"])
 async def health_check():
-    return {"status": "healthy", "api": "Writers LLM API", "version": "1.0.0"}
+    return {"status": "healthy", "api": "Vaani API", "version": "1.0.0"}

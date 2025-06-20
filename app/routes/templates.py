@@ -3,10 +3,10 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from ..auth import require_write_permission
-from ..database import get_db
-from ..schemas.schemas import TemplateRead
-from ..services.template_service import TemplateService
+from app.auth import require_write_permission
+from app.database import get_db
+from app.schemas.schemas import TemplateRead
+from app.services.template_service import TemplateService
 
 router = APIRouter(tags=["templates"])
 

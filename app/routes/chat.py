@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from ..auth import require_write_permission
-from ..database import get_db
-from ..schemas.schemas import ChatRequest, CompletionRequest
-from ..services.chat_completion_service import stream_completion
-from ..services.chat_service import chat_as_character, stream_chat, stream_chat_as_character
+from app.auth import require_write_permission
+from app.database import get_db
+from app.schemas.schemas import ChatRequest, CompletionRequest
+from app.services.chat_completion_service import stream_completion
+from app.services.chat_service import chat_as_character, stream_chat, stream_chat_as_character
 
 router = APIRouter(tags=["chat"])
 
