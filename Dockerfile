@@ -24,4 +24,4 @@ COPY . .
 
 EXPOSE 80
 
-CMD ["/bin/bash", "init.sh"]
+CMD ["/bin/bash", "server-init.sh"]

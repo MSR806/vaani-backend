@@ -1,16 +1,16 @@
 {
     "command": [
         "/bin/bash",
-        "server-init.sh"
+        "worker-init.sh"
     ],
     "cpu": 1024,
     "memoryReservation": 4096,
     "memory": 4096,
     "logConfiguration": {
-      "logDriver": "awslogs",
+        "logDriver": "awslogs",
         "options": {
-          "awslogs-group": "ecs-vaani",
-          "awslogs-region": "ap-south-1"
+            "awslogs-group": "ecs-vaani-worker",
+            "awslogs-region": "ap-south-1"
         }
     }
 }
