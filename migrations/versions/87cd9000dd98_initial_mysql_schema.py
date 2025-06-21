@@ -57,6 +57,17 @@ def upgrade() -> None:
     sa.Column('character_ids', sa.JSON(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('character_arcs',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('content', sa.Text(), nullable=False),
+    sa.Column('content_json', sa.JSON(), nullable=True),
+    sa.Column('type', sa.Text(), nullable=False),
+    sa.Column('source_id', sa.Integer(), nullable=True),
+    sa.Column('name', sa.Text(), nullable=True),
+    sa.Column('role', sa.Text(), nullable=True),
+    sa.Column('archetype', sa.Text(), nullable=True),
+    sa.PrimaryKeyConstraint('id')
+    )
     op.create_table('prompts',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('title', sa.String(length=255), nullable=False),
@@ -172,6 +183,7 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_settings_id'), table_name='settings')
     op.drop_table('settings')
     op.drop_table('prompts')
+    op.drop_table('character_arcs')
     op.drop_table('plot_beats')
     op.drop_index(op.f('ix_images_name'), table_name='images')
     op.drop_index(op.f('ix_images_id'), table_name='images')

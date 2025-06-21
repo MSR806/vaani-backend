@@ -1,10 +1,13 @@
+from typing import List
+from app.schemas.schemas import ChapterResponse, ChaptersCountResponse
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
 
 from app.database import get_db
+from app.schemas.plotbeat import PlotBeatRead
 from app.schemas.storyboard import (
     StoryboardCreate,
-    StoryboardGenerateChaptersSummaryRequest,
     StoryboardResponse,
 )
 from app.schemas.utils import BooleanResponse
@@ -44,16 +47,8 @@ def continue_storyboard(storyboard_id: int, db: Session = Depends(get_db)):
     return storyboard
 
 
-@router.post(
-    "/storyboard/{storyboard_id}/generate-chapters-summary", response_model=BooleanResponse
-)
-async def generate_chapters_summary(
-    storyboard_id: int,
-    request: StoryboardGenerateChaptersSummaryRequest,
-    db: Session = Depends(get_db),
-):
+@router.post("/storyboard/{storyboard_id}/generate-chapters-summary", response_model=ChaptersCountResponse)
+def create_chapters_from_plot_beats(storyboard_id: int, db: Session = Depends(get_db)):
     storyboard_service = StoryboardService(db, "test")
-    chapters = await storyboard_service.generate_chapters_summary(
-        storyboard_id, request.plot_beat_id
-    )
-    return BooleanResponse(success=True, message=f"Generated {len(chapters)} chapters")
+    chapters = storyboard_service.generate_chapters_summary(storyboard_id)
+    return ChaptersCountResponse(chapters_count=len(chapters))

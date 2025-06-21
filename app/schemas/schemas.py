@@ -320,3 +320,7 @@ class TemplateRead(TemplateBase):
 
     class Config:
         orm_mode = True
+
+
+class ChaptersCountResponse(BaseModel):
+    chapters_count: int

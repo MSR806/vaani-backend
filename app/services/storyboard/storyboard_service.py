@@ -1,5 +1,6 @@
 import logging
 
+from app.repository.chapter_repository import ChapterRepository
 from sqlalchemy.orm import Session
 
 from app.models.enums import StoryboardStatus
@@ -9,13 +10,13 @@ from app.services.background_jobs.tasks import (
     add_generate_character_arcs_task_to_bg_jobs,
     add_generate_plot_beats_task_to_bg_jobs,
 )
-from app.services.storyboard.summary_generatory import SummarizerGenerator
 from app.utils.exceptions import (
     PlotBeatNotGeneratedException,
     StoryboardAlreadyExistsException,
     StoryboardCannotBeContinuedException,
     StoryboardNotFoundException,
 )
+from fastapi import HTTPException
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +26,7 @@ class StoryboardService:
         self.db = db
         self.storyboard_repo = StoryboardRepository(db)
         self.plot_beat_repo = PlotBeatRepository(db)
+        self.chapter_repo = ChapterRepository(db)
         self.user_id = user_id
 
     def create_storyboard(self, book_id: int, template_id: int, prompt: str):
@@ -67,20 +69,57 @@ class StoryboardService:
         except Exception as e:
             logger.error(f"Error getting storyboard: {str(e)}")
             raise e
-
-    async def generate_chapters_summary(self, storyboard_id: int, plot_beat_id: int):
+        
+    def generate_chapters_summary(self, storyboard_id: int):
         try:
-            existing = self.storyboard_repo.get_by_id(storyboard_id)
-            if existing.status != StoryboardStatus.PLOT_BEATS_GENERATION_COMPLETED:
+            storyboard = self.storyboard_repo.get_by_id(storyboard_id)
+            if storyboard.status != StoryboardStatus.PLOT_BEATS_GENERATION_COMPLETED:
                 raise PlotBeatNotGeneratedException()
 
-            # Will throw exception if plot beat not found
-            self.plot_beat_repo.get_by_id(plot_beat_id)
+            # Check if there are already chapters for this book
+            from app.models.models import Chapter
+            existing_chapters = (
+                self.db.query(Chapter)
+                .filter(Chapter.book_id == storyboard.book_id)
+                .first()
+            )
+            
+            if existing_chapters:
+                raise HTTPException(
+                    status_code=400,
+                    detail="There are already chapters created for this book"
+                )
 
-            summarizer_generator = SummarizerGenerator(self.db, plot_beat_id)
-            chapters = await summarizer_generator.execute(self.user_id)
+            # Get plot beats for this storyboard
+            plot_beats = self.plot_beat_repo.get_by_storyboard_id(storyboard_id)
+            if not plot_beats:
+                raise PlotBeatNotGeneratedException("No plot beats found for this storyboard")
 
+            all_chapters = []
+            chapters_count = 0
+            
+            # Generate chapters for each plot beat
+            for plot_beat in plot_beats:
+                try:
+                    chapters_count += 1
+                    chapter_no = chapters_count
+                    chapters_data = {
+                        "book_id": storyboard.book_id,
+                        "title": f"Chapter {chapter_no}",
+                        "chapter_no": chapter_no,
+                        "content": "",  # Initially empty content
+                        "source_text": plot_beat.content,
+                        "character_ids": plot_beat.character_ids,
+                        "state": "DRAFT",
+                    }
+                    all_chapters.append(chapters_data)
+                    logger.info(f"Generated chapter {chapter_no} for plot beat {plot_beat.id}")
+                except Exception as e:
+                    logger.error(f"Error generating chapters for plot beat {plot_beat.id}: {str(e)}")
+                    continue
+
+            chapters = self.chapter_repo.batch_create(all_chapters, user_id=self.user_id)
             return chapters
         except Exception as e:
-            logger.error(f"Error getting storyboard: {str(e)}")
+            logger.error(f"Error generating chapters summary: {str(e)}")
             raise e

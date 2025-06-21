@@ -52,6 +52,14 @@ class PlotBeatRepository(BaseRepository[PlotBeat]):
             .all()
         )
 
+    def get_by_storyboard_id(self, storyboard_id: int) -> List[PlotBeat]:
+        return (
+            self.db.query(PlotBeat)
+            .filter(PlotBeat.source_id == storyboard_id)
+            .order_by(PlotBeat.id.asc())
+            .all()
+        )
+
     def get_by_id(self, id: int) -> PlotBeat:
         plot_beat = self.db.query(PlotBeat).filter(PlotBeat.id == id).first()
         if not plot_beat:

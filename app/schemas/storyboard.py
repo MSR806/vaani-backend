@@ -1,3 +1,4 @@
+from typing import Optional
 from pydantic import BaseModel
 
 
@@ -17,7 +18,3 @@ class StoryboardResponse(BaseModel):
     updated_at: int
     created_by: str
     updated_by: str
-
-
-class StoryboardGenerateChaptersSummaryRequest(BaseModel):
-    plot_beat_id: int
