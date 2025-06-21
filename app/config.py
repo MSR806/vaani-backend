@@ -21,5 +21,5 @@ AUTH0_ALGORITHMS = os.getenv("AUTH0_ALGORITHMS")
 
 
 class STATSD:
-    HOST = os.environ.get("STATSD_HOST", "localhost")
-    PORT = os.environ.get("STATSD_PORT", 8125)
+    HOST = os.getenv("STATSD_HOST", "localhost")
+    PORT = os.getenv("STATSD_PORT", 8125)
