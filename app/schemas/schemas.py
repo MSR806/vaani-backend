@@ -324,3 +324,14 @@ class TemplateRead(TemplateBase):
 
 class ChaptersCountResponse(BaseModel):
     chapters_count: int
+
+
+class ChapterListResponse(BaseModel):
+    book_id: int
+    chapter_no: int
+    title: str
+    state: str
+    id: int
+
+    class Config:
+        from_attributes = True

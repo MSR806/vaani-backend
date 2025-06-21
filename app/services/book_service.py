@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from app.config import OPENAI_MODEL
 from app.models.enums import BookType
 from app.models.models import Book, Chapter
-from app.schemas.schemas import BookBase, BookUpdate, ChapterGenerateRequest, BookTitleUpdate
+from app.schemas.schemas import BookBase, BookUpdate, ChapterGenerateRequest, BookTitleUpdate, ChapterListResponse
 from app.services.image_service import store_image_from_url
 from app.services.placeholder_image import generate_placeholder_image
 from app.utils.exceptions import rollback_on_exception
@@ -129,6 +129,34 @@ def update_book_title(db: Session, book_id: int, title_update: BookTitleUpdate, 
 def get_book_chapters(db: Session, book_id: int) -> list[Chapter]:
     """Get all chapters for a specific book."""
     return db.query(Chapter).filter(Chapter.book_id == book_id).order_by(Chapter.chapter_no).all()
+
+
+def get_book_chapters_list(db: Session, book_id: int) -> list[ChapterListResponse]:
+    """Get chapter list (only essential fields) for a specific book."""
+    chapters = (
+        db.query(
+            Chapter.book_id,
+            Chapter.chapter_no,
+            Chapter.title,
+            Chapter.state,
+            Chapter.id
+        )
+        .filter(Chapter.book_id == book_id)
+        .order_by(Chapter.chapter_no)
+        .all()
+    )
+    
+    # Convert to ChapterListResponse objects
+    return [
+        ChapterListResponse(
+            book_id=chapter.book_id,
+            chapter_no=chapter.chapter_no,
+            title=chapter.title,
+            state=chapter.state,
+            id=chapter.id
+        )
+        for chapter in chapters
+    ]
 
 
 async def generate_chapter_outline(

@@ -14,8 +14,9 @@ from app.schemas.schemas import (
     ChapterStateUpdate,
     ChapterUpdate,
     ChapterTitleUpdate,
+    ChapterListResponse,
 )
-from app.services.book_service import get_book, get_book_chapters
+from app.services.book_service import get_book, get_book_chapters, get_book_chapters_list
 from app.services.chapter_rewrite_service import stream_chapter_rewrite
 from app.services.chapter_service import (
     bulk_upload_chapters,
@@ -48,16 +49,10 @@ def create_chapter_route(
     return chapter
 
 
-@router.get("/books/{book_id}/chapters")
-def get_book_chapters_route(book_id: int, db: Session = Depends(get_db)):
-    # First check if the book exists
-    book = get_book(db, book_id)
-    if not book:
-        raise HTTPException(status_code=404, detail="Book not found")
-
-    # Then get the chapters
-    chapters = get_book_chapters(db, book_id)
-    return chapters
+@router.get("/books/{book_id}/chapters", response_model=list[ChapterListResponse])
+def get_book_chapters(book_id: int, db: Session = Depends(get_db)):
+    """Get all chapters for a specific book (list view with essential fields only)."""
+    return get_book_chapters_list(db, book_id)
 
 
 @router.get("/books/{book_id}/chapters/{chapter_id}")
