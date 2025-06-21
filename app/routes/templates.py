@@ -1,14 +1,15 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.auth import require_write_permission
 from app.database import get_db
+from app.metrics.router import MetricsRouter
 from app.schemas.schemas import TemplateRead
 from app.services.template_service import TemplateService
 
-router = APIRouter(tags=["templates"])
+router = MetricsRouter(tags=["templates"])
 
 
 @router.post("/templates", response_model=dict)

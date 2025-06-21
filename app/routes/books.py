@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 
 from app.auth import get_auth0_user_details, require_write_permission, security
 from app.database import get_db
+from app.metrics.router import MetricsRouter
 from app.schemas.schemas import BookBase, BookCoverResponse, BookCreate, BookResponse, BookUpdate
 from app.schemas.storyboard import StoryboardResponse
 from app.services.book_service import (
@@ -15,7 +16,7 @@ from app.services.book_service import (
 )
 from app.services.storyboard.storyboard_service import StoryboardService
 
-router = APIRouter(tags=["books"])
+router = MetricsRouter(tags=["books"])
 
 
 @router.get("/books", response_model=list[BookResponse])

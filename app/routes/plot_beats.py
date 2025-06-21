@@ -1,12 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException, Path
+from fastapi import Depends, HTTPException, Path
 from requests import Session
 
 from app.database import get_db
+from app.metrics.router import MetricsRouter
 from app.schemas.plotbeat import PlotBeatUpdate
 from app.services.plot_beat_service import PlotBeatService
 from app.utils.exceptions import PlotBeatNotFoundException
 
-router = APIRouter()
+router = MetricsRouter(tags=["plot_beats"])
 
 
 @router.get("/plot-beats")
