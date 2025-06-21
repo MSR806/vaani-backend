@@ -16,6 +16,7 @@ from app.schemas.schemas import (
     ChapterCreate,
     ChapterGenerateRequest,
     ChapterUpdate,
+    ChapterTitleUpdate,
     SceneOutlineResponse,
 )
 from app.services.ai_service import get_openai_client
@@ -83,6 +84,21 @@ def update_chapter(
         chapter.content = chapter_update.content
     if chapter_update.source_text:
         chapter.source_text = chapter_update.source_text
+    chapter.updated_at = int(time.time())
+    chapter.updated_by = user_id
+    db.commit()
+    db.refresh(chapter)
+    return chapter
+
+
+def update_chapter_title(
+    db: Session, book_id: int, chapter_id: int, title_update: ChapterTitleUpdate, user_id: str
+):
+    chapter = db.query(Chapter).filter(Chapter.id == chapter_id, Chapter.book_id == book_id).first()
+    if not chapter:
+        return None
+
+    chapter.title = title_update.title
     chapter.updated_at = int(time.time())
     chapter.updated_by = user_id
     db.commit()

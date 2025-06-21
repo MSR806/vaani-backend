@@ -1,21 +1,23 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
+import logging
 
 from app.auth import get_auth0_user_details, require_write_permission, security
 from app.database import get_db
-from app.schemas.schemas import BookBase, BookCoverResponse, BookCreate, BookResponse, BookUpdate
+from app.schemas.schemas import BookBase, BookCoverResponse, BookCreate, BookResponse, BookTitleUpdate
 from app.schemas.storyboard import StoryboardResponse
 from app.services.book_service import (
     create_book,
     generate_book_cover,
     get_book,
     get_books,
-    update_book,
+    update_book_title,
 )
 from app.services.storyboard.storyboard_service import StoryboardService
 
 router = APIRouter(tags=["books"])
+logger = logging.getLogger(__name__)
 
 
 @router.get("/books", response_model=list[BookResponse])
@@ -51,14 +53,14 @@ async def create_book_route(
     return await create_book(db, book_data, current_user["user_id"])
 
 
-@router.put("/books/{book_id}", response_model=BookResponse)
-def update_book_route(
+@router.patch("/books/{book_id}", response_model=BookResponse)
+def update_book_title_route(
     book_id: int,
-    book_update: BookUpdate,
+    title_update: BookTitleUpdate,
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_write_permission),
 ):
-    book = update_book(db, book_id, book_update, current_user["user_id"])
+    book = update_book_title(db, book_id, title_update, current_user["user_id"])
     if not book:
         raise HTTPException(status_code=404, detail="Book not found")
     return book

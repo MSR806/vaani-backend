@@ -13,6 +13,7 @@ from app.schemas.schemas import (
     ChapterSourceTextUpdate,
     ChapterStateUpdate,
     ChapterUpdate,
+    ChapterTitleUpdate,
 )
 from app.services.book_service import get_book, get_book_chapters
 from app.services.chapter_rewrite_service import stream_chapter_rewrite
@@ -27,6 +28,7 @@ from app.services.chapter_service import (
     patch_chapter_state,
     stream_chapter_content,
     update_chapter,
+    update_chapter_title,
 )
 from app.services.character_service import extract_chapter_characters
 
@@ -180,3 +182,17 @@ async def rewrite_chapter_route(
     current_user: dict = Depends(require_write_permission),
 ):
     return await stream_chapter_rewrite(db, book_id, chapter_id)
+
+
+@router.patch("/books/{book_id}/chapters/{chapter_id}", response_model=ChapterResponse)
+def update_chapter_title_route(
+    book_id: int,
+    chapter_id: int,
+    title_update: ChapterTitleUpdate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_write_permission),
+):
+    chapter = update_chapter_title(db, book_id, chapter_id, title_update, current_user["user_id"])
+    if not chapter:
+        raise HTTPException(status_code=404, detail="Chapter not found")
+    return chapter

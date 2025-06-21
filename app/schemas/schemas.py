@@ -23,6 +23,10 @@ class BookUpdate(BaseModel):
     title: str
 
 
+class BookTitleUpdate(BaseModel):
+    title: str
+
+
 class BookResponse(BaseModel):
     id: int
     title: str
@@ -59,6 +63,10 @@ class ChapterUpdate(BaseModel):
     content: str
     source_text: str | None = None
     state: str | None = None
+
+
+class ChapterTitleUpdate(BaseModel):
+    title: str
 
 
 class ChapterSourceTextUpdate(BaseModel):

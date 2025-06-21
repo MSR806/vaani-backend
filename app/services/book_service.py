@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from app.config import OPENAI_MODEL
 from app.models.enums import BookType
 from app.models.models import Book, Chapter
-from app.schemas.schemas import BookBase, BookUpdate, ChapterGenerateRequest
+from app.schemas.schemas import BookBase, BookUpdate, ChapterGenerateRequest, BookTitleUpdate
 from app.services.image_service import store_image_from_url
 from app.services.placeholder_image import generate_placeholder_image
 from app.utils.exceptions import rollback_on_exception
@@ -105,6 +105,20 @@ def update_book(db: Session, book_id: int, book_update: BookUpdate, user_id: str
         return None
 
     book.title = book_update.title
+    book.updated_at = int(time.time())
+    book.updated_by = user_id
+    db.commit()
+    db.refresh(book)
+    return book
+
+
+@rollback_on_exception
+def update_book_title(db: Session, book_id: int, title_update: BookTitleUpdate, user_id: str) -> Book:
+    book = get_book(db, book_id)
+    if not book:
+        return None
+
+    book.title = title_update.title
     book.updated_at = int(time.time())
     book.updated_by = user_id
     db.commit()
