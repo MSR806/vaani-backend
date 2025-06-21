@@ -3,9 +3,9 @@ repos:
     rev: v4.5.0
     hooks:
     -   id: trailing-whitespace
-        exclude: ^scripts/
+        exclude: ^(scripts/|migrations/)
     -   id: end-of-file-fixer
-        exclude: ^scripts/
+        exclude: ^(scripts/|migrations/)
     -   id: check-yaml
     -   id: check-added-large-files
 
@@ -15,7 +15,7 @@ repos:
     -   id: isort
         name: isort (python)
         args: ["--profile", "black"]
-        exclude: ^scripts/
+        exclude: ^(scripts/|migrations/)
 
 -   repo: https://github.com/psf/black
     rev: 24.3.0
@@ -23,7 +23,7 @@ repos:
     -   id: black
         args: ["--line-length", "100"]
         language_version: python3.9
-        exclude: ^scripts/
+        exclude: ^(scripts/|migrations/)
 
 -   repo: https://github.com/pycqa/flake8
     rev: 7.0.0
@@ -33,7 +33,8 @@ repos:
         args: # arguments to configure flake8
         # making isort compatible with black
         - "--max-line-length=100"
-        exclude: ^scripts/
+        - "--ignore=E203,W503,E501,W291,W293,E226,D100, D101, D102, D103, D104, D106, D107"
+        exclude: ^(scripts/|migrations/)
 
 -   repo: https://github.com/pycqa/autoflake
     rev: v2.2.1
@@ -44,4 +45,4 @@ repos:
             '--remove-unused-variables',
             '--ignore-init-module-imports',
         ]
-        exclude: ^scripts/
+        exclude: ^(scripts/|migrations)/

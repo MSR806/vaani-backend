@@ -10,28 +10,27 @@ from sqlalchemy.orm import sessionmaker
 # Load environment variables
 load_dotenv()
 
-# Supabase connection pooler settings
-# Format: postgresql://postgres.[PROJECT_REF]:[PASSWORD]@aws-0-ap-south-1.pooler.supabase.com:6543/postgres
-SUPABASE_DB_USER = os.getenv("SUPABASE_DB_USER", "postgres.wctnszbithsykyauvgyu")
-SUPABASE_DB_PASSWORD = os.getenv("SUPABASE_DB_PASSWORD")
-SUPABASE_DB_HOST = os.getenv("SUPABASE_DB_HOST", "aws-0-ap-south-1.pooler.supabase.com")
-SUPABASE_DB_PORT = os.getenv("SUPABASE_DB_PORT", "6543")
-SUPABASE_DB_NAME = os.getenv("SUPABASE_DB_NAME", "postgres")
+# MySQL database settings
+# Format: mysql+pymysql://username:password@host:port/database_name
+MYSQL_USER = os.getenv("MYSQL_USER", "root")
+MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD", "password")
+MYSQL_HOST = os.getenv("MYSQL_HOST", "localhost")
+MYSQL_PORT = os.getenv("MYSQL_PORT", "3306")
+MYSQL_DB_NAME = os.getenv("MYSQL_DB_NAME", "vaani")
 
-# Create database URL for Supabase PostgreSQL connection with connection pooler
-SQLALCHEMY_DATABASE_URL = f"postgresql://{SUPABASE_DB_USER}:{SUPABASE_DB_PASSWORD}@{SUPABASE_DB_HOST}:{SUPABASE_DB_PORT}/{SUPABASE_DB_NAME}"
+# Create database URL for MySQL connection
+SQLALCHEMY_DATABASE_URL = (
+    f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DB_NAME}"
+)
 
 
 # Create SQLAlchemy engine with retry mechanism
 def create_engine_with_retry(max_retries=5, retry_interval=5):
     for attempt in range(max_retries):
         try:
-            # Create engine with SSL parameters required for Supabase
+            # Create MySQL engine
             engine = create_engine(
                 SQLALCHEMY_DATABASE_URL,
-                connect_args={
-                    "sslmode": "require",
-                },
                 pool_pre_ping=True,
             )
 

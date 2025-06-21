@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Initialize default settings in Supabase database.
+Initialize default settings in MySQL database.
 This script creates the initial AI model settings needed by the application.
 """
 
@@ -8,14 +8,14 @@ import json
 import os
 import sys
 import time
+from sqlalchemy.exc import IntegrityError
 
-from app.utils.constants import SettingKeys
 
 # Add the parent directory to sys.path to import app modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from sqlalchemy.exc import IntegrityError
 
+from app.utils.constants import SettingKeys
 from app.database import SessionLocal
 from app.models.models import Setting
 
@@ -32,7 +32,7 @@ def create_default_settings():
             "key": "create_scenes_ai_model",
             "title": "Scene Creation AI Model",
             "section": "Scene",
-            "value": "gpt-4o-mini",
+            "value": "grok-3-latest",
             "description": "AI model used for generating chapter outlines with scenes",
             "type": "list",
             "options": model_options,
@@ -41,7 +41,7 @@ def create_default_settings():
             "key": "create_scenes_temperature",
             "title": "Scene Creation Temperature",
             "section": "Scene",
-            "value": "0.7",
+            "value": "0.1",
             "description": "Temperature parameter for scene generation",
             "type": "string",
             "options": None,
@@ -51,7 +51,7 @@ def create_default_settings():
             "key": "create_chapter_content_ai_model",
             "title": "Chapter Content AI Model",
             "section": "Chapter",
-            "value": "gpt-4o-mini",
+            "value": "grok-3-latest",
             "description": "AI model used for generating chapter content",
             "type": "list",
             "options": model_options,
@@ -60,7 +60,7 @@ def create_default_settings():
             "key": "create_chapter_content_temperature",
             "title": "Chapter Content Temperature",
             "section": "Chapter",
-            "value": "0.8",
+            "value": "0.4",
             "description": "Temperature parameter for chapter content generation",
             "type": "string",
             "options": None,
@@ -70,7 +70,7 @@ def create_default_settings():
             "key": "chapter_select_and_replace_ai_model",
             "title": "Chapter Edit AI Model",
             "section": "Chapter",
-            "value": "gpt-4o-mini",
+            "value": "grok-3-latest",
             "description": "AI model used for chapter editing",
             "type": "list",
             "options": model_options,
@@ -106,7 +106,7 @@ def create_default_settings():
             "key": SettingKeys.PLOT_BEAT_GENERATION_MODEL.value,
             "title": "Plot Beat Generation AI Model",
             "section": "Storyboard",
-            "value": "gpt-4o",
+            "value": "grok-3-latest",
             "description": "AI model used for generating plot beats",
             "type": "list",
             "options": model_options,
@@ -115,7 +115,7 @@ def create_default_settings():
             "key": SettingKeys.PLOT_BEAT_GENERATION_TEMPERATURE.value,
             "title": "Plot Beat Generation Temperature",
             "section": "Storyboard",
-            "value": "0.7",
+            "value": "0.5",
             "description": "Temperature parameter for plot beat generation",
             "type": "string",
             "options": None,
@@ -143,7 +143,7 @@ def create_default_settings():
             "key": SettingKeys.CHAPTER_SUMMARY_GENERATION_FROM_STORYBOARD_MODEL.value,
             "title": "Chapter Summary Generation from Storyboard AI Model",
             "section": "Storyboard",
-            "value": "gpt-4o",
+            "value": "grok-3-latest",
             "description": "AI model used for generating chapter summaries from storyboard",
             "type": "list",
             "options": model_options,
@@ -162,7 +162,7 @@ def create_default_settings():
             "key": SettingKeys.EXTRACTING_CHARACTER_ARCS_MODEL.value,
             "title": "Character Arc Extraction AI Model",
             "section": "Templates",
-            "value": "gpt-4o",
+            "value": "o3",
             "description": "AI model used for extracting character arcs from text",
             "type": "list",
             "options": model_options,
@@ -171,7 +171,7 @@ def create_default_settings():
             "key": SettingKeys.EXTRACTING_CHARACTER_ARCS_TEMPERATURE.value,
             "title": "Character Arc Extraction Temperature",
             "section": "Templates",
-            "value": "0.3",
+            "value": "1",
             "description": "Temperature parameter for character arc extraction",
             "type": "string",
             "options": None,
@@ -180,7 +180,7 @@ def create_default_settings():
             "key": SettingKeys.EXTRACTING_PLOT_BEATS_MODEL.value,
             "title": "Plot Beat Extraction AI Model",
             "section": "Templates",
-            "value": "gpt-4o",
+            "value": "grok-3-latest",
             "description": "AI model used for extracting plot beats from text",
             "type": "list",
             "options": model_options,
@@ -245,6 +245,25 @@ def create_default_settings():
             "section": "Templates",
             "value": "0.3",
             "description": "Temperature parameter for plot beat template creation",
+            "type": "string",
+            "options": None,
+        },
+        # Context size settings
+        {
+            "key": "scenes_previous_chapters_context_size",
+            "title": "Scene Generation Context Size",
+            "section": "Context",
+            "value": "5",
+            "description": "Number of previous chapters to include in context for scene generation",
+            "type": "string",
+            "options": None,
+        },
+        {
+            "key": "chapter_content_previous_chapters_context_size",
+            "title": "Chapter Generation Context Size",
+            "section": "Context",
+            "value": "5",
+            "description": "Number of previous chapters to include in context for chapter content generation",
             "type": "string",
             "options": None,
         },
