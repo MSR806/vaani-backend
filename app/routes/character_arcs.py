@@ -1,12 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException, Path
+from fastapi import Depends, HTTPException, Path
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.metrics.router import MetricsRouter
 from app.schemas.character_arcs import CharacterArcUpdate
 from app.services.character_arc_service import CharacterArcService
 from app.utils.exceptions import CharacterArcNotFoundException
 
-router = APIRouter()
+router = MetricsRouter(tags=["character_arcs"])
 
 
 @router.get("/character-arcs")

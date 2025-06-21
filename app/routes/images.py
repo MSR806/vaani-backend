@@ -1,11 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import Depends, HTTPException
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.metrics.router import MetricsRouter
 from app.services.image_service import get_image
 
-router = APIRouter(tags=["images"])
+router = MetricsRouter(tags=["images"])
 
 
 @router.get("/images/{image_id}")

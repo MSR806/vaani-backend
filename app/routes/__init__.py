@@ -1,4 +1,5 @@
-from fastapi import APIRouter
+# Create a main router that includes all the individual routers
+from app.metrics.router import MetricsRouter
 
 from .books import router as books_router
 from .chapters import router as chapters_router
@@ -12,8 +13,7 @@ from .settings import router as settings_router
 from .storyboard import router as storyboard_router
 from .templates import router as templates_router
 
-# Create a main router that includes all the individual routers
-router = APIRouter()
+router = MetricsRouter()
 
 # Include all routers
 router.include_router(books_router)

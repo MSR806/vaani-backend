@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends
+from fastapi import Depends
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.metrics.router import MetricsRouter
 from app.schemas.storyboard import (
     StoryboardCreate,
     StoryboardGenerateChaptersSummaryRequest,
@@ -10,10 +11,7 @@ from app.schemas.storyboard import (
 from app.schemas.utils import BooleanResponse
 from app.services.storyboard.storyboard_service import StoryboardService
 
-router = APIRouter(
-    tags=["storyboard"],
-    responses={404: {"description": "Not found"}},
-)
+router = MetricsRouter(tags=["storyboard"])
 
 
 @router.post("/storyboard", response_model=StoryboardResponse)

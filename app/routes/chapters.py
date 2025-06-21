@@ -1,10 +1,11 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.auth import require_write_permission
 from app.database import get_db
+from app.metrics.router import MetricsRouter
 from app.schemas.schemas import (
     ChapterCreate,
     ChapterGenerateRequest,
@@ -30,7 +31,7 @@ from app.services.chapter_service import (
 )
 from app.services.character_service import extract_chapter_characters
 
-router = APIRouter(tags=["chapters"])
+router = MetricsRouter(tags=["chapters"])
 
 
 @router.post("/books/{book_id}/chapters")

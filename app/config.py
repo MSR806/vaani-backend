@@ -18,3 +18,8 @@ AUTH0_DOMAIN = os.getenv("AUTH0_DOMAIN")
 AUTH0_API_AUDIENCE = os.getenv("AUTH0_API_AUDIENCE")
 AUTH0_ISSUER = f"https://{AUTH0_DOMAIN}/"
 AUTH0_ALGORITHMS = os.getenv("AUTH0_ALGORITHMS")
+
+
+class STATSD:
+    HOST = os.environ.get("STATSD_HOST", "localhost")
+    PORT = os.environ.get("STATSD_PORT", 8125)

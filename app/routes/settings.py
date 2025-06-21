@@ -1,16 +1,14 @@
 from typing import List
 
-from fastapi import APIRouter, Depends
+from fastapi import Depends
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.metrics.router import MetricsRouter
 from app.schemas.schemas import SettingBatchUpdate, SettingResponse
 from app.services.setting_service import batch_update_settings, get_settings
 
-router = APIRouter(
-    tags=["settings"],
-    responses={404: {"description": "Not found"}},
-)
+router = MetricsRouter(tags=["settings"])
 
 
 @router.get("/settings", response_model=List[SettingResponse])
