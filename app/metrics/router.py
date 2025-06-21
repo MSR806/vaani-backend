@@ -5,6 +5,7 @@ from typing import Callable
 from fastapi import APIRouter, Request, Response
 from fastapi.routing import APIRoute
 
+from app.constants.metrics import Constants
 from app.metrics.statsd_client import statsd
 
 # Use the same logger as in the original middleware
@@ -30,12 +31,8 @@ class MetricsAPIRoute(APIRoute):
 
             # Log request details - using format from original middleware
             logger.info(
-                f"{method} {request.url.path} from {client_ip} "
-                f"(Query params: {request.query_params})"
+                f"Request | {method} | {request.url.path} | {client_ip} | {request.query_params if request.query_params else 'No query params'}"
             )
-
-            # Resource path logging (templated route path)
-            logger.info(f"Resource path: {request.url.path}, Route pattern: {route_path}")
 
             try:
                 # Process the request through the original handler
@@ -49,14 +46,12 @@ class MetricsAPIRoute(APIRoute):
                 status_code = response.status_code
 
                 # Log response details (from original middleware)
-                logger.info(f"Response: {status_code} completed in {process_time:.4f}s")
+                logger.info(
+                    f"Response | {method} | {request.url.path} | {client_ip} | {status_code} | {process_time_ms:.4f}ms"
+                )
 
                 # Record metrics
-                tags = {"method": method, "path": route_path, "status_code": str(status_code)}
-
-                # Log metrics to StatsD
-                statsd.timing("http.request.duration", process_time_ms, tags)
-                statsd.increment("http.request.count", 1, tags)
+                self._log_metric(method, route_path, status_code, process_time_ms)
 
                 return response
             except Exception as e:
@@ -65,22 +60,33 @@ class MetricsAPIRoute(APIRoute):
                 process_time_ms = process_time * 1000
 
                 # Log error details with stack trace (from original middleware)
-                logger.error(f"Request failed: {str(e)}", exc_info=True)
+                logger.error(
+                    f"Uncaught exception in request | {method} | {request.url.path} | {client_ip} | {str(e)} | {process_time_ms:.4f}ms",
+                    exc_info=True,
+                )
 
-                tags = {
-                    "method": method,
-                    "path": route_path,
-                    "status_code": "500",  # Assuming 500 for exceptions
-                    "error_type": type(e).__name__,
-                }
-
-                statsd.timing("http.request.duration", process_time_ms, tags)
-                statsd.increment("http.request.errors", 1, tags)
+                self._log_metric(method, route_path, 500, process_time_ms)
 
                 # Re-raise the exception
                 raise
 
         return metrics_route_handler
+
+    def _log_metric(self, method, path, status_code, process_time_ms):
+        tags = {
+            Constants.Tag.METHOD: method,
+            Constants.Tag.PATH: path,
+            Constants.Tag.CODE: status_code,
+        }
+        statsd.timing(
+            Constants.Metric.API_LATENCY,
+            process_time_ms,
+            Constants.Metric.HUNDRED_SAMPLING_RATE,
+            tags,
+        )
+        statsd.increment(
+            Constants.Metric.API_COUNT, 1, Constants.Metric.HUNDRED_SAMPLING_RATE, tags
+        )
 
 
 class MetricsRouter(APIRouter):

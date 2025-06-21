@@ -3,8 +3,8 @@ from typing import Tuple
 
 from sqlalchemy.orm import Session
 
+from app.constants.llm_model import SettingKeys
 from app.services.setting_service import get_setting_by_key
-from app.utils.constants import SettingKeys
 
 logger = logging.getLogger(__name__)
 
