@@ -3,16 +3,20 @@ from typing import List, Optional
 
 from pydantic import BaseModel
 
+from app.models.enums import BookType
+
 
 # Book schemas
 class BookBase(BaseModel):
     title: str
     author: str | None = None
     author_id: str | None = None
+    type: BookType = BookType.SOURCE
 
 
 class BookCreate(BaseModel):
     title: str
+    type: BookType = BookType.SOURCE
 
 
 class BookUpdate(BaseModel):
@@ -24,6 +28,7 @@ class BookResponse(BaseModel):
     title: str
     author: str | None = None
     cover_url: str | None = None
+    type: BookType
     chapter_count: int = 0
     created_at: int
 

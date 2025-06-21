@@ -12,7 +12,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 
 from app.database import Base
-from app.models.enums import PromptSource, StoryboardStatus
+from app.models.enums import BookType, PromptSource, StoryboardStatus
 
 
 class CharacterArc(Base):
@@ -49,6 +49,7 @@ class Book(Base):
     author = Column(String(255))
     author_id = Column(String(255), nullable=False)  # Auth0 user ID of the book creator
     cover_url = Column(Text, nullable=True)  # URL to the generated book cover
+    type = Column(Enum(BookType), nullable=False, default=BookType.SOURCE)
     created_at = Column(BigInteger, nullable=False)  # Unix timestamp
     updated_at = Column(BigInteger, nullable=False)  # Unix timestamp
     created_by = Column(String(255), nullable=False)  # User ID

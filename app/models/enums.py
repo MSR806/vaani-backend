@@ -12,3 +12,8 @@ class StoryboardStatus(Enum):
 class PromptSource(Enum):
     SCENE = "SCENE"
     CHAPTER = "CHAPTER"
+
+
+class BookType(Enum):
+    SOURCE = "SOURCE"
+    REIMAGINED = "REIMAGINED"

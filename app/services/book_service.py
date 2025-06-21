@@ -9,6 +9,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.config import OPENAI_MODEL
+from app.models.enums import BookType
 from app.models.models import Book, Chapter
 from app.schemas.schemas import BookBase, BookUpdate, ChapterGenerateRequest
 from app.services.image_service import store_image_from_url
@@ -29,6 +30,7 @@ async def create_book(db: Session, book: BookBase, user_id: str) -> Book:
         title=book.title,
         author=book.author,
         author_id=book.author_id,
+        type=book.type,
         created_at=current_time,
         updated_at=current_time,
         created_by=user_id,

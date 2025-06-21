@@ -41,9 +41,10 @@ async def create_book_route(
     # Get user details from Auth0 UserInfo endpoint
     user_details = await get_auth0_user_details(credentials.credentials)
 
-    # Create a BookBase instance with the title and user information
+    # Create a BookBase instance with the title, type, and user information
     book_data = BookBase(
         title=book.title,
+        type=book.type,
         author_id=current_user["user_id"],
         author=user_details["name"],  # Use the name from UserInfo
     )
